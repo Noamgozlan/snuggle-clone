@@ -27,7 +27,6 @@ import ninjatraderLogo from "@/assets/brokers/ninjatrader.png";
 import topstepLogo from "@/assets/brokers/topstep.png";
 import tradovateLogo from "@/assets/brokers/tradovate.png";
 import metatrader5Logo from "@/assets/brokers/metatrader5.png";
-import rithmicLogo from "@/assets/brokers/rithmic.png";
 import bybitLogo from "@/assets/brokers/bybit.png";
 import binanceLogo from "@/assets/brokers/binance.png";
 import interactivebrokersLogo from "@/assets/brokers/interactivebrokers.png";
@@ -37,7 +36,6 @@ const brokers = [
   { name: "Topstep", logo: topstepLogo },
   { name: "Tradovate", logo: tradovateLogo },
   { name: "MetaTrader 5", logo: metatrader5Logo },
-  { name: "Rithmic", logo: rithmicLogo },
   { name: "Bybit", logo: bybitLogo },
   { name: "Binance", logo: binanceLogo },
   { name: "Interactive Brokers", logo: interactivebrokersLogo },
