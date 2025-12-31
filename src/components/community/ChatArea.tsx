@@ -127,18 +127,25 @@ export const ChatArea = ({
               </p>
             </div>
           ) : (
-            displayedMessages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                isOwn={message.user_id === user?.id}
-                isAdmin={isAdmin}
-                onDelete={onDeleteMessage}
-                onPin={onPinMessage}
-                onReply={setReplyTo}
-                onReaction={handleReaction}
-              />
-            ))
+            displayedMessages.map((message) => {
+              const replyToMessage = message.reply_to_id 
+                ? messages.find(m => m.id === message.reply_to_id) 
+                : null;
+              return (
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                  isOwn={message.user_id === user?.id}
+                  isAdmin={isAdmin}
+                  onDelete={onDeleteMessage}
+                  onPin={onPinMessage}
+                  onReply={setReplyTo}
+                  onReaction={handleReaction}
+                  replyToMessage={replyToMessage}
+                />
+              );
+            })
+
           )}
         </div>
       </ScrollArea>
