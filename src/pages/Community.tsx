@@ -23,6 +23,7 @@ const Community = () => {
     createChannel,
     deleteChannel,
     isAdmin,
+    isModerator,
   } = useCommunity();
 
   const handleReaction = (messageId: string, emoji: string, hasReacted: boolean) => {
@@ -54,6 +55,7 @@ const Community = () => {
           onCreateChannel={createChannel}
           onDeleteChannel={deleteChannel}
           isAdmin={isAdmin}
+          canManageChannels={isAdmin || isModerator}
         />
 
         {/* Main Chat Area */}

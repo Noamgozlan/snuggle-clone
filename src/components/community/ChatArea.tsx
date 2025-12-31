@@ -49,12 +49,17 @@ export const ChatArea = ({
   const pinnedMessages = messages.filter((m) => m.is_pinned);
   const displayedMessages = showPinnedOnly ? pinnedMessages : messages;
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom on new messages or initial load
   useEffect(() => {
     if (scrollRef.current && !showPinnedOnly) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      // Use setTimeout to ensure DOM is fully rendered
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 100);
     }
-  }, [messages, showPinnedOnly]);
+  }, [messages, showPinnedOnly, channel?.id]);
 
   const handleReaction = (messageId: string, emoji: string, hasReacted: boolean) => {
     onReaction(messageId, emoji, hasReacted);

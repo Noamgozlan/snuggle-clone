@@ -69,7 +69,7 @@ export interface OnlineUser {
 
 export const useCommunity = () => {
   const { user } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isModerator } = useUserRole();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
@@ -332,10 +332,10 @@ export const useCommunity = () => {
     [user]
   );
 
-  // Create channel (admin only)
+  // Create channel (admin/moderator)
   const createChannel = useCallback(
     async (name: string, description: string, icon: string, channelType: "text" | "announcements" | "trades") => {
-      if (!isAdmin) return;
+      if (!isAdmin && !isModerator) return;
 
       try {
         const { data, error } = await supabase
@@ -359,13 +359,13 @@ export const useCommunity = () => {
         throw error;
       }
     },
-    [isAdmin, channels.length]
+    [isAdmin, isModerator, channels.length]
   );
 
-  // Delete channel (admin only)
+  // Delete channel (admin/moderator)
   const deleteChannel = useCallback(
     async (channelId: string) => {
-      if (!isAdmin) return;
+      if (!isAdmin && !isModerator) return;
 
       try {
         const { error } = await supabase.from("community_channels").delete().eq("id", channelId);
@@ -383,7 +383,7 @@ export const useCommunity = () => {
         throw error;
       }
     },
-    [isAdmin, activeChannel, channels]
+    [isAdmin, isModerator, activeChannel, channels]
   );
 
   // Initial fetch
@@ -479,6 +479,7 @@ export const useCommunity = () => {
     createChannel,
     deleteChannel,
     isAdmin,
+    isModerator,
     fetchChannels,
   };
 };

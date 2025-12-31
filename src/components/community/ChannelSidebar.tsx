@@ -35,6 +35,7 @@ interface ChannelSidebarProps {
   onCreateChannel: (name: string, description: string, icon: string, type: "text" | "announcements" | "trades") => Promise<any>;
   onDeleteChannel: (channelId: string) => Promise<void>;
   isAdmin: boolean;
+  canManageChannels: boolean;
 }
 
 const getChannelIcon = (type: string, icon: string) => {
@@ -59,6 +60,7 @@ export const ChannelSidebar = ({
   onCreateChannel,
   onDeleteChannel,
   isAdmin,
+  canManageChannels,
 }: ChannelSidebarProps) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newChannel, setNewChannel] = useState({
@@ -94,7 +96,7 @@ export const ChannelSidebar = ({
       {/* Header */}
       <div className="h-12 border-b border-border flex items-center justify-between px-4">
         <h2 className="font-semibold text-foreground">קהילת סוחרים</h2>
-        {isAdmin && (
+        {canManageChannels && (
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -185,7 +187,7 @@ export const ChannelSidebar = ({
                 <span className="truncate text-sm">{channel.name}</span>
               </div>
               
-              {isAdmin && (
+              {canManageChannels && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
