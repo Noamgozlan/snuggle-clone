@@ -38,6 +38,7 @@ interface ChatMessageProps {
   onReply: (message: CommunityMessage) => void;
   onReaction: (messageId: string, emoji: string, hasReacted: boolean) => void;
   replyToMessage?: CommunityMessage | null;
+  onScrollToMessage?: (messageId: string) => void;
 }
 
 const EMOJI_OPTIONS = ["👍", "❤️", "🔥", "🚀", "💰", "📈", "📉", "🎯"];
@@ -51,6 +52,7 @@ export const ChatMessage = ({
   onReply,
   onReaction,
   replyToMessage,
+  onScrollToMessage,
 }: ChatMessageProps) => {
   const [showActions, setShowActions] = useState(false);
   const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
@@ -87,6 +89,7 @@ export const ChatMessage = ({
   return (
     <>
       <div
+        id={`message-${message.id}`}
         className={cn(
           "group relative flex gap-3 px-4 py-2 hover:bg-muted/30 transition-colors",
           message.is_pinned && "bg-yellow-500/5 border-r-2 border-yellow-500"
@@ -121,13 +124,16 @@ export const ChatMessage = ({
 
           {/* Reply Reference */}
           {replyToMessage && (
-            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1 max-w-sm">
+            <button
+              onClick={() => onScrollToMessage?.(replyToMessage.id)}
+              className="flex items-center gap-2 mt-1 text-xs text-muted-foreground bg-muted/50 hover:bg-muted rounded px-2 py-1 max-w-sm cursor-pointer transition-colors"
+            >
               <CornerDownRight className="h-3 w-3 shrink-0" />
               <span className="font-medium">{getReplyDisplayName()}</span>
               <span className="truncate">
                 {replyToMessage.content || (replyToMessage.trade ? "שיתף עסקה" : "קובץ")}
               </span>
-            </div>
+            </button>
           )}
 
           {/* Trade Card */}
