@@ -45,6 +45,12 @@ export interface CommunityMessage {
     pnl: number | null;
     strategy: string | null;
     screenshot_url: string | null;
+    entry_date?: string | null;
+    exit_date?: string | null;
+    quantity?: number;
+    notes?: string | null;
+    rr?: number | null;
+    commission?: number | null;
   } | null;
 }
 
@@ -130,7 +136,12 @@ export const useCommunity = () => {
           .select("user_id, first_name, last_name, username, avatar_url")
           .in("user_id", userIds),
         tradeIds.length > 0
-          ? supabase.from("trades").select("id, symbol, trade_type, entry_price, exit_price, pnl, strategy, screenshot_url").in("id", tradeIds)
+          ? supabase
+              .from("trades")
+              .select(
+                "id, symbol, trade_type, entry_price, exit_price, pnl, strategy, screenshot_url, entry_date, exit_date, quantity, notes, rr, commission"
+              )
+              .in("id", tradeIds)
           : { data: [] },
         supabase.from("message_reactions").select("*").in("message_id", messageIds),
       ]);
@@ -412,9 +423,22 @@ export const useCommunity = () => {
             .eq("user_id", payload.new.user_id)
             .single();
 
+          // Fetch trade (if attached)
+          const tradeId = (payload.new as any).trade_id as string | null | undefined;
+          const { data: trade } = tradeId
+            ? await supabase
+                .from("trades")
+                .select(
+                  "id, symbol, trade_type, entry_price, exit_price, pnl, strategy, screenshot_url, entry_date, exit_date, quantity, notes, rr, commission"
+                )
+                .eq("id", tradeId)
+                .maybeSingle()
+            : { data: null as any };
+
           const newMessage: CommunityMessage = {
             ...(payload.new as any),
             profile,
+            trade: trade || null,
             reactions: [],
           };
 
