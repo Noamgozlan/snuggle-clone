@@ -1051,7 +1051,7 @@ const MentorDashboard = () => {
                 }
               </div>
               <span>{selectedTradeForView?.symbol}</span>
-              {selectedTradeForView?.pnl !== null && (
+              {selectedTradeForView && selectedTradeForView.pnl !== null && (
                 <Badge variant={selectedTradeForView.pnl >= 0 ? "default" : "destructive"}>
                   {selectedTradeForView.pnl >= 0 ? '+' : ''}${selectedTradeForView.pnl.toFixed(2)}
                 </Badge>
