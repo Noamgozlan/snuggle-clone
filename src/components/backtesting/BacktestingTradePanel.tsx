@@ -17,7 +17,7 @@ import {
   DollarSign,
   Percent
 } from "lucide-react";
-import { BacktestTrade } from "./BacktestingWorkspace";
+import type { BacktestTrade } from "./types";
 import { useStrategies } from "@/hooks/useStrategies";
 
 interface BacktestingTradePanelProps {
