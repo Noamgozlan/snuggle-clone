@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.sync-tradovate]
 verify_jwt = false
+
+[functions.search-gifs]
+verify_jwt = false
