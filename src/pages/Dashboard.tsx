@@ -24,8 +24,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area } from "recharts";
-import { format, subMonths, startOfMonth, endOfMonth, getDay } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area, ScatterChart, Scatter, ZAxis, Cell } from "recharts";
+import { format, subMonths, startOfMonth, endOfMonth, getDay, differenceInSeconds, differenceInMinutes } from "date-fns";
 import { he } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -164,6 +164,66 @@ const Dashboard = () => {
         pnl: trade.pnl || 0,
       };
     });
+  }, [trades]);
+
+  // Calculate trade time performance (by hour of entry)
+  const tradeTimePerformance = useMemo(() => {
+    return trades
+      .filter(t => t.entry_date && t.pnl !== null)
+      .map(trade => {
+        const entryDate = new Date(trade.entry_date!);
+        const hour = entryDate.getHours();
+        const minutes = entryDate.getMinutes();
+        const timeDecimal = hour + minutes / 60;
+        const pnl = trade.pnl || 0;
+        const isWin = pnl > 0;
+        const isLoss = pnl < 0;
+        return {
+          time: timeDecimal,
+          timeLabel: format(entryDate, "HH:mm"),
+          pnl,
+          symbol: trade.symbol,
+          type: isWin ? "win" : isLoss ? "loss" : "breakeven",
+        };
+      });
+  }, [trades]);
+
+  // Calculate trade duration performance
+  const tradeDurationPerformance = useMemo(() => {
+    return trades
+      .filter(t => t.entry_date && t.exit_date && t.pnl !== null)
+      .map(trade => {
+        const entryDate = new Date(trade.entry_date!);
+        const exitDate = new Date(trade.exit_date!);
+        const durationSeconds = differenceInSeconds(exitDate, entryDate);
+        const durationMinutes = differenceInMinutes(exitDate, entryDate);
+        const pnl = trade.pnl || 0;
+        const isWin = pnl > 0;
+        const isLoss = pnl < 0;
+        
+        // Format duration label
+        let durationLabel: string;
+        if (durationSeconds < 60) {
+          durationLabel = `${durationSeconds}s`;
+        } else if (durationMinutes < 60) {
+          const secs = durationSeconds % 60;
+          durationLabel = `${durationMinutes}m:${secs.toString().padStart(2, '0')}s`;
+        } else {
+          const hours = Math.floor(durationMinutes / 60);
+          const mins = durationMinutes % 60;
+          durationLabel = `${hours}h:${mins.toString().padStart(2, '0')}m`;
+        }
+        
+        return {
+          duration: durationSeconds,
+          durationMinutes,
+          durationLabel,
+          pnl,
+          symbol: trade.symbol,
+          type: isWin ? "win" : isLoss ? "loss" : "breakeven",
+        };
+      })
+      .sort((a, b) => a.duration - b.duration);
   }, [trades]);
 
   const totalDisplay = displayMode === "money" ? stats.totalPnl : stats.totalPoints;
@@ -488,6 +548,154 @@ const Dashboard = () => {
               </div>
             </Card>
           </div>
+        </div>
+
+        {/* Trade Time & Duration Performance Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          {/* Trade Time Performance */}
+          <Card className="bg-card/50 border-border/50 p-3 md:p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm md:text-base">
+                🕐 ביצועים לפי שעת כניסה
+              </h3>
+            </div>
+            {tradeTimePerformance.length === 0 ? (
+              <div className="h-48 md:h-64 flex items-center justify-center">
+                <p className="text-muted-foreground text-sm">אין מספיק נתונים</p>
+              </div>
+            ) : (
+              <div className="h-48 md:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
+                    <XAxis 
+                      dataKey="time" 
+                      type="number"
+                      domain={[6, 23]}
+                      tickFormatter={(value) => `${Math.floor(value)}:00`}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                    />
+                    <YAxis 
+                      dataKey="pnl"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                      tickFormatter={(value) => `$${value}`}
+                    />
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length > 0) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-card border border-border rounded-lg p-2 shadow-lg">
+                              <p className="font-medium">{data.symbol}</p>
+                              <p className="text-sm text-muted-foreground">שעה: {data.timeLabel}</p>
+                              <p className={`font-bold ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                ${data.pnl.toFixed(2)}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Scatter 
+                      data={tradeTimePerformance} 
+                      fill="hsl(var(--primary))"
+                    >
+                      {tradeTimePerformance.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`}
+                          fill={
+                            entry.type === "win" 
+                              ? "hsl(var(--success))" 
+                              : entry.type === "loss" 
+                                ? "hsl(var(--destructive))" 
+                                : "hsl(var(--primary))"
+                          }
+                        />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
+
+          {/* Trade Duration Performance */}
+          <Card className="bg-card/50 border-border/50 p-3 md:p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm md:text-base">
+                ⏱️ ביצועים לפי משך עסקה
+              </h3>
+            </div>
+            {tradeDurationPerformance.length === 0 ? (
+              <div className="h-48 md:h-64 flex items-center justify-center">
+                <p className="text-muted-foreground text-sm">אין מספיק נתונים (נדרש תאריך כניסה ויציאה)</p>
+              </div>
+            ) : (
+              <div className="h-48 md:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
+                    <XAxis 
+                      dataKey="durationMinutes" 
+                      type="number"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                      tickFormatter={(value) => {
+                        if (value < 1) return `${Math.round(value * 60)}s`;
+                        if (value < 60) return `${Math.round(value)}m`;
+                        return `${Math.round(value / 60)}h`;
+                      }}
+                    />
+                    <YAxis 
+                      dataKey="pnl"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                      tickFormatter={(value) => `$${value}`}
+                    />
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length > 0) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-card border border-border rounded-lg p-2 shadow-lg">
+                              <p className="font-medium">{data.symbol}</p>
+                              <p className="text-sm text-muted-foreground">משך: {data.durationLabel}</p>
+                              <p className={`font-bold ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                ${data.pnl.toFixed(2)}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Scatter 
+                      data={tradeDurationPerformance} 
+                      fill="hsl(var(--primary))"
+                    >
+                      {tradeDurationPerformance.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`}
+                          fill={
+                            entry.type === "win" 
+                              ? "hsl(var(--success))" 
+                              : entry.type === "loss" 
+                                ? "hsl(var(--destructive))" 
+                                : "hsl(var(--primary))"
+                          }
+                        />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
         </div>
 
         {/* Monthly Breakdown */}
