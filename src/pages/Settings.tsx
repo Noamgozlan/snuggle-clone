@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowRight, Type, Check, BookOpen, Palette, Sun, Moon, Globe, Lock } from "lucide-react";
+import { ArrowRight, Type, Check, BookOpen, Palette, Sun, Moon, Globe, Lock, LayoutGrid, MinusSquare, Zap, Square } from "lucide-react";
 import { useFont, fontOptions, FontFamily } from "@/contexts/FontContext";
-import { useTheme, colorSchemeOptions } from "@/contexts/ThemeContext";
+import { useTheme, colorSchemeOptions, visualStyleOptions } from "@/contexts/ThemeContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { cn } from "@/lib/utils";
@@ -15,9 +15,16 @@ import { MentorSettings as MentorSettingsSection } from "@/components/mentor/Men
 import { StudentFeedbackView } from "@/components/mentor/StudentFeedbackView";
 import { BrokerIntegrations } from "@/components/settings/BrokerIntegrations";
 
+const visualStyleIcons: Record<string, React.ReactNode> = {
+  layout: <LayoutGrid className="h-6 w-6" />,
+  "minus-square": <MinusSquare className="h-6 w-6" />,
+  zap: <Zap className="h-6 w-6" />,
+  square: <Square className="h-6 w-6" />,
+};
+
 const Settings = () => {
   const { font, setFont } = useFont();
-  const { theme, colorScheme, toggleTheme, setColorScheme } = useTheme();
+  const { theme, colorScheme, visualStyle, toggleTheme, setColorScheme, setVisualStyle } = useTheme();
   const { startTour } = useOnboarding();
   const { profile, updateProfile } = useProfile();
 
@@ -174,6 +181,47 @@ const Settings = () => {
                       style={{ backgroundColor: option.primary }}
                     />
                     <span className="font-medium text-foreground">{option.label}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Visual Styles */}
+          <div className="mt-6 pt-6 border-t border-border">
+            <p className="text-sm font-medium text-foreground mb-3">סגנון עיצוב</p>
+            <div className="grid grid-cols-2 gap-3">
+              {visualStyleOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    setVisualStyle(option.value);
+                    toast.success(`סגנון העיצוב שונה ל${option.label}`);
+                  }}
+                  className={cn(
+                    "relative p-4 rounded-xl border-2 transition-all duration-200 text-right",
+                    "hover:border-primary/50 hover:scale-[1.02]",
+                    visualStyle === option.value
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-card"
+                  )}
+                >
+                  {visualStyle === option.value && (
+                    <div className="absolute top-2 left-2 p-1 rounded-full bg-primary">
+                      <Check className="h-3 w-3 text-primary-foreground" />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      visualStyle === option.value ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                    )}>
+                      {visualStyleIcons[option.icon]}
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{option.label}</p>
+                      <p className="text-xs text-muted-foreground">{option.description}</p>
+                    </div>
                   </div>
                 </button>
               ))}
