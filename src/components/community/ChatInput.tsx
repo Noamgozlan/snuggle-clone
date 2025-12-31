@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CommunityMessage } from "@/hooks/useCommunity";
 import { ShareTradeDialog } from "./ShareTradeDialog";
+import { GifPicker } from "./GifPicker";
 import { cn } from "@/lib/utils";
 
 interface SelectedTrade {
@@ -57,6 +58,7 @@ export const ChatInput = ({
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showTradeDialog, setShowTradeDialog] = useState(false);
+  const [selectedGifUrl, setSelectedGifUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -89,8 +91,18 @@ export const ChatInput = ({
     setSelectedTrade(null);
   };
 
+  const clearGif = () => {
+    setSelectedGifUrl(null);
+  };
+
+  const handleGifSelect = (gifUrl: string) => {
+    setSelectedGifUrl(gifUrl);
+    // Clear file if GIF is selected
+    clearFile();
+  };
+
   const handleSend = async () => {
-    if (!user || (!content.trim() && !file && !selectedTrade)) return;
+    if (!user || (!content.trim() && !file && !selectedTrade && !selectedGifUrl)) return;
 
     setSending(true);
     try {
@@ -98,8 +110,14 @@ export const ChatInput = ({
       let fileType: string | undefined;
       let fileName: string | undefined;
 
+      // Use GIF URL if selected
+      if (selectedGifUrl) {
+        fileUrl = selectedGifUrl;
+        fileType = "image/gif";
+        fileName = "gif.gif";
+      }
       // Upload file if exists
-      if (file) {
+      else if (file) {
         setUploading(true);
         const fileExt = file.name.split(".").pop();
         const filePath = `${user.id}/${Date.now()}.${fileExt}`;
@@ -132,6 +150,7 @@ export const ChatInput = ({
       setContent("");
       clearFile();
       clearTrade();
+      clearGif();
       onClearReply();
     } catch (error) {
       console.error("Error sending message:", error);
@@ -238,6 +257,20 @@ export const ChatInput = ({
         </div>
       )}
 
+      {/* GIF Preview */}
+      {selectedGifUrl && (
+        <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 mb-2">
+          <img src={selectedGifUrl} alt="Selected GIF" className="h-16 w-auto max-w-32 object-contain rounded" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium">GIF נבחר</p>
+            <p className="text-xs text-muted-foreground">מ-Tenor</p>
+          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={clearGif}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="flex items-end gap-2">
         <div className="flex-1 relative">
@@ -247,7 +280,7 @@ export const ChatInput = ({
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={`הודעה ל-#${channelName}`}
-            className="min-h-[44px] max-h-32 resize-none pr-28 bg-background"
+            className="min-h-[44px] max-h-32 resize-none pr-32 bg-background"
             disabled={sending}
           />
           <div className="absolute left-2 bottom-2 flex items-center gap-1">
@@ -267,6 +300,7 @@ export const ChatInput = ({
             >
               <Paperclip className="h-4 w-4" />
             </Button>
+            <GifPicker onSelect={handleGifSelect} disabled={sending} />
             <Button
               variant="ghost"
               size="icon"
@@ -301,7 +335,7 @@ export const ChatInput = ({
 
         <Button
           onClick={handleSend}
-          disabled={(!content.trim() && !file && !selectedTrade) || sending}
+          disabled={(!content.trim() && !file && !selectedTrade && !selectedGifUrl) || sending}
           className="h-[44px] px-4"
         >
           {sending ? (
