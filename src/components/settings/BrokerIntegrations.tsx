@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Link2, Unlink, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
+import { Link2, Unlink, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import tradovateLogo from "@/assets/brokers/tradovate.png";
@@ -232,8 +232,18 @@ export function BrokerIntegrations() {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="relative overflow-hidden">
+      {/* Coming Soon Overlay */}
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+        <div className="bg-primary/10 p-4 rounded-full mb-4">
+          <Lock className="h-8 w-8 text-primary" />
+        </div>
+        <span className="text-xl font-semibold text-foreground">בקרוב...</span>
+        <span className="text-sm text-muted-foreground mt-2">חיבור אוטומטי לברוקר</span>
+        <Badge variant="secondary" className="mt-4">Coming Soon</Badge>
+      </div>
+
+      <CardHeader className="opacity-40">
         <CardTitle className="flex items-center gap-2">
           <Link2 className="h-5 w-5" />
           חיבור לברוקר
@@ -242,7 +252,7 @@ export function BrokerIntegrations() {
           חבר את חשבון המסחר שלך לייבוא אוטומטי של עסקאות
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 opacity-40 pointer-events-none">
         {/* Tradovate Card */}
         <div className="border rounded-lg p-4">
           <div className="flex items-center gap-4 mb-4">
