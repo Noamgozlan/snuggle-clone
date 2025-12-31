@@ -18,7 +18,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Minus, Star, Upload, Loader2, X } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Plus, Minus, Star, Upload, Loader2, X, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,15 +58,13 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const [riskType, setRiskType] = useState<"dollars" | "percent">("dollars");
   const [isBreakeven, setIsBreakeven] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [tradeDate, setTradeDate] = useState<Date>(new Date());
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
-    tradeDate: "",
     durationHours: "",
     durationMinutes: "",
     durationSeconds: "",
-    entryPrice: "",
-    exitPrice: "",
     pnl: "",
     pnlPoints: "",
     risk: "",
@@ -70,18 +76,16 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setFormData({
       symbol: "",
       quantity: "1",
-      tradeDate: "",
       durationHours: "",
       durationMinutes: "",
       durationSeconds: "",
-      entryPrice: "",
-      exitPrice: "",
       pnl: "",
       pnlPoints: "",
       risk: "",
       rr: "",
       notes: "",
     });
+    setTradeDate(new Date());
     setRating(0);
     setTradeType("long");
     setPnlSign("positive");
@@ -181,20 +185,18 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setLoading(true);
 
     try {
-      // Build entry date
-      let entryDate = null;
-      if (formData.tradeDate) {
-        entryDate = `${formData.tradeDate}T00:00:00`;
-      }
+      // Build entry date from selected date
+      const tradeDateStr = format(tradeDate, 'yyyy-MM-dd');
+      const entryDate = `${tradeDateStr}T00:00:00`;
 
       // Calculate exit date based on duration
       let exitDate = null;
-      if (formData.tradeDate && (formData.durationHours || formData.durationMinutes || formData.durationSeconds)) {
+      if (formData.durationHours || formData.durationMinutes || formData.durationSeconds) {
         const hours = parseInt(formData.durationHours) || 0;
         const minutes = parseInt(formData.durationMinutes) || 0;
         const seconds = parseInt(formData.durationSeconds) || 0;
         
-        const entryDateTime = new Date(`${formData.tradeDate}T00:00:00`);
+        const entryDateTime = new Date(`${tradeDateStr}T00:00:00`);
         entryDateTime.setHours(entryDateTime.getHours() + hours);
         entryDateTime.setMinutes(entryDateTime.getMinutes() + minutes);
         entryDateTime.setSeconds(entryDateTime.getSeconds() + seconds);
@@ -217,8 +219,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
         quantity: parseFloat(formData.quantity) || 1,
         entry_date: entryDate,
         exit_date: exitDate,
-        entry_price: formData.entryPrice ? parseFloat(formData.entryPrice) : 0,
-        exit_price: formData.exitPrice ? parseFloat(formData.exitPrice) : null,
+        entry_price: 0,
+        exit_price: null,
         pnl: pnlValue,
         pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
         risk: formData.risk ? parseFloat(formData.risk) : null,
@@ -335,12 +337,26 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
 
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">תאריך עסקה</Label>
-              <Input
-                type="date"
-                value={formData.tradeDate}
-                onChange={(e) => setFormData({ ...formData, tradeDate: e.target.value })}
-                className="bg-input border-border hover:border-primary/50 transition-colors"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-right bg-input border-border hover:border-primary/50 transition-colors"
+                  >
+                    <CalendarIcon className="ml-2 h-4 w-4" />
+                    {format(tradeDate, "dd/MM/yyyy", { locale: he })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={tradeDate}
+                    onSelect={(date) => date && setTradeDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
@@ -388,32 +404,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
 
           </div>
 
-          {/* Row 2: Entry/Exit Prices, PnL, Points */}
-          <div className="grid grid-cols-5 gap-4 stagger-children">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">מחיר כניסה</Label>
-              <Input
-                type="number"
-                step="any"
-                placeholder="150.00"
-                value={formData.entryPrice}
-                onChange={(e) => setFormData({ ...formData, entryPrice: e.target.value })}
-                className="bg-input border-border hover:border-primary/50 transition-colors"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">מחיר יציאה</Label>
-              <Input
-                type="number"
-                step="any"
-                placeholder="155.00"
-                value={formData.exitPrice}
-                onChange={(e) => setFormData({ ...formData, exitPrice: e.target.value })}
-                className="bg-input border-border hover:border-primary/50 transition-colors"
-              />
-            </div>
-
+          {/* Row 2: PnL, Points */}
+          <div className="grid grid-cols-3 gap-4 stagger-children">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">נקודות</Label>
               <Input
