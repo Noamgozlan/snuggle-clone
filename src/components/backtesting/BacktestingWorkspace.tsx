@@ -23,29 +23,47 @@ export const BacktestingWorkspace = () => {
   const [accountBalance] = useState(10000);
   const [riskPercent, setRiskPercent] = useState(1);
 
+  const normalizeCandles = useCallback((input: CandleData[]) => {
+    // Lightweight Charts requires strictly ascending times (no duplicates)
+    const sorted = [...input].sort((a, b) => a.time - b.time);
+    const out: CandleData[] = [];
+    let lastTime: number | null = null;
+
+    for (const c of sorted) {
+      const t = Number(c.time);
+      if (!Number.isFinite(t)) continue;
+      if (lastTime === t) continue; // drop duplicates
+      lastTime = t;
+      out.push({ ...c, time: t });
+    }
+
+    return out;
+  }, []);
+
   const fetchMarketData = async (sym: string, int: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-market-data', {
-        body: { symbol: sym, interval: int, outputsize: 500 }
+      const { data, error } = await supabase.functions.invoke("fetch-market-data", {
+        body: { symbol: sym, interval: int, outputsize: 500 },
       });
 
       if (error) throw error;
-      
+
       if (data.success && data.candles) {
-        setCandles(data.candles);
+        const cleanedCandles = normalizeCandles(data.candles);
+        setCandles(cleanedCandles);
         // Start with first 50 candles visible
-        const initialCandles = data.candles.slice(0, 50);
+        const initialCandles = cleanedCandles.slice(0, 50);
         setVisibleCandles(initialCandles);
         setCurrentIndex(50);
         setCurrentPrice(initialCandles[initialCandles.length - 1]?.close || 0);
-        toast.success(`נטענו ${data.candles.length} נרות עבור ${sym}`);
+        toast.success(`נטענו ${cleanedCandles.length} נרות עבור ${sym}`);
       } else {
-        throw new Error(data.error || 'Failed to fetch data');
+        throw new Error(data.error || "Failed to fetch data");
       }
     } catch (error: any) {
-      console.error('Error fetching market data:', error);
-      toast.error(error.message || 'שגיאה בטעינת נתוני השוק');
+      console.error("Error fetching market data:", error);
+      toast.error(error.message || "שגיאה בטעינת נתוני השוק");
     } finally {
       setLoading(false);
     }
