@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import logoImage from "@/assets/logo.png";
 
 interface LogoProps {
   className?: string;
@@ -7,15 +8,16 @@ interface LogoProps {
 
 export const Logo = ({ className, size = "md" }: LogoProps) => {
   const sizeClasses = {
-    sm: "text-lg",
-    md: "text-2xl",
-    lg: "text-4xl",
+    sm: "h-6",
+    md: "h-8",
+    lg: "h-12",
   };
 
   return (
-    <div className={cn("font-heebo font-bold", sizeClasses[size], className)}>
-      <span className="text-gradient">Gozlan</span>
-      <span className="text-foreground">Journal</span>
-    </div>
+    <img 
+      src={logoImage} 
+      alt="GozlanJournal" 
+      className={cn(sizeClasses[size], "w-auto object-contain", className)}
+    />
   );
 };
