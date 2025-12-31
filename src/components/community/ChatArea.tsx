@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Hash, Pin, Users } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ export const ChatArea = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [replyTo, setReplyTo] = useState<CommunityMessage | null>(null);
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
   const pinnedMessages = messages.filter((m) => m.is_pinned);
   const displayedMessages = showPinnedOnly ? pinnedMessages : messages;
@@ -58,6 +59,15 @@ export const ChatArea = ({
   const handleReaction = (messageId: string, emoji: string, hasReacted: boolean) => {
     onReaction(messageId, emoji, hasReacted);
   };
+
+  const handleScrollToMessage = useCallback((messageId: string) => {
+    const element = document.getElementById(`message-${messageId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      setHighlightedMessageId(messageId);
+      setTimeout(() => setHighlightedMessageId(null), 2000);
+    }
+  }, []);
 
   if (!channel) {
     return (
@@ -132,17 +142,22 @@ export const ChatArea = ({
                 ? messages.find(m => m.id === message.reply_to_id) 
                 : null;
               return (
-                <ChatMessage
+                <div
                   key={message.id}
-                  message={message}
-                  isOwn={message.user_id === user?.id}
-                  isAdmin={isAdmin}
-                  onDelete={onDeleteMessage}
-                  onPin={onPinMessage}
-                  onReply={setReplyTo}
-                  onReaction={handleReaction}
-                  replyToMessage={replyToMessage}
-                />
+                  className={highlightedMessageId === message.id ? "animate-pulse bg-primary/10 rounded" : ""}
+                >
+                  <ChatMessage
+                    message={message}
+                    isOwn={message.user_id === user?.id}
+                    isAdmin={isAdmin}
+                    onDelete={onDeleteMessage}
+                    onPin={onPinMessage}
+                    onReply={setReplyTo}
+                    onReaction={handleReaction}
+                    replyToMessage={replyToMessage}
+                    onScrollToMessage={handleScrollToMessage}
+                  />
+                </div>
               );
             })
 
