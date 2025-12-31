@@ -32,8 +32,11 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Reply,
-  Eye
+  Eye,
+  MessageCircle,
+  Loader2
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -94,6 +97,14 @@ interface FeedbackReply {
   user_id: string;
 }
 
+interface ChatMessage {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  read_at: string | null;
+}
+
 const MentorDashboard = () => {
   const { myStudents, pendingRequests, loading: studentsLoading, removeStudent, respondToRequest } = useMentorRelationships();
   const [selectedStudent, setSelectedStudent] = useState<StudentWithProfile | null>(null);
@@ -107,6 +118,9 @@ const MentorDashboard = () => {
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   const [selectedTradeForView, setSelectedTradeForView] = useState<StudentTrade | null>(null);
   const [feedbackReplies, setFeedbackReplies] = useState<Record<string, FeedbackReply[]>>({});
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [newChatMessage, setNewChatMessage] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   const { 
     tradeFeedback, 
@@ -143,6 +157,49 @@ const MentorDashboard = () => {
     
     fetchReplies();
   }, [tradeFeedback]);
+
+  // Fetch chat messages for selected student
+  useEffect(() => {
+    const fetchChatMessages = async () => {
+      if (!selectedStudent) {
+        setChatMessages([]);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('mentor_messages')
+        .select('*')
+        .eq('relationship_id', selectedStudent.id)
+        .order('created_at', { ascending: true });
+
+      if (data) {
+        setChatMessages(data);
+      }
+    };
+
+    fetchChatMessages();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel(`mentor-chat-${selectedStudent?.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'mentor_messages',
+          filter: `relationship_id=eq.${selectedStudent?.id}`
+        },
+        (payload) => {
+          setChatMessages(prev => [...prev, payload.new as ChatMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedStudent]);
 
   // Fetch student's trades, portfolios, and strategies when selected
   useEffect(() => {
@@ -290,6 +347,34 @@ const MentorDashboard = () => {
     } else {
       toast.error("שגיאה בהוספת המשוב");
     }
+  };
+
+  const handleSendChatMessage = async () => {
+    if (!selectedStudent || !newChatMessage.trim()) return;
+
+    setSendingMessage(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast.error("שגיאה באימות המשתמש");
+      setSendingMessage(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('mentor_messages')
+      .insert({
+        relationship_id: selectedStudent.id,
+        sender_id: user.id,
+        content: newChatMessage.trim()
+      });
+
+    if (!error) {
+      setNewChatMessage("");
+    } else {
+      toast.error("שגיאה בשליחת ההודעה");
+    }
+    setSendingMessage(false);
   };
 
   const handleRemoveStudent = async (relationshipId: string) => {
@@ -547,10 +632,14 @@ const MentorDashboard = () => {
 
                   {/* Tabs */}
                   <Tabs defaultValue="trades" dir="rtl">
-                    <TabsList className="grid w-full grid-cols-5 h-12">
+                    <TabsList className="grid w-full grid-cols-6 h-12">
                       <TabsTrigger value="trades" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                         <TrendingUp className="h-4 w-4" />
                         <span className="hidden sm:inline">עסקאות</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="chat" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                        <MessageCircle className="h-4 w-4" />
+                        <span className="hidden sm:inline">צ'אט</span>
                       </TabsTrigger>
                       <TabsTrigger value="strategies" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                         <Target className="h-4 w-4" />
@@ -1014,6 +1103,85 @@ const MentorDashboard = () => {
                               )}
                             </div>
                           </ScrollArea>
+                        </div>
+                      </Card>
+                    </TabsContent>
+
+                    {/* Chat Tab */}
+                    <TabsContent value="chat" className="mt-4">
+                      <Card className="bg-card border-border h-[500px] flex flex-col">
+                        <div className="p-4 border-b border-border bg-muted/30">
+                          <h3 className="font-semibold flex items-center gap-2">
+                            <MessageCircle className="h-4 w-4 text-primary" />
+                            צ'אט עם {getDisplayName(selectedStudent.student_profile)}
+                          </h3>
+                        </div>
+                        
+                        <ScrollArea className="flex-1 p-4">
+                          <div className="space-y-4">
+                            {chatMessages.length === 0 ? (
+                              <div className="text-center text-muted-foreground py-8">
+                                <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                <p>אין הודעות עדיין. התחל את השיחה!</p>
+                              </div>
+                            ) : (
+                              chatMessages.map((message) => {
+                                const isMe = message.sender_id !== selectedStudent.student_id;
+                                return (
+                                  <div
+                                    key={message.id}
+                                    className={`flex ${isMe ? 'justify-start' : 'justify-end'}`}
+                                  >
+                                    <div
+                                      className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                                        isMe
+                                          ? 'bg-primary text-primary-foreground rounded-br-sm'
+                                          : 'bg-muted rounded-bl-sm'
+                                      }`}
+                                    >
+                                      <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                                      <p
+                                        className={`text-[10px] mt-1 ${
+                                          isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                                        }`}
+                                      >
+                                        {format(new Date(message.created_at), 'HH:mm', { locale: he })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </ScrollArea>
+
+                        <div className="p-4 border-t border-border bg-background">
+                          <div className="flex gap-2">
+                            <Input
+                              value={newChatMessage}
+                              onChange={(e) => setNewChatMessage(e.target.value)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSendChatMessage();
+                                }
+                              }}
+                              placeholder="כתוב הודעה..."
+                              className="flex-1"
+                              disabled={sendingMessage}
+                            />
+                            <Button
+                              onClick={handleSendChatMessage}
+                              disabled={!newChatMessage.trim() || sendingMessage}
+                              size="icon"
+                            >
+                              {sendingMessage ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       </Card>
                     </TabsContent>
