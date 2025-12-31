@@ -123,6 +123,8 @@ const MentorDashboard = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newChatMessage, setNewChatMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [chatTradeDetail, setChatTradeDetail] = useState<StudentTrade | null>(null);
+  const [loadingChatTradeDetail, setLoadingChatTradeDetail] = useState(false);
 
   const { 
     tradeFeedback, 
@@ -410,6 +412,25 @@ const MentorDashboard = () => {
       toast.error("שגיאה בשליחת ההודעה");
     }
     setSendingMessage(false);
+  };
+
+  const handleOpenChatTradeDetail = async (trade: StudentTrade) => {
+    setLoadingChatTradeDetail(true);
+    setChatTradeDetail(trade);
+    
+    // Fetch confirmations for this trade if not already loaded
+    if (!trade.confirmations || trade.confirmations.length === 0) {
+      const { data: confirmationsData } = await supabase
+        .from('trade_confirmations')
+        .select('*')
+        .eq('trade_id', trade.id);
+      
+      if (confirmationsData) {
+        setChatTradeDetail(prev => prev ? { ...prev, confirmations: confirmationsData } : null);
+      }
+    }
+    
+    setLoadingChatTradeDetail(false);
   };
 
   const handleRemoveStudent = async (relationshipId: string) => {
@@ -1175,7 +1196,10 @@ const MentorDashboard = () => {
                                       }`}
                                     >
                                       {message.trade && (
-                                        <div className={`mb-2 ${isMe ? 'bg-primary-foreground/10' : 'bg-background/50'} rounded-lg p-2`}>
+                                        <div 
+                                          className={`mb-2 ${isMe ? 'bg-primary-foreground/10' : 'bg-background/50'} rounded-lg p-2 cursor-pointer hover:opacity-80 transition-opacity`}
+                                          onClick={() => handleOpenChatTradeDetail(message.trade!)}
+                                        >
                                           <div className="flex items-center gap-2">
                                             <div className={`p-1.5 rounded ${message.trade.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
                                               {message.trade.trade_type === 'long' 
@@ -1196,6 +1220,7 @@ const MentorDashboard = () => {
                                                 {message.trade.pnl >= 0 ? '+' : ''}${message.trade.pnl.toFixed(2)}
                                               </Badge>
                                             )}
+                                            <Eye className={`h-4 w-4 ${isMe ? 'text-primary-foreground/50' : 'text-muted-foreground'}`} />
                                           </div>
                                         </div>
                                       )}
@@ -1294,6 +1319,126 @@ const MentorDashboard = () => {
               alt="Trade Screenshot"
               className="w-full rounded-lg"
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Chat Trade Detail Dialog */}
+      <Dialog open={!!chatTradeDetail} onOpenChange={() => setChatTradeDetail(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${chatTradeDetail?.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
+                {chatTradeDetail?.trade_type === 'long' 
+                  ? <ArrowUpRight className="h-5 w-5 text-success" />
+                  : <ArrowDownRight className="h-5 w-5 text-destructive" />
+                }
+              </div>
+              <span className="text-xl font-bold">{chatTradeDetail?.symbol}</span>
+              <Badge variant={chatTradeDetail?.trade_type === 'long' ? 'default' : 'destructive'}>
+                {chatTradeDetail?.trade_type === 'long' ? 'לונג' : 'שורט'}
+              </Badge>
+              {chatTradeDetail && chatTradeDetail.pnl !== null && (
+                <Badge variant={chatTradeDetail.pnl >= 0 ? "default" : "destructive"} className="text-base px-3">
+                  {chatTradeDetail.pnl >= 0 ? '+' : ''}${chatTradeDetail.pnl.toFixed(2)}
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          {loadingChatTradeDetail ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : chatTradeDetail && (
+            <div className="space-y-6 mt-4">
+              {/* Trade Screenshot */}
+              {chatTradeDetail.screenshot_url && (
+                <div className="rounded-xl overflow-hidden border border-border">
+                  <img
+                    src={chatTradeDetail.screenshot_url}
+                    alt="Trade Screenshot"
+                    className="w-full h-auto"
+                  />
+                </div>
+              )}
+
+              {/* Trade Details Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-muted/50 rounded-xl p-4">
+                  <p className="text-xs text-muted-foreground mb-1">תאריך</p>
+                  <p className="font-semibold text-foreground">
+                    {chatTradeDetail.entry_date 
+                      ? format(new Date(chatTradeDetail.entry_date), 'dd/MM/yyyy', { locale: he })
+                      : '-'
+                    }
+                  </p>
+                </div>
+                
+                <div className="bg-muted/50 rounded-xl p-4">
+                  <p className="text-xs text-muted-foreground mb-1">כמות</p>
+                  <p className="font-semibold text-foreground">{chatTradeDetail.quantity}</p>
+                </div>
+                
+                {chatTradeDetail.rr !== null && (
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground mb-1">RR</p>
+                    <p className="font-semibold text-foreground">{chatTradeDetail.rr.toFixed(2)}</p>
+                  </div>
+                )}
+                
+                {chatTradeDetail.strategy && (
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground mb-1">אסטרטגיה</p>
+                    <p className="font-semibold text-foreground">{chatTradeDetail.strategy}</p>
+                  </div>
+                )}
+                
+                {chatTradeDetail.entry_price > 0 && (
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground mb-1">מחיר כניסה</p>
+                    <p className="font-semibold text-foreground">${chatTradeDetail.entry_price}</p>
+                  </div>
+                )}
+                
+                {chatTradeDetail.exit_price !== null && (
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground mb-1">מחיר יציאה</p>
+                    <p className="font-semibold text-foreground">${chatTradeDetail.exit_price}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Confirmations */}
+              {chatTradeDetail.confirmations && chatTradeDetail.confirmations.length > 0 && (
+                <div className="bg-muted/30 rounded-xl p-4">
+                  <p className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    אישורים ({chatTradeDetail.confirmations.length})
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {chatTradeDetail.confirmations.map((conf) => (
+                      <Badge 
+                        key={conf.id} 
+                        variant="outline"
+                        className="bg-primary/10 border-primary/30 text-primary"
+                      >
+                        <Check className="h-3 w-3 ml-1" />
+                        {conf.confirmation_name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {chatTradeDetail.notes && (
+                <div className="bg-muted/30 rounded-xl p-4">
+                  <p className="text-sm font-medium text-foreground mb-2">הערות</p>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{chatTradeDetail.notes}</p>
+                </div>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>
