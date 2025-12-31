@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useMentorRelationships } from "@/hooks/useMentorRelationships";
 import { supabase } from "@/integrations/supabase/client";
+import { MessageSquare } from "lucide-react";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "דף ראשי", href: "/dashboard" },
@@ -39,10 +40,11 @@ export const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
-  const { myStudents, pendingRequests } = useMentorRelationships();
+  const { myMentor, myStudents, pendingRequests } = useMentorRelationships();
   const [isAdmin, setIsAdmin] = useState(false);
 
   const hasMentorAccess = myStudents.length > 0 || pendingRequests.length > 0;
+  const hasApprovedMentor = myMentor?.status === 'accepted';
 
   useEffect(() => {
     const checkAdminRole = async () => {
@@ -128,6 +130,24 @@ export const DashboardSidebar = () => {
             );
           })}
           
+          {/* Mentor Chat Link - only show if user has an approved mentor */}
+          {hasApprovedMentor && (
+            <li>
+              <Link
+                to="/mentor-chat"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                  location.pathname === "/mentor-chat"
+                    ? "bg-primary/10 text-primary border-r-2 border-primary"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                )}
+              >
+                <MessageSquare className="h-5 w-5" />
+                <span>צ'אט עם המנטור</span>
+              </Link>
+            </li>
+          )}
+
           {/* Mentor Dashboard Link - only show if user has students */}
           {hasMentorAccess && (
             <li>
