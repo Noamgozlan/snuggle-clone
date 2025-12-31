@@ -29,6 +29,7 @@ import {
 import type { CommunityMessage } from "@/hooks/useCommunity";
 import { cn } from "@/lib/utils";
 import { TradeDetailsDialog } from "./TradeDetailsDialog";
+import { ImageViewer } from "@/components/ui/image-viewer";
 
 interface ChatMessageProps {
   message: CommunityMessage;
@@ -199,10 +200,10 @@ export const ChatMessage = ({
           {message.file_url && (
             <div className="mt-2">
               {message.file_type?.startsWith("image/") ? (
-                <img
+                <ImageViewer
                   src={message.file_url}
                   alt={message.file_name || "Uploaded image"}
-                  className="max-w-md max-h-64 rounded-lg object-cover cursor-pointer hover:opacity-90"
+                  className="max-w-md max-h-64 rounded-lg object-cover"
                 />
               ) : (
                 <a

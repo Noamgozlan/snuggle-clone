@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Star, TrendingUp, TrendingDown, Calendar, Target, DollarSign, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Trade } from "@/hooks/useTrades";
+import { ImageViewer } from "@/components/ui/image-viewer";
 
 interface TradeSummaryDialogProps {
   trade: Trade | null;
@@ -157,7 +158,7 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit }: TradeS
             <Card className="p-4 bg-secondary/30">
               <h4 className="text-sm font-medium text-muted-foreground mb-3">צילום מסך</h4>
               <div className="rounded-lg overflow-hidden border border-border">
-                <img
+                <ImageViewer
                   src={trade.screenshot_url}
                   alt="Trade screenshot"
                   className="w-full h-auto max-h-[400px] object-contain bg-background"
