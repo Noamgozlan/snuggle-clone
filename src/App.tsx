@@ -22,6 +22,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Community from "./pages/Community";
 import MentorDashboard from "./pages/MentorDashboard";
+import MentorChat from "./pages/MentorChat";
 import Giveaways from "./pages/Giveaways";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -106,6 +107,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <MentorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mentor-chat"
+                element={
+                  <ProtectedRoute>
+                    <MentorChat />
                   </ProtectedRoute>
                 }
               />
