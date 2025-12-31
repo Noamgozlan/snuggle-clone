@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { MentorSettings as MentorSettingsSection } from "@/components/mentor/MentorSettings";
 import { StudentFeedbackView } from "@/components/mentor/StudentFeedbackView";
+import { BrokerIntegrations } from "@/components/settings/BrokerIntegrations";
 
 const Settings = () => {
   const { font, setFont } = useFont();
@@ -222,6 +223,9 @@ const Settings = () => {
             />
           </div>
         </Card>
+
+        {/* Broker Integrations */}
+        <BrokerIntegrations />
 
         {/* Mentor Settings */}
         <MentorSettingsSection />

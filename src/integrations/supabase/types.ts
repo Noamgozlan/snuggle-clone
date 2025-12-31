@@ -70,6 +70,59 @@ export type Database = {
           },
         ]
       }
+      broker_connections: {
+        Row: {
+          account_id: string | null
+          account_name: string | null
+          broker_name: string
+          created_at: string | null
+          environment: string | null
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          portfolio_id: string | null
+          updated_at: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          account_name?: string | null
+          broker_name?: string
+          created_at?: string | null
+          environment?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          portfolio_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          account_name?: string | null
+          broker_name?: string
+          created_at?: string | null
+          environment?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          portfolio_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broker_connections_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_permissions: {
         Row: {
           can_read: boolean | null
@@ -716,6 +769,7 @@ export type Database = {
           entry_price: number
           exit_date: string | null
           exit_price: number | null
+          external_trade_id: string | null
           id: string
           is_closed: boolean
           notes: string | null
@@ -740,6 +794,7 @@ export type Database = {
           entry_price: number
           exit_date?: string | null
           exit_price?: number | null
+          external_trade_id?: string | null
           id?: string
           is_closed?: boolean
           notes?: string | null
@@ -764,6 +819,7 @@ export type Database = {
           entry_price?: number
           exit_date?: string | null
           exit_price?: number | null
+          external_trade_id?: string | null
           id?: string
           is_closed?: boolean
           notes?: string | null
