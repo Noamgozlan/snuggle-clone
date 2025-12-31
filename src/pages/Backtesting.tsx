@@ -1,3 +1,4 @@
+// Backtesting page component
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BacktestingWorkspace } from "@/components/backtesting/BacktestingWorkspace";
 
