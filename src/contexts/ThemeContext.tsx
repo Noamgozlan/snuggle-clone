@@ -2,12 +2,15 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 
 type Theme = "dark" | "light";
 type ColorScheme = "emerald" | "blue" | "purple" | "orange" | "rose" | "cyan";
+type VisualStyle = "classic" | "minimal" | "neon" | "glass";
 
 interface ThemeContextType {
   theme: Theme;
   colorScheme: ColorScheme;
+  visualStyle: VisualStyle;
   toggleTheme: () => void;
   setColorScheme: (scheme: ColorScheme) => void;
+  setVisualStyle: (style: VisualStyle) => void;
 }
 
 export const colorSchemeOptions: { value: ColorScheme; label: string; primary: string; gradient: string }[] = [
@@ -17,6 +20,13 @@ export const colorSchemeOptions: { value: ColorScheme; label: string; primary: s
   { value: "orange", label: "כתום", primary: "hsl(25, 95%, 53%)", gradient: "from-orange-500 to-orange-600" },
   { value: "rose", label: "ורוד", primary: "hsl(350, 89%, 60%)", gradient: "from-rose-500 to-rose-600" },
   { value: "cyan", label: "טורקיז", primary: "hsl(189, 94%, 43%)", gradient: "from-cyan-500 to-cyan-600" },
+];
+
+export const visualStyleOptions: { value: VisualStyle; label: string; description: string; icon: string }[] = [
+  { value: "classic", label: "קלאסי", description: "המראה הסטנדרטי והמוכר", icon: "layout" },
+  { value: "minimal", label: "מינימליסטי", description: "נקי, אסתטי וללא הסחות", icon: "minus-square" },
+  { value: "neon", label: "זוהר", description: "דינמי עם אפקטי glow", icon: "zap" },
+  { value: "glass", label: "זכוכית", description: "מודרני עם אפקט שקיפות", icon: "square" },
 ];
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -30,6 +40,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>(() => {
     const saved = localStorage.getItem("colorScheme");
     return (saved as ColorScheme) || "emerald";
+  });
+
+  const [visualStyle, setVisualStyleState] = useState<VisualStyle>(() => {
+    const saved = localStorage.getItem("visualStyle");
+    return (saved as VisualStyle) || "classic";
   });
 
   useEffect(() => {
@@ -50,6 +65,17 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("colorScheme", colorScheme);
   }, [colorScheme]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    // Remove all visual style classes
+    visualStyleOptions.forEach(opt => {
+      root.classList.remove(`style-${opt.value}`);
+    });
+    // Add current visual style
+    root.classList.add(`style-${visualStyle}`);
+    localStorage.setItem("visualStyle", visualStyle);
+  }, [visualStyle]);
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
@@ -58,8 +84,12 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     setColorSchemeState(scheme);
   };
 
+  const setVisualStyle = (style: VisualStyle) => {
+    setVisualStyleState(style);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, colorScheme, toggleTheme, setColorScheme }}>
+    <ThemeContext.Provider value={{ theme, colorScheme, visualStyle, toggleTheme, setColorScheme, setVisualStyle }}>
       {children}
     </ThemeContext.Provider>
   );

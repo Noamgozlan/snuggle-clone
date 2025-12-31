@@ -266,6 +266,102 @@
     --gradient-glow: radial-gradient(ellipse at center, hsl(189 94% 38% / 0.1) 0%, transparent 70%);
     --shadow-glow: 0 0 40px hsl(189 94% 38% / 0.15);
   }
+
+  /* Visual Style: Classic (default) */
+  .style-classic {
+    --style-radius: 0.75rem;
+    --style-shadow: 0 4px 24px hsl(210 20% 4% / 0.4);
+    --style-border-opacity: 1;
+    --style-glow-intensity: 0;
+    --style-blur: 0px;
+    --style-card-opacity: 1;
+  }
+
+  /* Visual Style: Minimal */
+  .style-minimal {
+    --style-radius: 0.5rem;
+    --style-shadow: 0 1px 3px hsl(210 20% 4% / 0.1);
+    --style-border-opacity: 0.5;
+    --style-glow-intensity: 0;
+    --style-blur: 0px;
+    --style-card-opacity: 1;
+  }
+
+  .style-minimal .card,
+  .style-minimal [class*="Card"] {
+    border-width: 1px;
+    box-shadow: none;
+  }
+
+  .style-minimal button,
+  .style-minimal [class*="Button"] {
+    box-shadow: none !important;
+  }
+
+  /* Visual Style: Neon/Glow */
+  .style-neon {
+    --style-radius: 1rem;
+    --style-shadow: 0 0 30px hsl(var(--primary) / 0.3);
+    --style-border-opacity: 1;
+    --style-glow-intensity: 1;
+    --style-blur: 0px;
+    --style-card-opacity: 1;
+  }
+
+  .style-neon .card,
+  .style-neon [class*="rounded"] {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.15), inset 0 0 20px hsl(var(--primary) / 0.05);
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  .style-neon button[class*="primary"],
+  .style-neon button[class*="default"] {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.4);
+  }
+
+  .style-neon button:hover {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+  }
+
+  .style-neon input:focus,
+  .style-neon textarea:focus {
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
+  }
+
+  /* Visual Style: Glass */
+  .style-glass {
+    --style-radius: 1.25rem;
+    --style-shadow: 0 8px 32px hsl(210 20% 4% / 0.3);
+    --style-border-opacity: 0.2;
+    --style-glow-intensity: 0;
+    --style-blur: 12px;
+    --style-card-opacity: 0.8;
+  }
+
+  .style-glass .card,
+  .style-glass [class*="bg-card"] {
+    background: hsl(var(--card) / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  .style-glass .bg-background {
+    background: hsl(var(--background) / 0.95);
+  }
+
+  .style-glass [class*="popover"],
+  .style-glass [class*="dropdown"] {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: hsl(var(--popover) / 0.85);
+  }
+
+  .light.style-glass .card,
+  .light.style-glass [class*="bg-card"] {
+    background: hsl(var(--card) / 0.6);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
 }
 
 @layer base {
