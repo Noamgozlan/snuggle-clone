@@ -70,6 +70,150 @@ export type Database = {
           },
         ]
       }
+      channel_permissions: {
+        Row: {
+          can_read: boolean | null
+          can_upload: boolean | null
+          can_write: boolean | null
+          channel_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          can_read?: boolean | null
+          can_upload?: boolean | null
+          can_write?: boolean | null
+          channel_id: string
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          can_read?: boolean | null
+          can_upload?: boolean | null
+          can_write?: boolean | null
+          channel_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_permissions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "community_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_channels: {
+        Row: {
+          channel_type: Database["public"]["Enums"]["channel_type"] | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          position: number | null
+          updated_at: string
+        }
+        Insert: {
+          channel_type?: Database["public"]["Enums"]["channel_type"] | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          position?: number | null
+          updated_at?: string
+        }
+        Update: {
+          channel_type?: Database["public"]["Enums"]["channel_type"] | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          position?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      community_messages: {
+        Row: {
+          channel_id: string
+          content: string | null
+          created_at: string
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_edited: boolean | null
+          is_pinned: boolean | null
+          reply_to_id: string | null
+          trade_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          content?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_edited?: boolean | null
+          is_pinned?: boolean | null
+          reply_to_id?: string | null
+          trade_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          content?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_edited?: boolean | null
+          is_pinned?: boolean | null
+          reply_to_id?: string | null
+          trade_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "community_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "community_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_messages_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       confirmations: {
         Row: {
           created_at: string
@@ -267,6 +411,38 @@ export type Database = {
             columns: ["trade_id"]
             isOneToOne: false
             referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "community_messages"
             referencedColumns: ["id"]
           },
         ]
@@ -615,6 +791,38 @@ export type Database = {
           },
         ]
       }
+      user_channel_presence: {
+        Row: {
+          channel_id: string
+          id: string
+          is_typing: boolean | null
+          last_seen: string | null
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          id?: string
+          is_typing?: boolean | null
+          last_seen?: string | null
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          id?: string
+          is_typing?: boolean | null
+          last_seen?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_channel_presence_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "community_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -659,6 +867,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      channel_type: "text" | "announcements" | "trades"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -787,6 +996,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      channel_type: ["text", "announcements", "trades"],
     },
   },
 } as const
