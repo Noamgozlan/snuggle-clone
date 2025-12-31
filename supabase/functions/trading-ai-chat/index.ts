@@ -68,7 +68,7 @@ ${tradingContext}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "xiaomi/mimo-v2-flash:free",
+        model: "deepseek/deepseek-r1-0528:free",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages
