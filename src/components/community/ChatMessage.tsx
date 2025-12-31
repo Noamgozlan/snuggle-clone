@@ -11,6 +11,7 @@ import {
   TrendingDown,
   CornerDownRight,
 } from "lucide-react";
+import { PublicProfileDialog } from "@/components/profile/PublicProfileDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,7 @@ export const ChatMessage = ({
 }: ChatMessageProps) => {
   const [showActions, setShowActions] = useState(false);
   const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const getDisplayName = () => {
     if (message.profile?.first_name || message.profile?.last_name) {
@@ -97,13 +99,18 @@ export const ChatMessage = ({
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
       >
-        {/* Avatar */}
-        <Avatar className="h-10 w-10 shrink-0">
-          <AvatarImage src={message.profile?.avatar_url || ""} />
-          <AvatarFallback className="bg-primary/10 text-primary text-sm">
-            {getInitials()}
-          </AvatarFallback>
-        </Avatar>
+        {/* Avatar - clickable to open profile */}
+        <button
+          onClick={() => setProfileDialogOpen(true)}
+          className="shrink-0 focus:outline-none hover:opacity-80 transition-opacity"
+        >
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={message.profile?.avatar_url || ""} />
+            <AvatarFallback className="bg-primary/10 text-primary text-sm">
+              {getInitials()}
+            </AvatarFallback>
+          </Avatar>
+        </button>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -232,60 +239,63 @@ export const ChatMessage = ({
           )}
         </div>
 
-        {/* Actions */}
-        {showActions && (
-          <div className="absolute left-4 top-2 flex items-center gap-1 bg-card border rounded-md shadow-sm p-0.5">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Smile className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-2" align="start">
-                <div className="flex gap-1">
-                  {EMOJI_OPTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => onReaction(message.id, emoji, false)}
-                      className="text-lg hover:scale-125 transition-transform p-1"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onReply(message)}>
-              <Reply className="h-4 w-4" />
-            </Button>
-
-            {(isOwn || isAdmin) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {isAdmin && (
-                    <DropdownMenuItem onClick={() => onPin(message.id, message.is_pinned)}>
-                      <Pin className="h-4 w-4 mr-2" />
-                      {message.is_pinned ? "הסר נעיצה" : "נעץ הודעה"}
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => onDelete(message.id)}
+        {/* Actions - positioned on the left side, vertically centered */}
+        <div 
+          className={cn(
+            "flex items-center gap-1 bg-card border rounded-md shadow-sm p-0.5 shrink-0 transition-opacity",
+            showActions ? "opacity-100" : "opacity-0"
+          )}
+        >
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <Smile className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-2" align="start">
+              <div className="flex gap-1">
+                {EMOJI_OPTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => onReaction(message.id, emoji, false)}
+                    className="text-lg hover:scale-125 transition-transform p-1"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    מחק
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onReply(message)}>
+            <Reply className="h-4 w-4" />
+          </Button>
+
+          {(isOwn || isAdmin) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => onPin(message.id, message.is_pinned)}>
+                    <Pin className="h-4 w-4 mr-2" />
+                    {message.is_pinned ? "הסר נעיצה" : "נעץ הודעה"}
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        )}
+                )}
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => onDelete(message.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  מחק
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       {/* Trade Details Dialog */}
@@ -296,6 +306,13 @@ export const ChatMessage = ({
           onOpenChange={setTradeDialogOpen}
         />
       )}
+
+      {/* Public Profile Dialog */}
+      <PublicProfileDialog
+        userId={message.user_id}
+        open={profileDialogOpen}
+        onOpenChange={setProfileDialogOpen}
+      />
     </>
   );
 };
