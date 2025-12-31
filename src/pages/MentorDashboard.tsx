@@ -234,9 +234,12 @@ const MentorDashboard = () => {
     }
   };
 
-  const getDisplayName = (profile?: { first_name: string | null; last_name: string | null; email: string | null }) => {
+  const getDisplayName = (profile?: { first_name: string | null; last_name: string | null; username: string | null; email: string | null }) => {
     if (profile?.first_name && profile?.last_name) {
       return `${profile.first_name} ${profile.last_name}`;
+    }
+    if (profile?.username) {
+      return profile.username;
     }
     return profile?.email || "משתמש";
   };

@@ -24,6 +24,7 @@ export interface StudentWithProfile extends MentorRelationship {
   student_profile?: {
     first_name: string | null;
     last_name: string | null;
+    username: string | null;
     email: string | null;
     avatar_url: string | null;
   };
@@ -82,7 +83,7 @@ export const useMentorRelationships = () => {
         const studentIds = studentsData.map(s => s.student_id);
         const { data: studentProfiles } = await supabase
           .from('profiles')
-          .select('user_id, first_name, last_name, email, avatar_url')
+          .select('user_id, first_name, last_name, username, email, avatar_url')
           .in('user_id', studentIds);
 
         const profileMap = new Map(studentProfiles?.map(p => [p.user_id, p]) || []);
