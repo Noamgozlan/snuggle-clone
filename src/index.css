@@ -269,98 +269,171 @@
 
   /* Visual Style: Classic (default) */
   .style-classic {
-    --style-radius: 0.75rem;
-    --style-shadow: 0 4px 24px hsl(210 20% 4% / 0.4);
-    --style-border-opacity: 1;
-    --style-glow-intensity: 0;
-    --style-blur: 0px;
-    --style-card-opacity: 1;
+    --radius: 0.75rem;
   }
 
-  /* Visual Style: Minimal */
+  /* Visual Style: Minimal - Clean, flat, no distractions */
   .style-minimal {
-    --style-radius: 0.5rem;
-    --style-shadow: 0 1px 3px hsl(210 20% 4% / 0.1);
-    --style-border-opacity: 0.5;
-    --style-glow-intensity: 0;
-    --style-blur: 0px;
-    --style-card-opacity: 1;
+    --radius: 0.375rem;
+    --shadow-card: none;
+    --shadow-glow: none;
   }
 
   .style-minimal .card,
-  .style-minimal [class*="Card"] {
-    border-width: 1px;
-    box-shadow: none;
+  .style-minimal [data-slot="card"],
+  .style-minimal .bg-card {
+    border-width: 1px !important;
+    box-shadow: none !important;
+    background: hsl(var(--card)) !important;
   }
 
-  .style-minimal button,
-  .style-minimal [class*="Button"] {
+  .style-minimal button {
+    box-shadow: none !important;
+    border-radius: 0.375rem !important;
+  }
+
+  .style-minimal input,
+  .style-minimal textarea,
+  .style-minimal select {
+    border-radius: 0.375rem !important;
     box-shadow: none !important;
   }
 
-  /* Visual Style: Neon/Glow */
+  .style-minimal .rounded-xl,
+  .style-minimal .rounded-lg {
+    border-radius: 0.375rem !important;
+  }
+
+  .style-minimal .gradient-card,
+  .style-minimal .gradient-hero {
+    background: hsl(var(--background)) !important;
+  }
+
+  .style-minimal [class*="shadow"] {
+    box-shadow: none !important;
+  }
+
+  /* Visual Style: Neon/Glow - Dynamic with glow effects */
   .style-neon {
-    --style-radius: 1rem;
-    --style-shadow: 0 0 30px hsl(var(--primary) / 0.3);
-    --style-border-opacity: 1;
-    --style-glow-intensity: 1;
-    --style-blur: 0px;
-    --style-card-opacity: 1;
+    --radius: 1rem;
+    --shadow-card: 0 0 30px hsl(var(--primary) / 0.2);
+    --shadow-glow: 0 0 50px hsl(var(--primary) / 0.3);
   }
 
   .style-neon .card,
-  .style-neon [class*="rounded"] {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.15), inset 0 0 20px hsl(var(--primary) / 0.05);
-    border-color: hsl(var(--primary) / 0.3);
+  .style-neon [data-slot="card"],
+  .style-neon .bg-card {
+    box-shadow: 0 0 25px hsl(var(--primary) / 0.15), inset 0 1px 0 hsl(var(--primary) / 0.1) !important;
+    border-color: hsl(var(--primary) / 0.3) !important;
+    border-width: 1px !important;
   }
 
-  .style-neon button[class*="primary"],
+  .style-neon button[class*="bg-primary"],
   .style-neon button[class*="default"] {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.4);
+    box-shadow: 0 0 25px hsl(var(--primary) / 0.5), 0 0 50px hsl(var(--primary) / 0.3) !important;
   }
 
   .style-neon button:hover {
-    box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+    box-shadow: 0 0 35px hsl(var(--primary) / 0.6), 0 0 60px hsl(var(--primary) / 0.4) !important;
   }
 
   .style-neon input:focus,
-  .style-neon textarea:focus {
-    box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
+  .style-neon textarea:focus,
+  .style-neon select:focus {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.4) !important;
+    border-color: hsl(var(--primary)) !important;
   }
 
-  /* Visual Style: Glass */
+  .style-neon .border-border {
+    border-color: hsl(var(--primary) / 0.2) !important;
+  }
+
+  .style-neon .text-primary {
+    text-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  }
+
+  .style-neon .bg-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+  }
+
+  .style-neon .rounded-xl,
+  .style-neon .rounded-lg {
+    border-radius: 1rem !important;
+  }
+
+  .style-neon aside,
+  .style-neon [data-sidebar] {
+    box-shadow: 5px 0 30px hsl(var(--primary) / 0.1) !important;
+  }
+
+  /* Visual Style: Glass - Modern glassmorphism */
   .style-glass {
-    --style-radius: 1.25rem;
-    --style-shadow: 0 8px 32px hsl(210 20% 4% / 0.3);
-    --style-border-opacity: 0.2;
-    --style-glow-intensity: 0;
-    --style-blur: 12px;
-    --style-card-opacity: 0.8;
+    --radius: 1.25rem;
   }
 
   .style-glass .card,
-  .style-glass [class*="bg-card"] {
-    background: hsl(var(--card) / 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border) / 0.3);
+  .style-glass [data-slot="card"],
+  .style-glass .bg-card {
+    background: hsl(var(--card) / 0.6) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid hsl(var(--border) / 0.3) !important;
+    box-shadow: 0 8px 32px hsl(210 20% 4% / 0.2) !important;
   }
 
   .style-glass .bg-background {
-    background: hsl(var(--background) / 0.95);
+    background: hsl(var(--background) / 0.95) !important;
   }
 
-  .style-glass [class*="popover"],
-  .style-glass [class*="dropdown"] {
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    background: hsl(var(--popover) / 0.85);
+  .style-glass button {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .style-glass button[class*="bg-primary"] {
+    background: hsl(var(--primary) / 0.85) !important;
+    box-shadow: 0 4px 20px hsl(var(--primary) / 0.3) !important;
+  }
+
+  .style-glass input,
+  .style-glass textarea,
+  .style-glass select {
+    background: hsl(var(--input) / 0.5) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 1rem !important;
+  }
+
+  .style-glass .rounded-xl,
+  .style-glass .rounded-lg {
+    border-radius: 1.25rem !important;
+  }
+
+  .style-glass [data-radix-popper-content-wrapper] > div,
+  .style-glass [role="dialog"],
+  .style-glass [role="menu"] {
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    background: hsl(var(--popover) / 0.8) !important;
+  }
+
+  .style-glass aside,
+  .style-glass [data-sidebar] {
+    background: hsl(var(--sidebar-background) / 0.7) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
   }
 
   .light.style-glass .card,
-  .light.style-glass [class*="bg-card"] {
-    background: hsl(var(--card) / 0.6);
-    border: 1px solid hsl(var(--border) / 0.5);
+  .light.style-glass [data-slot="card"],
+  .light.style-glass .bg-card {
+    background: hsl(0 0% 100% / 0.7) !important;
+    border: 1px solid hsl(var(--border) / 0.5) !important;
+  }
+
+  .light.style-glass aside,
+  .light.style-glass [data-sidebar] {
+    background: hsl(0 0% 100% / 0.6) !important;
   }
 }
 
