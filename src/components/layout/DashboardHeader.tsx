@@ -1,6 +1,5 @@
 import { Bell, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/Logo";
 import { useTheme } from "@/contexts/ThemeContext";
 import { PortfolioSelector } from "@/components/portfolio/PortfolioSelector";
 
@@ -15,9 +14,6 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
     <header className="h-14 md:h-16 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
       <div className="flex items-center justify-between h-full px-3 md:px-6">
         <div className="flex items-center gap-4">
-          <div className="hidden md:block">
-            <Logo size="sm" />
-          </div>
         </div>
         
         {title && (
