@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Play, Loader2 } from "lucide-react";
 
 interface BacktestingControlsProps {
@@ -75,63 +80,61 @@ export const BacktestingControls = ({ onLoadData, loading }: BacktestingControls
   };
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">קטגוריה:</span>
-          <Select value={category} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(ASSET_CATEGORIES).map(([key, cat]) => (
-                <SelectItem key={key} value={key}>{cat.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">נכס:</span>
-          <Select value={symbol} onValueChange={setSymbol}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ASSET_CATEGORIES[category as keyof typeof ASSET_CATEGORIES]?.assets.map((asset) => (
-                <SelectItem key={asset.value} value={asset.value}>{asset.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">טיימפריים:</span>
-          <Select value={interval} onValueChange={setInterval}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TIMEFRAMES.map((tf) => (
-                <SelectItem key={tf.value} value={tf.value}>{tf.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button 
-          onClick={() => onLoadData(symbol, interval)} 
-          disabled={loading}
-          className="gap-2"
-        >
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Play className="h-4 w-4" />
-          )}
-          טען נתונים
-        </Button>
+    <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">קטגוריה:</span>
+        <Select value={category} onValueChange={handleCategoryChange}>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(ASSET_CATEGORIES).map(([key, cat]) => (
+              <SelectItem key={key} value={key}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-    </Card>
+
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">נכס:</span>
+        <Select value={symbol} onValueChange={setSymbol}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ASSET_CATEGORIES[category as keyof typeof ASSET_CATEGORIES]?.assets.map(
+              (asset) => (
+                <SelectItem key={asset.value} value={asset.value}>
+                  {asset.label}
+                </SelectItem>
+              )
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">טיימפריים:</span>
+        <Select value={interval} onValueChange={setInterval}>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {TIMEFRAMES.map((tf) => (
+              <SelectItem key={tf.value} value={tf.value}>
+                {tf.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Button onClick={() => onLoadData(symbol, interval)} disabled={loading} className="gap-2">
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+        טען נתונים
+      </Button>
+    </div>
   );
 };

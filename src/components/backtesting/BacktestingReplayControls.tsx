@@ -1,18 +1,30 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
+import {
+  Play,
+  Pause,
+  RotateCcw,
   SkipForward,
-  ChevronRight
+  ChevronRight,
+  ChevronsRight,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface BacktestingReplayControlsProps {
-  onStepForward: () => void;
+  onStepForward: (steps?: number) => void;
   onReset: () => void;
   isPlaying: boolean;
   setIsPlaying: (playing: boolean) => void;
@@ -28,6 +40,9 @@ const SPEEDS = [
   { value: 2, label: "x2" },
   { value: 5, label: "x5" },
   { value: 10, label: "x10" },
+  { value: 20, label: "x20" },
+  { value: 50, label: "x50" },
+  { value: 100, label: "x100" },
 ];
 
 export const BacktestingReplayControls = ({
@@ -46,7 +61,7 @@ export const BacktestingReplayControls = ({
   useEffect(() => {
     if (isPlaying && canStep) {
       intervalRef.current = setInterval(() => {
-        onStepForward();
+        onStepForward(1);
       }, 1000 / playSpeed);
     } else {
       if (intervalRef.current) {
@@ -62,68 +77,99 @@ export const BacktestingReplayControls = ({
     };
   }, [isPlaying, playSpeed, canStep, onStepForward]);
 
-  // Stop playing when we reach the end
   useEffect(() => {
     if (!canStep && isPlaying) {
       setIsPlaying(false);
     }
   }, [canStep, isPlaying, setIsPlaying]);
 
-  const progress = totalCandles > 0 ? ((currentIndex) / totalCandles) * 100 : 0;
+  const progress = totalCandles > 0 ? (currentIndex / totalCandles) * 100 : 0;
 
   return (
     <Card className="p-4">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onReset}
-            title="איפוס"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setIsPlaying(!isPlaying)}
-            disabled={!canStep && !isPlaying}
-            title={isPlaying ? "עצור" : "הפעל"}
-          >
-            {isPlaying ? (
-              <Pause className="h-4 w-4" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onStepForward}
-            disabled={!canStep}
-            title="נר קדימה"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              for (let i = 0; i < 5; i++) onStepForward();
-            }}
-            disabled={!canStep}
-            title="5 נרות קדימה"
-          >
-            <SkipForward className="h-4 w-4" />
-          </Button>
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={onReset}
+                title="איפוס"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>איפוס</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsPlaying(!isPlaying)}
+                disabled={!canStep && !isPlaying}
+              >
+                {isPlaying ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{isPlaying ? "עצור" : "הפעל"}</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onStepForward(1)}
+                disabled={!canStep}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>נר קדימה</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onStepForward(5)}
+                disabled={!canStep}
+              >
+                <SkipForward className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>5 נרות קדימה</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onStepForward(20)}
+                disabled={!canStep}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>20 נרות קדימה</TooltipContent>
+          </Tooltip>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">מהירות:</span>
-          <Select value={playSpeed.toString()} onValueChange={(v) => setPlaySpeed(Number(v))}>
+          <Select
+            value={playSpeed.toString()}
+            onValueChange={(v) => setPlaySpeed(Number(v))}
+          >
             <SelectTrigger className="w-[80px]">
               <SelectValue />
             </SelectTrigger>
@@ -147,3 +193,4 @@ export const BacktestingReplayControls = ({
     </Card>
   );
 };
+

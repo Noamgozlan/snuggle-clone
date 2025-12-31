@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import {
   createChart,
   CandlestickSeries,
@@ -11,14 +11,43 @@ import {
   type Time,
 } from "lightweight-charts";
 import type { CandleData, BacktestTrade } from "./types";
+import { Badge } from "@/components/ui/badge";
 
-interface BacktestingChartProps {
+interface BacktestingMultiChartProps {
+  chartsData: {
+    id: string;
+    candles: CandleData[];
+    symbol: string;
+    interval: string;
+  }[];
+  trades: BacktestTrade[];
+  layout: "1" | "2h" | "2v" | "4";
+}
+
+const getGridClass = (layout: string) => {
+  switch (layout) {
+    case "2h":
+      return "grid-cols-2 grid-rows-1";
+    case "2v":
+      return "grid-cols-1 grid-rows-2";
+    case "4":
+      return "grid-cols-2 grid-rows-2";
+    default:
+      return "grid-cols-1 grid-rows-1";
+  }
+};
+
+const ChartPanel = ({
+  candles,
+  trades,
+  symbol,
+  interval,
+}: {
   candles: CandleData[];
   trades: BacktestTrade[];
   symbol: string;
-}
-
-export const BacktestingChart = ({ candles, trades, symbol }: BacktestingChartProps) => {
+  interval: string;
+}) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick", Time> | null>(null);
@@ -27,24 +56,19 @@ export const BacktestingChart = ({ candles, trades, symbol }: BacktestingChartPr
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    // Create chart
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { color: 'transparent' },
-        textColor: '#9ca3af',
+        background: { color: "transparent" },
+        textColor: "#9ca3af",
       },
       grid: {
-        vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
-        horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
+        vertLines: { color: "rgba(42, 46, 57, 0.5)" },
+        horzLines: { color: "rgba(42, 46, 57, 0.5)" },
       },
-      crosshair: {
-        mode: 1,
-      },
-      rightPriceScale: {
-        borderColor: 'rgba(42, 46, 57, 0.8)',
-      },
+      crosshair: { mode: 1 },
+      rightPriceScale: { borderColor: "rgba(42, 46, 57, 0.8)" },
       timeScale: {
-        borderColor: 'rgba(42, 46, 57, 0.8)',
+        borderColor: "rgba(42, 46, 57, 0.8)",
         timeVisible: true,
         secondsVisible: false,
       },
@@ -52,7 +76,6 @@ export const BacktestingChart = ({ candles, trades, symbol }: BacktestingChartPr
       height: chartContainerRef.current.clientHeight,
     });
 
-    // Create candlestick series
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: "#22c55e",
       downColor: "#ef4444",
@@ -66,7 +89,6 @@ export const BacktestingChart = ({ candles, trades, symbol }: BacktestingChartPr
     seriesRef.current = candlestickSeries;
     markersRef.current = createSeriesMarkers(candlestickSeries, []);
 
-    // Handle resize
     const handleResize = () => {
       if (chartContainerRef.current) {
         chart.applyOptions({
@@ -76,21 +98,22 @@ export const BacktestingChart = ({ candles, trades, symbol }: BacktestingChartPr
       }
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(chartContainerRef.current);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       chart.remove();
     };
   }, []);
 
-  // Update data when candles change
   useEffect(() => {
     if (seriesRef.current && candles.length > 0) {
-      // Ensure strictly ascending times (no duplicates) for Lightweight Charts
       const seen = new Set<number>();
       const chartData: CandlestickData<Time>[] = [];
-      
+
       for (const c of candles) {
         const t = Number(c.time);
         if (!Number.isFinite(t) || seen.has(t)) continue;
@@ -104,19 +127,15 @@ export const BacktestingChart = ({ candles, trades, symbol }: BacktestingChartPr
         });
       }
 
-      // Sort by time ascending
       chartData.sort((a, b) => (a.time as number) - (b.time as number));
-      
       seriesRef.current.setData(chartData);
-      
-      // Auto-scroll to the right
+
       if (chartRef.current) {
         chartRef.current.timeScale().scrollToRealTime();
       }
     }
   }, [candles]);
 
-  // Add trade markers
   useEffect(() => {
     if (!markersRef.current) return;
 
@@ -128,18 +147,18 @@ export const BacktestingChart = ({ candles, trades, symbol }: BacktestingChartPr
     const markers: SeriesMarker<Time>[] = trades.flatMap((trade) => {
       const entryMarker: SeriesMarker<Time> = {
         time: trade.entryTime as Time,
-        position: trade.type === "buy" ? ("belowBar" as const) : ("aboveBar" as const),
+        position: trade.type === "buy" ? "belowBar" : "aboveBar",
         color: trade.type === "buy" ? "#22c55e" : "#ef4444",
-        shape: trade.type === "buy" ? ("arrowUp" as const) : ("arrowDown" as const),
+        shape: trade.type === "buy" ? "arrowUp" : "arrowDown",
         text: trade.type === "buy" ? "BUY" : "SELL",
       };
 
       if (trade.status === "closed" && trade.exitTime) {
         const exitMarker: SeriesMarker<Time> = {
           time: trade.exitTime as Time,
-          position: trade.type === "buy" ? ("aboveBar" as const) : ("belowBar" as const),
+          position: trade.type === "buy" ? "aboveBar" : "belowBar",
           color: (trade.pnl || 0) >= 0 ? "#22c55e" : "#ef4444",
-          shape: "circle" as const,
+          shape: "circle",
           text: "EXIT",
         };
         return [entryMarker, exitMarker];
@@ -152,6 +171,49 @@ export const BacktestingChart = ({ candles, trades, symbol }: BacktestingChartPr
   }, [trades]);
 
   return (
-    <div ref={chartContainerRef} className="w-full h-full" />
+    <div className="relative w-full h-full bg-card rounded-lg border overflow-hidden">
+      <div className="absolute top-2 right-2 z-10 flex gap-1">
+        <Badge variant="outline" className="text-xs">
+          {symbol}
+        </Badge>
+        <Badge variant="secondary" className="text-xs">
+          {interval}
+        </Badge>
+      </div>
+      <div ref={chartContainerRef} className="w-full h-full" />
+    </div>
+  );
+};
+
+export const BacktestingMultiChart = ({
+  chartsData,
+  trades,
+  layout,
+}: BacktestingMultiChartProps) => {
+  const visibleCharts = useMemo(() => {
+    const count = layout === "4" ? 4 : layout === "1" ? 1 : 2;
+    return chartsData.slice(0, count);
+  }, [chartsData, layout]);
+
+  if (visibleCharts.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center text-muted-foreground">
+        בחר נכס וטווח זמן כדי להתחיל
+      </div>
+    );
+  }
+
+  return (
+    <div className={`grid gap-2 h-full ${getGridClass(layout)}`}>
+      {visibleCharts.map((chartData) => (
+        <ChartPanel
+          key={chartData.id}
+          candles={chartData.candles}
+          trades={trades}
+          symbol={chartData.symbol}
+          interval={chartData.interval}
+        />
+      ))}
+    </div>
   );
 };
