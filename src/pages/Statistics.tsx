@@ -2,11 +2,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrades } from "@/hooks/useTrades";
-import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText, Bot } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TradeReports } from "@/components/statistics/TradeReports";
+import AITradingAdvisor from "@/components/statistics/AITradingAdvisor";
 
 interface TradeConfirmation {
   trade_id: string;
@@ -230,7 +231,7 @@ const Statistics = () => {
   return (
     <DashboardLayout title="סטטיסטיקות מתקדמות">
       <Tabs defaultValue="overview" dir="rtl" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart2 className="h-4 w-4" />
             סקירה כללית
@@ -238,6 +239,10 @@ const Statistics = () => {
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             דוחות מותאמים
+          </TabsTrigger>
+          <TabsTrigger value="ai-advisor" className="flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            יועץ AI
           </TabsTrigger>
         </TabsList>
 
@@ -708,6 +713,10 @@ const Statistics = () => {
 
         <TabsContent value="reports">
           <TradeReports trades={trades} strategies={uniqueStrategies} />
+        </TabsContent>
+
+        <TabsContent value="ai-advisor">
+          <AITradingAdvisor trades={trades} stats={stats} />
         </TabsContent>
       </Tabs>
     </DashboardLayout>
