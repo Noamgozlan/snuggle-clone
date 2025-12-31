@@ -56,7 +56,8 @@ export const BacktestingTradePanel = ({
   const handleOpenTrade = (type: 'buy' | 'sell') => {
     const sl = stopLoss ? parseFloat(stopLoss) : undefined;
     const tp = takeProfit ? parseFloat(takeProfit) : undefined;
-    onOpenTrade(type, sl, tp, selectedStrategy || undefined);
+    const strategy = selectedStrategy === "none" ? undefined : selectedStrategy || undefined;
+    onOpenTrade(type, sl, tp, strategy);
     setStopLoss("");
     setTakeProfit("");
   };
@@ -110,7 +111,7 @@ export const BacktestingTradePanel = ({
               <SelectValue placeholder="בחר אסטרטגיה" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">ללא</SelectItem>
+              <SelectItem value="none">ללא</SelectItem>
               {strategies.map((s) => (
                 <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
               ))}
