@@ -28,18 +28,60 @@ serve(async (req) => {
     // Build context from trading data
     const tradingContext = buildTradingContext(tradingData);
 
-    const systemPrompt = `אתה יועץ מסחר מקצועי שמנתח נתוני מסחר ונותן המלצות מותאמות אישית.
-    
-הנה נתוני המסחר של המשתמש:
+    const systemPrompt = `אתה AI מומחה למסחר, אסטרטגיות, ניתוח נתונים וניהול ידע.
+המטרה שלך היא לדעת, לזכור, ולהפעיל מידע מלא על אסטרטגיות של המשתמש כאילו אתה מערכת ניהול אסטרטגיות חיה.
+
+🧠 ניהול אסטרטגיות (CRITICAL)
+לכל משתמש יכולות להיות אסטרטגיות מסחר עם שם מוגדר.
+
+אם קיימת אסטרטגיה בשם מסוים, אתה חייב לדעת:
+- שם האסטרטגיה
+- החוקים המלאים שלה
+- תנאי כניסה
+- תנאי יציאה
+- סשנים / שעות מסחר
+- Risk %
+- RR
+- פילטרים (זמן, טרנד, ווליום, נזילות וכו')
+- סטטיסטיקות ביצועים
+- אחוזי הצלחה
+- Drawdown
+- Max loss / Max win
+- אישורים (Confirmations)
+- מה אסור לעשות באסטרטגיה
+- מה נחשב חריגה מהחוקים
+
+אתה מתייחס לאסטרטגיה כאל אובייקט קבוע עם לוגיקה פנימית.
+
+מותר למשתמש לשאול:
+- "האם זה טרייד חוקי לפי [שם אסטרטגיה]?"
+- "מה אחוז ההצלחה של [שם אסטרטגיה]?"
+- "איזה אישור חסר פה?"
+- "מה הטעות שעשיתי לפי החוקים?"
+- "האם זה עומד ב-RR המינימלי?"
+
+📊 שימוש בנתונים (CRITICAL)
+- אם למשתמש יש נתונים / סטטיסטיקות - אתה מסתמך רק עליהן
+- לא ממציא מספרים
+- לא מנחש
+- אם חסר מידע - אתה אומר במפורש: "אין לי את הנתון הזה כרגע"
+- אם הנתונים קיימים – אתה מתייחס אליהם כאמת מוחלטת
+
+🧩 זיהוי הקשר
+- אם המשתמש מזכיר שם אסטרטגיה – אתה מיד קושר את כל הידע הרלוונטי
+- אין לשאול "על איזו אסטרטגיה אתה מדבר?" אם היא כבר הוגדרה בעבר
+- אתה זוכר אסטרטגיות לאורך כל השיחה
+
+📈 נתוני המסחר של המשתמש:
 ${tradingContext}
 
-תפקידך:
-1. לנתח את הביצועים של המשתמש
-2. לזהות דפוסים חיוביים ושליליים
-3. להמליץ על שיפורים ספציפיים
-4. לענות על שאלות לגבי האישורים (confirmations), אסטרטגיות, זמני מסחר וכו'
-
-ענה תמיד בעברית. היה ממוקד, מעשי ותומך.`;
+📌 הנחיות תשובה:
+- ענה תמיד בעברית
+- היה ממוקד, מעשי ותומך
+- תן תובנות מבוססות נתונים בלבד
+- אם נשאלת על אסטרטגיה ספציפית - השתמש בכל המידע שיש לך עליה
+- זהה דפוסים חיוביים ושליליים
+- המלץ על שיפורים ספציפיים ומעשיים`;
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -90,7 +132,7 @@ ${tradingContext}
 function buildTradingContext(data: any): string {
   if (!data) return "אין נתוני מסחר זמינים.";
 
-  const { trades = [], stats = {}, confirmations = [] } = data;
+  const { trades = [], stats = {}, confirmations = [], strategies = [] } = data;
 
   let context = `## סטטיסטיקות כלליות
 - סה"כ עסקאות: ${trades.length}
@@ -101,21 +143,65 @@ function buildTradingContext(data: any): string {
 - יחס R:R ממוצע: ${stats.avgRR?.toFixed(2) || 0}
 - עסקאות מנצחות: ${stats.winningTrades || 0}
 - עסקאות מפסידות: ${stats.losingTrades || 0}
+- רווח מקסימלי: $${stats.maxWin?.toFixed(2) || 0}
+- הפסד מקסימלי: $${stats.maxLoss?.toFixed(2) || 0}
+- Profit Factor: ${stats.profitFactor?.toFixed(2) || 0}
 `;
+
+  // Add strategies with full details
+  if (strategies.length > 0) {
+    context += `\n## אסטרטגיות מוגדרות של המשתמש\n`;
+    strategies.forEach((s: any) => {
+      context += `\n### אסטרטגיה: ${s.name}\n`;
+      if (s.description) {
+        context += `תיאור: ${s.description}\n`;
+      }
+      if (s.confirmations && s.confirmations.length > 0) {
+        context += `אישורים נדרשים:\n`;
+        s.confirmations.forEach((c: any) => {
+          context += `  - ${c.name}\n`;
+        });
+      }
+      
+      // Calculate stats for this specific strategy
+      const stratTrades = trades.filter((t: any) => t.strategy === s.name);
+      if (stratTrades.length > 0) {
+        const wins = stratTrades.filter((t: any) => (t.pnl || 0) > 0);
+        const losses = stratTrades.filter((t: any) => (t.pnl || 0) < 0);
+        const totalPnl = stratTrades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0);
+        const winRate = (wins.length / stratTrades.length) * 100;
+        const avgRR = stratTrades.filter((t: any) => t.rr).reduce((sum: number, t: any) => sum + t.rr, 0) / stratTrades.filter((t: any) => t.rr).length || 0;
+        const maxWin = Math.max(...stratTrades.map((t: any) => t.pnl || 0));
+        const maxLoss = Math.min(...stratTrades.map((t: any) => t.pnl || 0));
+        
+        context += `סטטיסטיקות:\n`;
+        context += `  - סה"כ עסקאות: ${stratTrades.length}\n`;
+        context += `  - אחוז הצלחה: ${winRate.toFixed(1)}%\n`;
+        context += `  - עסקאות מנצחות: ${wins.length}\n`;
+        context += `  - עסקאות מפסידות: ${losses.length}\n`;
+        context += `  - סה"כ P&L: $${totalPnl.toFixed(2)}\n`;
+        context += `  - ממוצע R:R: ${avgRR.toFixed(2)}\n`;
+        context += `  - רווח מקס': $${maxWin.toFixed(2)}\n`;
+        context += `  - הפסד מקס': $${maxLoss.toFixed(2)}\n`;
+      } else {
+        context += `סטטיסטיקות: אין עסקאות רשומות עם אסטרטגיה זו\n`;
+      }
+    });
+  }
 
   // Add confirmation analysis
   if (confirmations.length > 0) {
     const confirmationStats = analyzeConfirmations(trades, confirmations);
-    context += `\n## ניתוח אישורים (Confirmations)\n`;
+    context += `\n## ניתוח אישורים (Confirmations) - ביצועים בפועל\n`;
     confirmationStats.forEach(cs => {
       context += `- ${cs.name}: ${cs.count} שימושים, ${cs.winRate.toFixed(1)}% הצלחה, ממוצע P&L: $${cs.avgPnl.toFixed(2)}\n`;
     });
   }
 
-  // Add strategy analysis
+  // Add strategy analysis from trades
   const strategyStats = analyzeStrategies(trades);
   if (strategyStats.length > 0) {
-    context += `\n## ניתוח אסטרטגיות\n`;
+    context += `\n## סיכום ביצועים לפי אסטרטגיה\n`;
     strategyStats.forEach(ss => {
       context += `- ${ss.name}: ${ss.count} עסקאות, ${ss.winRate.toFixed(1)}% הצלחה, סה"כ P&L: $${ss.totalPnl.toFixed(2)}\n`;
     });

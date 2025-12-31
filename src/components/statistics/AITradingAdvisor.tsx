@@ -24,9 +24,12 @@ export default function AITradingAdvisor({ trades, stats }: AITradingAdvisorProp
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [confirmations, setConfirmations] = useState<any[]>([]);
+  const [strategies, setStrategies] = useState<any[]>([]);
+  const [strategyConfirmations, setStrategyConfirmations] = useState<any[]>([]);
 
   useEffect(() => {
     fetchConfirmations();
+    fetchStrategies();
   }, [trades]);
 
   useEffect(() => {
@@ -47,6 +50,27 @@ export default function AITradingAdvisor({ trades, stats }: AITradingAdvisorProp
     if (data) setConfirmations(data);
   };
 
+  const fetchStrategies = async () => {
+    const { data: strategiesData } = await supabase
+      .from("strategies")
+      .select("*");
+    
+    if (strategiesData) {
+      setStrategies(strategiesData);
+      
+      // Fetch strategy confirmations
+      const strategyIds = strategiesData.map(s => s.id);
+      if (strategyIds.length > 0) {
+        const { data: confsData } = await supabase
+          .from("confirmations")
+          .select("*")
+          .in("strategy_id", strategyIds);
+        
+        if (confsData) setStrategyConfirmations(confsData);
+      }
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -59,7 +83,11 @@ export default function AITradingAdvisor({ trades, stats }: AITradingAdvisorProp
       const tradingData = {
         trades,
         stats,
-        confirmations
+        confirmations,
+        strategies: strategies.map(s => ({
+          ...s,
+          confirmations: strategyConfirmations.filter(c => c.strategy_id === s.id)
+        }))
       };
 
       const response = await fetch(
