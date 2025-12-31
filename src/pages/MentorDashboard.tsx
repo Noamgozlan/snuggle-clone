@@ -103,6 +103,8 @@ interface ChatMessage {
   content: string;
   created_at: string;
   read_at: string | null;
+  trade_id: string | null;
+  trade?: StudentTrade | null;
 }
 
 const MentorDashboard = () => {
@@ -173,7 +175,27 @@ const MentorDashboard = () => {
         .order('created_at', { ascending: true });
 
       if (data) {
-        setChatMessages(data);
+        // Fetch trade data for messages with trade_id
+        const tradeIds = data.filter(m => m.trade_id).map(m => m.trade_id);
+        let tradesMap: Record<string, StudentTrade> = {};
+        
+        if (tradeIds.length > 0) {
+          const { data: tradesData } = await supabase
+            .from('trades')
+            .select('id, symbol, trade_type, pnl, entry_date, is_closed, entry_price, exit_price, quantity, rr, strategy, portfolio_id, notes, screenshot_url, created_at')
+            .in('id', tradeIds);
+          
+          if (tradesData) {
+            tradesMap = tradesData.reduce((acc, t) => ({ ...acc, [t.id]: t }), {});
+          }
+        }
+
+        const messagesWithTrades = data.map(m => ({
+          ...m,
+          trade: m.trade_id ? tradesMap[m.trade_id] : null
+        }));
+        
+        setChatMessages(messagesWithTrades);
       }
     };
 
@@ -190,8 +212,21 @@ const MentorDashboard = () => {
           table: 'mentor_messages',
           filter: `relationship_id=eq.${selectedStudent?.id}`
         },
-        (payload) => {
-          setChatMessages(prev => [...prev, payload.new as ChatMessage]);
+        async (payload) => {
+          const newMsg = payload.new as ChatMessage;
+          
+          // Fetch trade if exists
+          if (newMsg.trade_id) {
+            const { data: tradeData } = await supabase
+              .from('trades')
+              .select('id, symbol, trade_type, pnl, entry_date, is_closed, entry_price, exit_price, quantity, rr, strategy, portfolio_id, notes, screenshot_url, created_at')
+              .eq('id', newMsg.trade_id)
+              .single();
+            
+            newMsg.trade = tradeData;
+          }
+          
+          setChatMessages(prev => [...prev, newMsg]);
         }
       )
       .subscribe();
@@ -1139,7 +1174,34 @@ const MentorDashboard = () => {
                                           : 'bg-muted rounded-bl-sm'
                                       }`}
                                     >
-                                      <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                                      {message.trade && (
+                                        <div className={`mb-2 ${isMe ? 'bg-primary-foreground/10' : 'bg-background/50'} rounded-lg p-2`}>
+                                          <div className="flex items-center gap-2">
+                                            <div className={`p-1.5 rounded ${message.trade.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
+                                              {message.trade.trade_type === 'long' 
+                                                ? <ArrowUpRight className="h-4 w-4 text-success" />
+                                                : <ArrowDownRight className="h-4 w-4 text-destructive" />
+                                              }
+                                            </div>
+                                            <div className="flex-1">
+                                              <p className={`font-medium text-sm ${isMe ? 'text-primary-foreground' : 'text-foreground'}`}>
+                                                {message.trade.symbol}
+                                              </p>
+                                              <p className={`text-[10px] ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                                                {message.trade.entry_date && format(new Date(message.trade.entry_date), 'dd/MM/yyyy', { locale: he })}
+                                              </p>
+                                            </div>
+                                            {message.trade.pnl !== null && (
+                                              <Badge variant={message.trade.pnl >= 0 ? "default" : "destructive"} className="text-xs">
+                                                {message.trade.pnl >= 0 ? '+' : ''}${message.trade.pnl.toFixed(2)}
+                                              </Badge>
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {message.content && (
+                                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                                      )}
                                       <p
                                         className={`text-[10px] mt-1 ${
                                           isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'

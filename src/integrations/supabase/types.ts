@@ -86,6 +86,7 @@ export type Database = {
           read_at: string | null
           relationship_id: string
           sender_id: string
+          trade_id: string | null
         }
         Insert: {
           content: string
@@ -94,6 +95,7 @@ export type Database = {
           read_at?: string | null
           relationship_id: string
           sender_id: string
+          trade_id?: string | null
         }
         Update: {
           content?: string
@@ -102,6 +104,7 @@ export type Database = {
           read_at?: string | null
           relationship_id?: string
           sender_id?: string
+          trade_id?: string | null
         }
         Relationships: [
           {
@@ -109,6 +112,13 @@ export type Database = {
             columns: ["relationship_id"]
             isOneToOne: false
             referencedRelation: "mentor_relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_messages_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
             referencedColumns: ["id"]
           },
         ]
