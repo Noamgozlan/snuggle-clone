@@ -87,13 +87,25 @@ export const BacktestingChart = ({ candles, trades, symbol }: BacktestingChartPr
   // Update data when candles change
   useEffect(() => {
     if (seriesRef.current && candles.length > 0) {
-      const chartData: CandlestickData<Time>[] = candles.map(c => ({
-        time: c.time as Time,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
-      }));
+      // Ensure strictly ascending times (no duplicates) for Lightweight Charts
+      const seen = new Set<number>();
+      const chartData: CandlestickData<Time>[] = [];
+      
+      for (const c of candles) {
+        const t = Number(c.time);
+        if (!Number.isFinite(t) || seen.has(t)) continue;
+        seen.add(t);
+        chartData.push({
+          time: t as Time,
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        });
+      }
+
+      // Sort by time ascending
+      chartData.sort((a, b) => (a.time as number) - (b.time as number));
       
       seriesRef.current.setData(chartData);
       
