@@ -20,7 +20,9 @@ import {
   Flame,
   Trophy,
   Skull,
-  Share2
+  Share2,
+  Link,
+  Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -433,6 +435,27 @@ const Dashboard = () => {
                     <p className="text-xs text-muted-foreground">{tradingStreaks.worstTrade.symbol}</p>
                   </div>
                 )}
+              </div>
+            </Card>
+
+            {/* Broker Connection Coming Soon */}
+            <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-5 group">
+              <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center">
+                <div className="bg-primary/10 p-3 rounded-full mb-3">
+                  <Lock className="h-6 w-6 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-foreground">בקרוב...</span>
+                <span className="text-xs text-muted-foreground mt-1">חיבור אוטומטי לברוקר</span>
+              </div>
+              <div className="flex items-start justify-between opacity-40">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">חיבור לברוקר</p>
+                  <p className="text-2xl font-bold text-foreground">Tradovate</p>
+                  <p className="text-xs text-muted-foreground mt-2">סנכרון אוטומטי של עסקאות</p>
+                </div>
+                <div className="p-3 rounded-xl bg-primary/10">
+                  <Link className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </Card>
           </div>
