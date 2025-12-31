@@ -9,6 +9,7 @@ import { TrendingUp, TrendingDown, Calendar, DollarSign, Target, BarChart3 } fro
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { ImageViewer } from "@/components/ui/image-viewer";
 
 interface Trade {
   id: string;
@@ -165,7 +166,7 @@ export const TradeDetailsDialog = ({ trade, open, onOpenChange }: TradeDetailsDi
           {trade.screenshot_url && (
             <div>
               <div className="text-muted-foreground text-xs mb-2">צילום מסך</div>
-              <img
+              <ImageViewer
                 src={trade.screenshot_url}
                 alt="Trade screenshot"
                 className="w-full rounded-lg object-contain max-h-80"
