@@ -201,20 +201,7 @@ export const useCommunity = () => {
 
         if (error) throw error;
 
-        // Get profile for the new message
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("user_id, first_name, last_name, username, avatar_url")
-          .eq("user_id", user.id)
-          .single();
-
-        const newMessage: CommunityMessage = {
-          ...data,
-          profile,
-          reactions: [],
-        };
-
-        setMessages((prev) => [...prev, newMessage]);
+        // Message will be added via realtime subscription
         return data;
       } catch (error) {
         console.error("Error sending message:", error);
