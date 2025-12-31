@@ -41,25 +41,50 @@ export const ChatArea = ({
   showUserList,
 }: ChatAreaProps) => {
   const { user } = useAuth();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [replyTo, setReplyTo] = useState<CommunityMessage | null>(null);
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
+  const prevChannelId = useRef<string | null>(null);
 
   const pinnedMessages = messages.filter((m) => m.is_pinned);
   const displayedMessages = showPinnedOnly ? pinnedMessages : messages;
 
-  // Auto-scroll to bottom on new messages or initial load
-  useEffect(() => {
-    if (scrollRef.current && !showPinnedOnly) {
-      // Use setTimeout to ensure DOM is fully rendered
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      }, 100);
+  // Scroll to bottom function
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: "end" });
     }
-  }, [messages, showPinnedOnly, channel?.id]);
+  }, []);
+
+  // Scroll to bottom on channel change or initial load
+  useEffect(() => {
+    if (channel?.id && channel.id !== prevChannelId.current) {
+      prevChannelId.current = channel.id;
+      setHasInitialScrolled(false);
+    }
+  }, [channel?.id]);
+
+  // Scroll to bottom when messages load for the first time
+  useEffect(() => {
+    if (!loading && messages.length > 0 && !hasInitialScrolled && !showPinnedOnly) {
+      // Use a small delay to ensure DOM is fully rendered
+      const timer = setTimeout(() => {
+        scrollToBottom("auto");
+        setHasInitialScrolled(true);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, messages.length, hasInitialScrolled, showPinnedOnly, scrollToBottom]);
+
+  // Scroll to bottom on new messages (only if already at bottom)
+  useEffect(() => {
+    if (hasInitialScrolled && !showPinnedOnly && messagesEndRef.current) {
+      scrollToBottom("smooth");
+    }
+  }, [messages.length, hasInitialScrolled, showPinnedOnly, scrollToBottom]);
 
   const handleReaction = (messageId: string, emoji: string, hasReacted: boolean) => {
     onReaction(messageId, emoji, hasReacted);
@@ -121,8 +146,8 @@ export const ChatArea = ({
       </div>
 
       {/* Messages */}
-      <ScrollArea ref={scrollRef} className="flex-1">
-        <div className="py-4">
+      <ScrollArea className="flex-1">
+        <div className="py-4" ref={scrollContainerRef}>
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -165,8 +190,9 @@ export const ChatArea = ({
                 </div>
               );
             })
-
           )}
+          {/* Invisible element to scroll to */}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
