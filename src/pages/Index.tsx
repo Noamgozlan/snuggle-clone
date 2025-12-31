@@ -173,10 +173,10 @@ const Index = () => {
               className={`grid grid-cols-3 gap-8 max-w-2xl mx-auto transition-all duration-1000 ${heroSection.isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
               style={{ transitionDelay: '400ms' }}
             >
-              {[
-                { value: "10K+", label: "סוחרים פעילים", icon: Users },
-                { value: "₪2.5M+", label: "רווחים מתועדים", icon: TrendingUp },
-                { value: "99.9%", label: "זמן פעילות", icon: Shield },
+            {[
+                { value: "100%", label: "חינמי לשימוש", icon: Zap },
+                { value: "50+", label: "סטטיסטיקות מתקדמות", icon: BarChart3 },
+                { value: "24/7", label: "גישה מכל מקום", icon: Shield },
               ].map((stat, i) => (
                 <div key={i} className="text-center group cursor-default">
                   <div className="inline-flex items-center justify-center gap-2 mb-2">
