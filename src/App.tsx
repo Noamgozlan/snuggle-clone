@@ -25,6 +25,7 @@ import MentorDashboard from "./pages/MentorDashboard";
 import MentorChat from "./pages/MentorChat";
 import Giveaways from "./pages/Giveaways";
 import Admin from "./pages/Admin";
+import Backtesting from "./pages/Backtesting";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -131,6 +132,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Admin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/backtesting"
+                element={
+                  <ProtectedRoute>
+                    <Backtesting />
                   </ProtectedRoute>
                 }
               />

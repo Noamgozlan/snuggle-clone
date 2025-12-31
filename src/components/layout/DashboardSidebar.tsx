@@ -29,6 +29,7 @@ const menuItems = [
   { icon: TrendingUp, label: "עסקאות", href: "/trades" },
   { icon: BarChart3, label: "סטטיסטיקות", href: "/statistics" },
   { icon: Target, label: "אסטרטגיות", href: "/strategies" },
+  { icon: BarChart3, label: "בקטסטינג", href: "/backtesting" },
   { icon: Users, label: "קהילה", href: "/community" },
   { icon: Gift, label: "הגרלות", href: "/giveaways" },
   { icon: User, label: "פרופיל", href: "/profile" },
