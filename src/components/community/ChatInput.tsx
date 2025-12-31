@@ -1,7 +1,8 @@
 import { useState, useRef, KeyboardEvent } from "react";
-import { Send, Paperclip, X, Smile, BarChart2 } from "lucide-react";
+import { Send, Paperclip, X, Smile, BarChart2, TrendingUp, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -10,7 +11,19 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CommunityMessage } from "@/hooks/useCommunity";
+import { ShareTradeDialog } from "./ShareTradeDialog";
 import { cn } from "@/lib/utils";
+
+interface SelectedTrade {
+  id: string;
+  symbol: string;
+  trade_type: string;
+  entry_price: number;
+  exit_price: number | null;
+  pnl: number | null;
+  strategy: string | null;
+  screenshot_url: string | null;
+}
 
 interface ChatInputProps {
   channelId: string;
@@ -40,8 +53,10 @@ export const ChatInput = ({
   const [content, setContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [selectedTrade, setSelectedTrade] = useState<SelectedTrade | null>(null);
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showTradeDialog, setShowTradeDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -70,8 +85,12 @@ export const ChatInput = ({
     }
   };
 
+  const clearTrade = () => {
+    setSelectedTrade(null);
+  };
+
   const handleSend = async () => {
-    if (!user || (!content.trim() && !file)) return;
+    if (!user || (!content.trim() && !file && !selectedTrade)) return;
 
     setSending(true);
     try {
@@ -106,12 +125,13 @@ export const ChatInput = ({
         fileUrl,
         fileType,
         fileName,
-        undefined,
+        selectedTrade?.id,
         replyTo?.id
       );
 
       setContent("");
       clearFile();
+      clearTrade();
       onClearReply();
     } catch (error) {
       console.error("Error sending message:", error);
@@ -158,6 +178,44 @@ export const ChatInput = ({
         </div>
       )}
 
+      {/* Selected Trade Preview */}
+      {selectedTrade && (
+        <div className="flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 mb-2">
+          <div className="flex items-center gap-2 flex-1">
+            <Badge
+              variant={selectedTrade.trade_type === "long" ? "default" : "destructive"}
+              className="text-xs"
+            >
+              {selectedTrade.trade_type === "long" ? (
+                <TrendingUp className="h-3 w-3 mr-1" />
+              ) : (
+                <TrendingDown className="h-3 w-3 mr-1" />
+              )}
+              {selectedTrade.trade_type.toUpperCase()}
+            </Badge>
+            <span className="font-semibold">{selectedTrade.symbol}</span>
+            {selectedTrade.pnl !== null && (
+              <span
+                className={cn(
+                  "font-bold text-sm",
+                  selectedTrade.pnl >= 0 ? "text-green-500" : "text-red-500"
+                )}
+              >
+                {selectedTrade.pnl >= 0 ? "+" : ""}${selectedTrade.pnl.toFixed(2)}
+              </span>
+            )}
+            {selectedTrade.strategy && (
+              <Badge variant="outline" className="text-xs">
+                {selectedTrade.strategy}
+              </Badge>
+            )}
+          </div>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={clearTrade}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
       {/* File Preview */}
       {file && (
         <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 mb-2">
@@ -189,7 +247,7 @@ export const ChatInput = ({
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={`הודעה ל-#${channelName}`}
-            className="min-h-[44px] max-h-32 resize-none pr-24 bg-background"
+            className="min-h-[44px] max-h-32 resize-none pr-28 bg-background"
             disabled={sending}
           />
           <div className="absolute left-2 bottom-2 flex items-center gap-1">
@@ -208,6 +266,15 @@ export const ChatInput = ({
               disabled={sending}
             >
               <Paperclip className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setShowTradeDialog(true)}
+              disabled={sending}
+            >
+              <BarChart2 className="h-4 w-4" />
             </Button>
             <Popover>
               <PopoverTrigger asChild>
@@ -234,7 +301,7 @@ export const ChatInput = ({
 
         <Button
           onClick={handleSend}
-          disabled={(!content.trim() && !file) || sending}
+          disabled={(!content.trim() && !file && !selectedTrade) || sending}
           className="h-[44px] px-4"
         >
           {sending ? (
@@ -248,6 +315,13 @@ export const ChatInput = ({
           )}
         </Button>
       </div>
+
+      {/* Share Trade Dialog */}
+      <ShareTradeDialog
+        open={showTradeDialog}
+        onOpenChange={setShowTradeDialog}
+        onSelectTrade={setSelectedTrade}
+      />
     </div>
   );
 };
