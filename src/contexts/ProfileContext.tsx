@@ -122,12 +122,33 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
         dbUpdates.chart_colors = { ...updates.chart_colors };
       }
 
-      const { error } = await supabase
+      // Check if profile exists first
+      const { data: existingProfile } = await supabase
         .from("profiles")
-        .update(dbUpdates)
-        .eq("user_id", user.id);
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existingProfile) {
+        // Update existing profile
+        const { error } = await supabase
+          .from("profiles")
+          .update(dbUpdates)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        // Create new profile with user_id
+        const { error } = await supabase
+          .from("profiles")
+          .insert({ 
+            user_id: user.id, 
+            email: user.email,
+            ...dbUpdates 
+          });
+
+        if (error) throw error;
+      }
 
       // Update local state immediately
       setProfile((prev) => prev ? { ...prev, ...updates } : null);
