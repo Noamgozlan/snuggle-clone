@@ -1,10 +1,12 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrades } from "@/hooks/useTrades";
-import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { TradeReports } from "@/components/statistics/TradeReports";
 
 interface TradeConfirmation {
   trade_id: string;
@@ -195,6 +197,14 @@ const Statistics = () => {
   const totalGrossWins = winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
   const totalGrossLosses = Math.abs(losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0));
 
+  // Get unique strategies for reports
+  const uniqueStrategies = useMemo(() => {
+    const strategies = trades
+      .map(t => t.strategy)
+      .filter((s): s is string => !!s);
+    return [...new Set(strategies)];
+  }, [trades]);
+
   if (loading) {
     return (
       <DashboardLayout title="סטטיסטיקות מתקדמות">
@@ -219,7 +229,19 @@ const Statistics = () => {
 
   return (
     <DashboardLayout title="סטטיסטיקות מתקדמות">
-      <div className="space-y-6">
+      <Tabs defaultValue="overview" dir="rtl" className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart2 className="h-4 w-4" />
+            סקירה כללית
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            דוחות מותאמים
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
         {/* Top Stats Row */}
         <div className="grid grid-cols-4 gap-4">
           <Card className="bg-card border-border p-4">
@@ -682,7 +704,12 @@ const Statistics = () => {
             </p>
           </Card>
         </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="reports">
+          <TradeReports trades={trades} strategies={uniqueStrategies} />
+        </TabsContent>
+      </Tabs>
     </DashboardLayout>
   );
 };
