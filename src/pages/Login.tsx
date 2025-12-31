@@ -150,6 +150,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="new-password"
                 />
               </div>
 
