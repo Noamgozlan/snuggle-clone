@@ -187,16 +187,17 @@ const Trades = () => {
   return (
     <DashboardLayout title="עסקאות">
       <div className="space-y-6">
-        {/* Filters */}
-        <div className="flex items-center justify-between animate-fade-in">
-          <div className="flex items-center gap-2">
+        {/* Filters - Mobile Responsive */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between animate-fade-in mt-8 md:mt-0">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button 
               variant="default" 
-              className="gap-2 bg-primary hover:bg-primary/90 hover:scale-105 transition-all"
+              className="gap-2 bg-primary hover:bg-primary/90 hover:scale-105 transition-all text-sm"
               onClick={() => setIsAddTradeOpen(true)}
             >
               <Plus className="h-4 w-4" />
-              הוסף עסקה
+              <span className="hidden sm:inline">הוסף עסקה</span>
+              <span className="sm:hidden">הוסף</span>
             </Button>
             <Button 
               variant="outline" 
@@ -205,7 +206,7 @@ const Trades = () => {
               onClick={() => setIsCSVImportOpen(true)}
             >
               <FileDown className="h-4 w-4" />
-              יבוא CSV
+              <span className="hidden sm:inline">יבוא CSV</span>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -216,7 +217,7 @@ const Trades = () => {
                   disabled={trades.length === 0}
                 >
                   <Trash2 className="h-4 w-4" />
-                  מחק הכל
+                  <span className="hidden sm:inline">מחק הכל</span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -234,17 +235,17 @@ const Trades = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <span className="text-sm text-muted-foreground">מציג {filteredTrades.length} עסקאות</span>
+            <span className="text-xs md:text-sm text-muted-foreground">{filteredTrades.length} עסקאות</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={cn(
-                  "hover:scale-105 transition-transform",
+                  "hover:scale-105 transition-transform text-xs md:text-sm",
                   fromDate && "bg-primary/10 border-primary"
                 )}>
-                  <CalendarIcon className="h-4 w-4 ml-2" />
-                  {fromDate ? format(fromDate, "dd/MM/yyyy") : "מתאריך"}
+                  <CalendarIcon className="h-4 w-4 ml-1 md:ml-2" />
+                  {fromDate ? format(fromDate, "dd/MM/yy") : "מתאריך"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -260,11 +261,11 @@ const Trades = () => {
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={cn(
-                  "hover:scale-105 transition-transform",
+                  "hover:scale-105 transition-transform text-xs md:text-sm",
                   toDate && "bg-primary/10 border-primary"
                 )}>
-                  <CalendarIcon className="h-4 w-4 ml-2" />
-                  {toDate ? format(toDate, "dd/MM/yyyy") : "עד תאריך"}
+                  <CalendarIcon className="h-4 w-4 ml-1 md:ml-2" />
+                  {toDate ? format(toDate, "dd/MM/yy") : "עד תאריך"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -282,19 +283,19 @@ const Trades = () => {
                 <X className="h-4 w-4" />
               </Button>
             )}
-            <div className="flex gap-1">
+            <div className="hidden md:flex gap-1">
               <Button variant="default" size="sm" className="bg-primary">כסף $</Button>
               <Button variant="secondary" size="sm">נקודות</Button>
             </div>
             <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
-              <Filter className="h-4 w-4 ml-2" />
-              מסננים
+              <Filter className="h-4 w-4 md:ml-2" />
+              <span className="hidden md:inline">מסננים</span>
             </Button>
           </div>
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-4 gap-4 stagger-children">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 stagger-children">
           <Card className="bg-card border-border p-4 hover-lift">
             <div className="flex items-center gap-4">
               <div className="flex-1">

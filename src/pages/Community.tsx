@@ -46,17 +46,37 @@ const Community = () => {
 
   return (
     <DashboardLayout>
-      <div className="h-[calc(100vh-80px)] flex" dir="rtl">
-        {/* Channel Sidebar */}
-        <ChannelSidebar
-          channels={channels}
-          activeChannel={activeChannel}
-          onChannelSelect={setActiveChannel}
-          onCreateChannel={createChannel}
-          onDeleteChannel={deleteChannel}
-          isAdmin={isAdmin}
-          canManageChannels={isAdmin || isModerator}
-        />
+      <div className="h-[calc(100vh-120px)] md:h-[calc(100vh-80px)] flex flex-col md:flex-row mt-8 md:mt-0" dir="rtl">
+        {/* Channel Sidebar - Hidden on mobile by default */}
+        <div className="hidden md:block">
+          <ChannelSidebar
+            channels={channels}
+            activeChannel={activeChannel}
+            onChannelSelect={setActiveChannel}
+            onCreateChannel={createChannel}
+            onDeleteChannel={deleteChannel}
+            isAdmin={isAdmin}
+            canManageChannels={isAdmin || isModerator}
+          />
+        </div>
+
+        {/* Mobile Channel Selector */}
+        <div className="md:hidden px-2 py-2 border-b border-border bg-card">
+          <select
+            className="w-full p-2 rounded-lg bg-muted text-foreground border border-border"
+            value={activeChannel?.id || ""}
+            onChange={(e) => {
+              const channel = channels.find(c => c.id === e.target.value);
+              if (channel) setActiveChannel(channel);
+            }}
+          >
+            {channels.map((channel) => (
+              <option key={channel.id} value={channel.id}>
+                {channel.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Main Chat Area */}
         <ChatArea
@@ -72,8 +92,8 @@ const Community = () => {
           showUserList={showUserList}
         />
 
-        {/* Online Users */}
-        {showUserList && <OnlineUsersList channel={activeChannel} />}
+        {/* Online Users - Hidden on mobile */}
+        {showUserList && <div className="hidden md:block"><OnlineUsersList channel={activeChannel} /></div>}
       </div>
     </DashboardLayout>
   );

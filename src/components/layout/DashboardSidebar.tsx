@@ -36,7 +36,11 @@ const menuItems = [
   { icon: Settings, label: "הגדרות", href: "/settings" },
 ];
 
-export const DashboardSidebar = () => {
+interface DashboardSidebarProps {
+  onNavigate?: () => void;
+}
+
+export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -70,6 +74,10 @@ export const DashboardSidebar = () => {
     navigate("/login", { replace: true });
   };
 
+  const handleLinkClick = () => {
+    onNavigate?.();
+  };
+
   const displayName = profile?.first_name && profile?.last_name 
     ? `${profile.first_name} ${profile.last_name}`
     : profile?.username || user?.email?.split("@")[0] || "משתמש";
@@ -84,10 +92,10 @@ export const DashboardSidebar = () => {
     .slice(0, 2);
 
   return (
-    <aside className="fixed right-0 top-0 h-screen w-64 bg-sidebar border-l border-sidebar-border flex flex-col z-50">
+    <aside className="h-screen w-64 bg-sidebar border-l border-sidebar-border flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-sidebar-border">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2" onClick={handleLinkClick}>
           <Logo size="md" />
         </Link>
       </div>
@@ -117,6 +125,7 @@ export const DashboardSidebar = () => {
               <li key={item.href}>
                 <Link
                   to={item.href}
+                  onClick={handleLinkClick}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                     isActive
@@ -136,6 +145,7 @@ export const DashboardSidebar = () => {
             <li>
               <Link
                 to="/mentor-chat"
+                onClick={handleLinkClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                   location.pathname === "/mentor-chat"
@@ -154,6 +164,7 @@ export const DashboardSidebar = () => {
             <li>
               <Link
                 to="/mentor"
+                onClick={handleLinkClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                   location.pathname === "/mentor"
@@ -177,6 +188,7 @@ export const DashboardSidebar = () => {
             <li>
               <Link
                 to="/admin"
+                onClick={handleLinkClick}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                   location.pathname === "/admin"
@@ -193,7 +205,7 @@ export const DashboardSidebar = () => {
       </nav>
 
       {/* Social Links */}
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border hidden md:block">
         <p className="text-xs text-muted-foreground mb-3 text-center">
           רוצים לקבל עדכונים שוטפים וטיפים ישירות אליכם? הצטרפו אלינו ותהיו חלק מקהילה חכמה!
         </p>

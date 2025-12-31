@@ -171,21 +171,21 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 p-2">
+      <div className="space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-l from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="mt-8 md:mt-0">
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-l from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
               סקירה כללית
             </h1>
-            <p className="text-muted-foreground mt-1">ניתוח הביצועים שלך במבט אחד</p>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">ניתוח הביצועים שלך במבט אחד</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <div className="flex bg-secondary/50 rounded-lg p-1">
               <Button 
                 variant="ghost"
                 size="sm" 
-                className={`transition-all ${displayMode === "money" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
+                className={`transition-all text-xs md:text-sm ${displayMode === "money" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
                 onClick={() => setDisplayMode("money")}
               >
                 💵 כסף
@@ -193,7 +193,7 @@ const Dashboard = () => {
               <Button 
                 variant="ghost"
                 size="sm"
-                className={`transition-all ${displayMode === "points" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
+                className={`transition-all text-xs md:text-sm ${displayMode === "points" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
                 onClick={() => setDisplayMode("points")}
               >
                 📊 נקודות
@@ -202,31 +202,32 @@ const Dashboard = () => {
             <Button 
               variant="outline"
               size="icon"
-              className="hover:bg-primary/10 hover:border-primary"
+              className="hover:bg-primary/10 hover:border-primary h-8 w-8 md:h-10 md:w-10"
               onClick={() => setIsShareOpen(true)}
               title="שתף את הביצועים שלך"
             >
               <Share2 className="h-4 w-4" />
             </Button>
             <Button 
-              className="gap-2 bg-gradient-to-l from-primary to-primary/80 hover:opacity-90 shadow-lg shadow-primary/25"
+              className="gap-2 bg-gradient-to-l from-primary to-primary/80 hover:opacity-90 shadow-lg shadow-primary/25 text-xs md:text-sm"
               onClick={() => setIsAddTradeOpen(true)}
             >
               <Plus className="h-4 w-4" />
-              הוסף עסקה
+              <span className="hidden sm:inline">הוסף עסקה</span>
+              <span className="sm:hidden">הוסף</span>
             </Button>
           </div>
         </div>
 
         {/* Main Stats Grid */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {/* Total PnL */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-5 group hover:border-primary/30 transition-all">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-3 md:p-5 group hover:border-primary/30 transition-all">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-primary/50" />
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">סה״כ רווח/הפסד</p>
-                <p className={`text-3xl font-bold ${totalDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
+                <p className="text-xs md:text-sm text-muted-foreground mb-1">סה״כ רווח/הפסד</p>
+                <p className={`text-xl md:text-3xl font-bold ${totalDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {totalDisplay >= 0 ? '+' : ''}{displayMode === "money" ? `$${totalDisplay.toFixed(2)}` : `${totalDisplay.toFixed(1)}`}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{stats.totalTrades} עסקאות</p>
@@ -242,13 +243,13 @@ const Dashboard = () => {
           </Card>
 
           {/* Win Rate */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-5 group hover:border-primary/30 transition-all">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-3 md:p-5 group hover:border-primary/30 transition-all">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-warning to-warning/50" />
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">אחוז הצלחה</p>
-                <p className="text-3xl font-bold text-foreground">{stats.winRate.toFixed(1)}%</p>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <p className="text-xs md:text-sm text-muted-foreground mb-1">אחוז הצלחה</p>
+                <p className="text-xl md:text-3xl font-bold text-foreground">{stats.winRate.toFixed(1)}%</p>
+                <div className="flex items-center gap-1 md:gap-2 mt-1 flex-wrap">
                   <span className="text-xs text-success">{stats.winningTrades} רווח</span>
                   <span className="text-xs text-muted-foreground">|</span>
                   <span className="text-xs text-destructive">{stats.losingTrades} הפסד</span>
@@ -273,12 +274,12 @@ const Dashboard = () => {
           </Card>
 
           {/* Avg RR */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-5 group hover:border-primary/30 transition-all">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-3 md:p-5 group hover:border-primary/30 transition-all">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-primary/50" />
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Avg RR</p>
-                <p className="text-3xl font-bold text-foreground">{stats.avgRR.toFixed(2)}</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-1">Avg RR</p>
+                <p className="text-xl md:text-3xl font-bold text-foreground">{stats.avgRR.toFixed(2)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {stats.avgRR >= 2 ? '🔥 מצוין' : stats.avgRR >= 1 ? '✓ טוב' : '⚠️ לשפר'}
                 </p>
@@ -290,12 +291,12 @@ const Dashboard = () => {
           </Card>
 
           {/* Average PnL */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-5 group hover:border-primary/30 transition-all">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-3 md:p-5 group hover:border-primary/30 transition-all">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-success to-success/50" />
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">ממוצע לעסקה</p>
-                <p className={`text-3xl font-bold ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
+                <p className="text-xs md:text-sm text-muted-foreground mb-1">ממוצע לעסקה</p>
+                <p className={`text-xl md:text-3xl font-bold ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {displayMode === "money" ? `$${avgDisplay.toFixed(2)}` : avgDisplay.toFixed(1)}
                 </p>
                 <div className="flex items-center gap-1 mt-1">
@@ -311,9 +312,9 @@ const Dashboard = () => {
         </div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
           {/* Calendar */}
-          <div className="col-span-7 space-y-4">
+          <div className="lg:col-span-7 space-y-4">
             <TradingCalendar trades={trades} />
 
             {/* Streaks & Records */}
@@ -377,7 +378,7 @@ const Dashboard = () => {
           </div>
 
           {/* Right Column */}
-          <div className="col-span-5 space-y-4">
+          <div className="lg:col-span-5 space-y-4">
             {/* Trading Score */}
             <TradingScore 
               winRate={stats.winRate}
