@@ -67,9 +67,12 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
   const calendarDays = useMemo(() => {
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
     
-    // Add padding days at the start (for RTL, we need to adjust)
+    // For RTL Hebrew calendar: days are displayed reversed (Saturday first visually)
+    // getDay returns 0 for Sunday, 1 for Monday, etc.
+    // In RTL view: Saturday(6) is first column, Sunday(0) is last column
+    // So padding = 6 - dayOfWeek (e.g., Thursday=4 -> padding=2)
     const firstDayOfWeek = getDay(monthStart);
-    const paddingDays = Array(firstDayOfWeek).fill(null);
+    const paddingDays = Array(6 - firstDayOfWeek).fill(null);
     
     return [...paddingDays, ...days];
   }, [monthStart, monthEnd]);
