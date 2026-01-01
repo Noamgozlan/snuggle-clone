@@ -67,12 +67,11 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
   const calendarDays = useMemo(() => {
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
     
-    // For RTL Hebrew calendar: days are displayed reversed (Saturday first visually)
-    // getDay returns 0 for Sunday, 1 for Monday, etc.
-    // In RTL view: Saturday(6) is first column, Sunday(0) is last column
-    // So padding = 6 - dayOfWeek (e.g., Thursday=4 -> padding=2)
+    // Standard week starts on Sunday (getDay: 0=Sunday, 6=Saturday)
+    // For Hebrew RTL display with Saturday on right, we reverse the headers
+    // But need padding from the START of the week (Sunday side)
     const firstDayOfWeek = getDay(monthStart);
-    const paddingDays = Array(6 - firstDayOfWeek).fill(null);
+    const paddingDays = Array(firstDayOfWeek).fill(null);
     
     return [...paddingDays, ...days];
   }, [monthStart, monthEnd]);
@@ -168,8 +167,8 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
         </div>
 
         {/* Main Calendar */}
-        <div className="flex-1">
-          {/* Days Header */}
+        <div className="flex-1" dir="ltr">
+          {/* Days Header - reversed for RTL display */}
           <div className="grid grid-cols-7 gap-1">
             {[...hebrewDays].reverse().map((day) => (
               <div key={day} className="h-8 flex items-center justify-center text-xs text-muted-foreground border-b border-border">
