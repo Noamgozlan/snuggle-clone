@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useBreakEvenConfig } from "./useBreakEvenConfig";
 
 export interface Trade {
   id: string;
@@ -51,6 +52,7 @@ export interface TradeStats {
 export const useTrades = () => {
   const { user } = useAuth();
   const { activePortfolio } = usePortfolio();
+  const { min: beMin, max: beMax } = useBreakEvenConfig();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<TradeStats>({
@@ -73,54 +75,63 @@ export const useTrades = () => {
     maxLossPoints: 0,
   });
 
-  const calculateStats = useCallback((tradesData: Trade[]) => {
-    const totalPnl = tradesData.reduce((sum, t) => sum + (t.pnl || 0), 0);
-    const totalPoints = tradesData.reduce((sum, t) => sum + (t.pnl_points || 0), 0);
-    const winningTrades = tradesData.filter(t => (t.pnl || 0) > 0);
-    const losingTrades = tradesData.filter(t => (t.pnl || 0) < 0);
-    const breakevenTrades = tradesData.filter(t => t.pnl === 0 || t.pnl === null);
-    const totalWins = winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
-    const totalLosses = Math.abs(losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0));
+  const calculateStats = useCallback(
+    (tradesData: Trade[]) => {
+      const totalPnl = tradesData.reduce((sum, t) => sum + (t.pnl || 0), 0);
+      const totalPoints = tradesData.reduce((sum, t) => sum + (t.pnl_points || 0), 0);
 
-    const pnls = tradesData.map(t => t.pnl || 0);
-    const points = tradesData.map(t => t.pnl_points || 0);
-    const maxWin = pnls.length > 0 ? Math.max(...pnls) : 0;
-    const maxLoss = pnls.length > 0 ? Math.min(...pnls) : 0;
-    const maxWinPoints = points.length > 0 ? Math.max(...points) : 0;
-    const maxLossPoints = points.length > 0 ? Math.min(...points) : 0;
-    
-    const avgWin = winningTrades.length > 0 ? totalWins / winningTrades.length : 0;
-    const avgLoss = losingTrades.length > 0 ? totalLosses / losingTrades.length : 0;
+      // Categorize trades based on Break Even range
+      const winningTrades = tradesData.filter((t) => (t.pnl || 0) > beMax);
+      const losingTrades = tradesData.filter((t) => (t.pnl || 0) < beMin);
+      const breakevenTrades = tradesData.filter((t) => {
+        const pnl = t.pnl || 0;
+        // BE if it's explicitly 0/null OR within the [min, max] range inclusive
+        return pnl === 0 || t.pnl === null || (pnl >= beMin && pnl <= beMax);
+      });
 
-    // Calculate Avg RR
-    const tradesWithRR = tradesData.filter(t => t.rr !== null && t.rr !== undefined);
-    const avgRR = tradesWithRR.length > 0 
-      ? tradesWithRR.reduce((sum, t) => sum + (t.rr || 0), 0) / tradesWithRR.length 
-      : 0;
+      const totalWins = winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+      const totalLosses = Math.abs(losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0));
 
-    // Win rate excludes break-even trades (only count wins vs losses)
-    const decisiveTrades = winningTrades.length + losingTrades.length;
+      const pnls = tradesData.map((t) => t.pnl || 0);
+      const points = tradesData.map((t) => t.pnl_points || 0);
+      const maxWin = pnls.length > 0 ? Math.max(...pnls) : 0;
+      const maxLoss = pnls.length > 0 ? Math.min(...pnls) : 0;
+      const maxWinPoints = points.length > 0 ? Math.max(...points) : 0;
+      const maxLossPoints = points.length > 0 ? Math.min(...points) : 0;
 
-    setStats({
-      totalPnl,
-      totalPoints,
-      totalTrades: tradesData.length,
-      winningTrades: winningTrades.length,
-      losingTrades: losingTrades.length,
-      breakevenTrades: breakevenTrades.length,
-      winRate: decisiveTrades > 0 ? (winningTrades.length / decisiveTrades) * 100 : 0,
-      profitFactor: totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0,
-      avgRR,
-      avgPnl: tradesData.length > 0 ? totalPnl / tradesData.length : 0,
-      avgPoints: tradesData.length > 0 ? totalPoints / tradesData.length : 0,
-      avgWin,
-      avgLoss,
-      maxWin,
-      maxLoss,
-      maxWinPoints,
-      maxLossPoints,
-    });
-  }, []);
+      const avgWin = winningTrades.length > 0 ? totalWins / winningTrades.length : 0;
+      const avgLoss = losingTrades.length > 0 ? totalLosses / losingTrades.length : 0;
+
+      // Calculate Avg RR
+      const tradesWithRR = tradesData.filter((t) => t.rr !== null && t.rr !== undefined);
+      const avgRR =
+        tradesWithRR.length > 0 ? tradesWithRR.reduce((sum, t) => sum + (t.rr || 0), 0) / tradesWithRR.length : 0;
+
+      // Win rate excludes break-even trades (only count wins vs losses)
+      const decisiveTrades = winningTrades.length + losingTrades.length;
+
+      setStats({
+        totalPnl,
+        totalPoints,
+        totalTrades: tradesData.length,
+        winningTrades: winningTrades.length,
+        losingTrades: losingTrades.length,
+        breakevenTrades: breakevenTrades.length,
+        winRate: decisiveTrades > 0 ? (winningTrades.length / decisiveTrades) * 100 : 0,
+        profitFactor: totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0,
+        avgRR,
+        avgPnl: tradesData.length > 0 ? totalPnl / tradesData.length : 0,
+        avgPoints: tradesData.length > 0 ? totalPoints / tradesData.length : 0,
+        avgWin,
+        avgLoss,
+        maxWin,
+        maxLoss,
+        maxWinPoints,
+        maxLossPoints,
+      });
+    },
+    [beMin, beMax],
+  );
 
   const fetchTrades = useCallback(async () => {
     if (!user) {
@@ -130,15 +141,11 @@ export const useTrades = () => {
     }
 
     try {
-      let query = supabase
-        .from('trades')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      let query = supabase.from("trades").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
 
       // Filter by active portfolio if one is selected
       if (activePortfolio) {
-        query = query.eq('portfolio_id', activePortfolio.id);
+        query = query.eq("portfolio_id", activePortfolio.id);
       }
 
       const { data, error } = await query;
@@ -149,18 +156,15 @@ export const useTrades = () => {
       setTrades(tradesData);
       calculateStats(tradesData);
     } catch (error) {
-      console.error('Error fetching trades:', error);
+      console.error("Error fetching trades:", error);
     } finally {
       setLoading(false);
     }
-  }, [user, activePortfolio, calculateStats]);
+  }, [user, activePortfolio, calculateStats]); // calculateStats now depends on beMin/beMax via callback dep
 
   const deleteTrade = async (tradeId: string) => {
     try {
-      const { error } = await supabase
-        .from('trades')
-        .delete()
-        .eq('id', tradeId);
+      const { error } = await supabase.from("trades").delete().eq("id", tradeId);
 
       if (error) throw error;
 
@@ -168,7 +172,7 @@ export const useTrades = () => {
       await fetchTrades();
       return { success: true };
     } catch (error) {
-      console.error('Error deleting trade:', error);
+      console.error("Error deleting trade:", error);
       return { success: false, error };
     }
   };
@@ -177,14 +181,11 @@ export const useTrades = () => {
     if (!user) return { success: false };
 
     try {
-      let query = supabase
-        .from('trades')
-        .delete()
-        .eq('user_id', user.id);
+      let query = supabase.from("trades").delete().eq("user_id", user.id);
 
       // Only delete trades for active portfolio if one is selected
       if (activePortfolio) {
-        query = query.eq('portfolio_id', activePortfolio.id);
+        query = query.eq("portfolio_id", activePortfolio.id);
       }
 
       const { error } = await query;
@@ -195,7 +196,7 @@ export const useTrades = () => {
       calculateStats([]);
       return { success: true };
     } catch (error) {
-      console.error('Error deleting all trades:', error);
+      console.error("Error deleting all trades:", error);
       return { success: false, error };
     }
   };
