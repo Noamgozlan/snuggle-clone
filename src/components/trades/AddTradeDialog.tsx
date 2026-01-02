@@ -1,30 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Minus, Star, Upload, Loader2, X, CalendarIcon } from "lucide-react";
+import { Plus, Minus, Star, Upload, Loader2, X, CalendarIcon, Layers } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -56,9 +40,18 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
   const [selectedConfirmations, setSelectedConfirmations] = useState<string[]>([]);
   const [riskType, setRiskType] = useState<"dollars" | "percent">("dollars");
+  const { portfolios } = usePortfolio();
+  const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
   const [isBreakeven, setIsBreakeven] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [tradeDate, setTradeDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    if (activePortfolio && selectedPortfolioIds.length === 0) {
+      setSelectedPortfolioIds([activePortfolio.id]);
+    }
+  }, [activePortfolio]);
+
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
@@ -96,20 +89,19 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setSelectedStrategy(null);
     setSelectedConfirmations([]);
     setRiskType("dollars");
+    setSelectedPortfolioIds(activePortfolio ? [activePortfolio.id] : []);
     setIsBreakeven(false);
   };
 
   const handleStrategyChange = (strategyId: string) => {
-    const strategy = strategies.find(s => s.id === strategyId) || null;
+    const strategy = strategies.find((s) => s.id === strategyId) || null;
     setSelectedStrategy(strategy);
     setSelectedConfirmations([]);
   };
 
   const toggleConfirmation = (confName: string) => {
-    setSelectedConfirmations(prev =>
-      prev.includes(confName)
-        ? prev.filter(c => c !== confName)
-        : [...prev, confName]
+    setSelectedConfirmations((prev) =>
+      prev.includes(confName) ? prev.filter((c) => c !== confName) : [...prev, confName],
     );
   };
 
@@ -126,25 +118,23 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
 
     setUploadingImage(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('trade-screenshots')
-        .upload(fileName, file);
+
+      const { error: uploadError } = await supabase.storage.from("trade-screenshots").upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('trade-screenshots')
-        .getPublicUrl(fileName);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("trade-screenshots").getPublicUrl(fileName);
 
       setScreenshotUrl(publicUrl);
       toast({
         title: "התמונה הועלתה בהצלחה",
       });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error("Error uploading image:", error);
       toast({
         title: "שגיאה בהעלאת התמונה",
         variant: "destructive",
@@ -159,7 +149,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setScreenshotUrl(null);
     setScreenshotPreview(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -188,7 +178,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
 
     try {
       // Build entry date from selected date
-      const tradeDateStr = format(tradeDate, 'yyyy-MM-dd');
+      const tradeDateStr = format(tradeDate, "yyyy-MM-dd");
       const entryDate = `${tradeDateStr}T00:00:00`;
 
       // Calculate exit date based on duration
@@ -197,7 +187,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
         const hours = parseInt(formData.durationHours) || 0;
         const minutes = parseInt(formData.durationMinutes) || 0;
         const seconds = parseInt(formData.durationSeconds) || 0;
-        
+
         const entryDateTime = new Date(`${tradeDateStr}T00:00:00`);
         entryDateTime.setHours(entryDateTime.getHours() + hours);
         entryDateTime.setMinutes(entryDateTime.getMinutes() + minutes);
@@ -213,43 +203,52 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
         pnlValue = pnlSign === "negative" ? -Math.abs(parseFloat(formData.pnl)) : Math.abs(parseFloat(formData.pnl));
       }
 
-      const { data: tradeData, error } = await supabase.from('trades').insert({
-        user_id: user.id,
-        portfolio_id: activePortfolio?.id || null,
-        symbol: formData.symbol.toUpperCase(),
-        trade_type: tradeType,
-        quantity: parseFloat(formData.quantity) || 1,
-        entry_date: entryDate,
-        exit_date: exitDate,
-        entry_price: 0,
-        exit_price: null,
-        pnl: pnlValue,
-        pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
-        risk: formData.risk ? parseFloat(formData.risk) : null,
-        rr: formData.rr ? parseFloat(formData.rr) : null,
-        rating: rating || null,
-        strategy: selectedStrategy?.name || null,
-        entry_reason: formData.entryReason || null,
-        conclusions: formData.conclusions || null,
-        is_closed: true,
-        screenshot_url: screenshotUrl,
-      }).select('id').single();
+      // Sync across selected portfolios
+      const portfoliosToCreate = selectedPortfolioIds.length > 0 ? selectedPortfolioIds : [activePortfolio?.id || null];
 
-      if (error) throw error;
+      for (const portfolioId of portfoliosToCreate) {
+        const { data: tradeData, error } = await supabase
+          .from("trades")
+          .insert({
+            user_id: user.id,
+            portfolio_id: portfolioId,
+            symbol: formData.symbol.toUpperCase(),
+            trade_type: tradeType,
+            quantity: parseFloat(formData.quantity) || 1,
+            entry_date: entryDate,
+            exit_date: exitDate,
+            entry_price: 0,
+            exit_price: null,
+            pnl: pnlValue,
+            pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
+            risk: formData.risk ? parseFloat(formData.risk) : null,
+            rr: formData.rr ? parseFloat(formData.rr) : null,
+            rating: rating || null,
+            strategy: selectedStrategy?.name || null,
+            notes:
+              formData.entryReason || formData.conclusions
+                ? `${formData.entryReason || ""}\n\n[CONCLUSIONS]\n${formData.conclusions || ""}`.trim()
+                : null,
+            is_closed: true,
+            screenshot_url: screenshotUrl,
+          })
+          .select("id")
+          .single();
 
-      // Save selected confirmations for this trade
-      if (tradeData && selectedConfirmations.length > 0) {
-        const confirmationsToInsert = selectedConfirmations.map(confName => ({
-          trade_id: tradeData.id,
-          confirmation_name: confName,
-        }));
+        if (error) throw error;
 
-        const { error: confError } = await supabase
-          .from('trade_confirmations')
-          .insert(confirmationsToInsert);
+        // Save selected confirmations for this trade
+        if (tradeData && selectedConfirmations.length > 0) {
+          const confirmationsToInsert = selectedConfirmations.map((confName) => ({
+            trade_id: tradeData.id,
+            confirmation_name: confName,
+          }));
 
-        if (confError) {
-          console.error('Error saving confirmations:', confError);
+          const { error: confError } = await supabase.from("trade_confirmations").insert(confirmationsToInsert);
+
+          if (confError) {
+            console.error("Error saving confirmations:", confError);
+          }
         }
       }
 
@@ -262,7 +261,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       onOpenChange?.(false);
       onTradeAdded?.();
     } catch (error) {
-      console.error('Error adding trade:', error);
+      console.error("Error adding trade:", error);
       toast({
         title: "שגיאה",
         description: "לא ניתן להוסיף את העסקה",
@@ -276,7 +275,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border animate-scale-in">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-card border-border animate-scale-in">
         <DialogHeader className="animate-fade-in">
           <DialogTitle className="text-xl font-bold text-right">הוסף עסקה חדשה</DialogTitle>
           <p className="text-sm text-muted-foreground text-right">הזן את פרטי העסקה להלן</p>
@@ -315,10 +314,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                   type="button"
                   variant={tradeType === "short" ? "destructive" : "outline"}
                   size="sm"
-                  className={cn(
-                    "flex-1 transition-all duration-200",
-                    tradeType === "short" && "scale-105"
-                  )}
+                  className={cn("flex-1 transition-all duration-200", tradeType === "short" && "scale-105")}
                   onClick={() => setTradeType("short")}
                 >
                   S
@@ -327,10 +323,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                   type="button"
                   variant={tradeType === "long" ? "default" : "outline"}
                   size="sm"
-                  className={cn(
-                    "flex-1 transition-all duration-200",
-                    tradeType === "long" && "scale-105 bg-primary"
-                  )}
+                  className={cn("flex-1 transition-all duration-200", tradeType === "long" && "scale-105 bg-primary")}
                   onClick={() => setTradeType("long")}
                 >
                   L
@@ -404,7 +397,6 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* Row 2: PnL, Points */}
@@ -449,8 +441,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                     isBreakeven
                       ? "bg-warning/20 border-warning/30 text-warning"
                       : pnlSign === "positive"
-                        ? "bg-success/20 border-success/30 text-success hover:border-success/50" 
-                        : "bg-destructive/20 border-destructive/30 text-destructive hover:border-destructive/50"
+                        ? "bg-success/20 border-success/30 text-success hover:border-success/50"
+                        : "bg-destructive/20 border-destructive/30 text-destructive hover:border-destructive/50",
                   )}
                 />
                 <Button
@@ -459,7 +451,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                   size="icon"
                   className={cn(
                     "h-10 w-10 rounded-full flex-shrink-0 hover:scale-110 transition-transform",
-                    pnlSign === "positive" && !isBreakeven && "bg-primary"
+                    pnlSign === "positive" && !isBreakeven && "bg-primary",
                   )}
                   onClick={() => {
                     setPnlSign("positive");
@@ -475,7 +467,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                   size="sm"
                   className={cn(
                     "flex-shrink-0 transition-all font-medium",
-                    isBreakeven && "bg-warning/20 text-warning border-warning/30 hover:bg-warning/30"
+                    isBreakeven && "bg-warning/20 text-warning border-warning/30 hover:bg-warning/30",
                   )}
                   onClick={() => {
                     setIsBreakeven(!isBreakeven);
@@ -491,7 +483,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           </div>
 
           {/* Row 3: Risk, Commission, Rating, Strategy */}
-          <div className="grid grid-cols-4 gap-4 stagger-children">
+          <div className="grid grid-cols-5 gap-4 stagger-children">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סיכון</Label>
               <div className="flex gap-1">
@@ -509,9 +501,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                     onClick={() => setRiskType("dollars")}
                     className={cn(
                       "px-2 py-1 text-sm transition-colors",
-                      riskType === "dollars" 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-input hover:bg-secondary"
+                      riskType === "dollars" ? "bg-primary text-primary-foreground" : "bg-input hover:bg-secondary",
                     )}
                   >
                     $
@@ -521,9 +511,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                     onClick={() => setRiskType("percent")}
                     className={cn(
                       "px-2 py-1 text-sm transition-colors",
-                      riskType === "percent" 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-input hover:bg-secondary"
+                      riskType === "percent" ? "bg-primary text-primary-foreground" : "bg-input hover:bg-secondary",
                     )}
                   >
                     %
@@ -556,9 +544,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                     <Star
                       className={cn(
                         "h-5 w-5 transition-colors",
-                        star <= rating
-                          ? "fill-warning text-warning"
-                          : "text-muted-foreground"
+                        star <= rating ? "fill-warning text-warning" : "text-muted-foreground",
                       )}
                     />
                   </button>
@@ -566,21 +552,64 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-2">
               <Label className="text-muted-foreground text-sm">אסטרטגיה</Label>
-              <Select
-                value={selectedStrategy?.id || ""}
-                onValueChange={handleStrategyChange}
-              >
-                <SelectTrigger className="bg-input border-border">
-                  <SelectValue placeholder="בחר אסטרטגיה" />
-                </SelectTrigger>
-                <SelectContent>
-                  {strategies.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={selectedStrategy?.id || ""} onValueChange={handleStrategyChange}>
+                  <SelectTrigger className="bg-input border-border flex-1">
+                    <SelectValue placeholder="בחר אסטרטגיה" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {strategies.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "bg-input border-border gap-2 whitespace-nowrap px-3",
+                        selectedPortfolioIds.length > 1 && "border-primary/50 bg-primary/5",
+                      )}
+                    >
+                      <Layers className="h-4 w-4 text-primary" />
+                      <span className="hidden sm:inline">סנכרון תיקים</span>
+                      {selectedPortfolioIds.length > 1 && (
+                        <span className="bg-primary text-primary-foreground text-[10px] px-1.5 rounded-full">
+                          {selectedPortfolioIds.length}
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3 bg-card border-border" align="end">
+                    <h4 className="font-medium text-sm mb-3 text-right">סנכרן עם תיקים נוספים</h4>
+                    <div className="space-y-2">
+                      {portfolios.map((portfolio) => (
+                        <div key={portfolio.id} className="flex items-center gap-2 justify-end">
+                          <Label htmlFor={`sync-${portfolio.id}`} className="text-sm cursor-pointer order-1">
+                            {portfolio.name}
+                          </Label>
+                          <Checkbox
+                            id={`sync-${portfolio.id}`}
+                            checked={selectedPortfolioIds.includes(portfolio.id)}
+                            className="order-2"
+                            onCheckedChange={(checked) => {
+                              setSelectedPortfolioIds((prev) =>
+                                checked ? [...prev, portfolio.id] : prev.filter((id) => id !== portfolio.id),
+                              );
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
 
@@ -596,10 +625,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                       checked={selectedConfirmations.includes(conf.name)}
                       onCheckedChange={() => toggleConfirmation(conf.name)}
                     />
-                    <label
-                      htmlFor={conf.id}
-                      className="text-sm cursor-pointer"
-                    >
+                    <label htmlFor={conf.id} className="text-sm cursor-pointer">
                       {conf.name}
                     </label>
                   </div>
@@ -614,18 +640,12 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           {/* Screenshot Upload */}
           <div className="space-y-2 animate-fade-in">
             <Label className="text-muted-foreground text-sm">צילום מסך של העסקה</Label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
             {screenshotPreview ? (
               <div className="relative border border-border rounded-xl overflow-hidden">
-                <img 
-                  src={screenshotPreview} 
-                  alt="צילום מסך" 
+                <img
+                  src={screenshotPreview}
+                  alt="צילום מסך"
                   className="w-full max-h-64 object-contain bg-secondary/30"
                 />
                 <button
@@ -642,7 +662,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                 )}
               </div>
             ) : (
-              <div 
+              <div
                 onClick={() => fileInputRef.current?.click()}
                 className="border border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors cursor-pointer group"
               >
@@ -652,25 +672,62 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             )}
           </div>
 
-          {/* Entry Reason & Conclusions */}
+          {/* Notes - Split into Entry Reason and Conclusions */}
           <div className="grid grid-cols-2 gap-4 animate-fade-in">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סיבת כניסה לעסקה</Label>
-              <Textarea
-                placeholder="למה נכנסת לעסקה? מה היו הסיגנלים?"
-                value={formData.entryReason}
-                onChange={(e) => setFormData({ ...formData, entryReason: e.target.value })}
-                className="bg-input border-border min-h-[120px] max-h-[200px] overflow-y-auto resize-none"
-              />
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b border-border">
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="font-bold text-sm">B</span>
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="italic text-sm">I</span>
+                  </button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    גדול
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    קטן
+                  </button>
+                </div>
+                <Textarea
+                  placeholder="למה נכנסת לעסקה? מה היו הסיגנלים?"
+                  value={formData.entryReason}
+                  onChange={(e) => setFormData({ ...formData, entryReason: e.target.value })}
+                  className="border-0 min-h-[120px] max-h-[200px] overflow-y-auto resize-none focus-visible:ring-0 text-right"
+                  dir="rtl"
+                />
+              </div>
             </div>
+
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">מסקנות לאחר העסקה</Label>
-              <Textarea
-                placeholder="מה למדת מהעסקה? מה היית עושה אחרת?"
-                value={formData.conclusions}
-                onChange={(e) => setFormData({ ...formData, conclusions: e.target.value })}
-                className="bg-input border-border min-h-[120px] max-h-[200px] overflow-y-auto resize-none"
-              />
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b border-border">
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="font-bold text-sm">B</span>
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="italic text-sm">I</span>
+                  </button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    גדול
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    קטן
+                  </button>
+                </div>
+                <Textarea
+                  placeholder="מה למדת מהעסקה? מה היית עושה אחרת?"
+                  value={formData.conclusions}
+                  onChange={(e) => setFormData({ ...formData, conclusions: e.target.value })}
+                  className="border-0 min-h-[120px] max-h-[200px] overflow-y-auto resize-none focus-visible:ring-0 text-right"
+                  dir="rtl"
+                />
+              </div>
             </div>
           </div>
 
