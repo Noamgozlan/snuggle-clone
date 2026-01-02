@@ -1,20 +1,18 @@
 import { useState, useRef, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Minus, Star, Upload, Loader2, X } from "lucide-react";
+import { Plus, Minus, Star, Upload, Loader2, X, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Trade } from "@/hooks/useTrades";
+import { usePortfolio } from "@/contexts/PortfolioContext";
 
 interface EditTradeDialogProps {
   trade: Trade | null;
@@ -34,6 +32,8 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { portfolios } = usePortfolio();
+  const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
@@ -53,10 +53,13 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   useEffect(() => {
     if (trade) {
       const pnl = trade.pnl || 0;
+      const fullNotes = trade.notes || "";
+      const [reason, ...rest] = fullNotes.split("\n\n[CONCLUSIONS]\n");
+
       setFormData({
         symbol: trade.symbol || "",
         quantity: String(trade.quantity || 1),
-        tradeDate: trade.entry_date ? trade.entry_date.split('T')[0] : "",
+        tradeDate: trade.entry_date ? trade.entry_date.split("T")[0] : "",
         entryPrice: String(trade.entry_price || ""),
         exitPrice: trade.exit_price ? String(trade.exit_price) : "",
         pnl: String(Math.abs(pnl)),
@@ -64,14 +67,15 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
         risk: trade.risk ? String(trade.risk) : "",
         rr: trade.rr ? String(trade.rr) : "",
         strategy: trade.strategy || "",
-        entryReason: (trade as any).entry_reason || "",
-        conclusions: (trade as any).conclusions || "",
+        entryReason: reason || "",
+        conclusions: rest.join("\n\n[CONCLUSIONS]\n") || "",
       });
       setRating(trade.rating || 0);
-      setTradeType(trade.trade_type as "long" | "short" || "long");
+      setTradeType((trade.trade_type as "long" | "short") || "long");
       setPnlSign(pnl >= 0 ? "positive" : "negative");
       setScreenshotUrl(trade.screenshot_url);
       setScreenshotPreview(trade.screenshot_url);
+      setSelectedPortfolioIds(trade.portfolio_id ? [trade.portfolio_id] : []);
     }
   }, [trade]);
 
@@ -87,23 +91,21 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
 
     setUploadingImage(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('trade-screenshots')
-        .upload(fileName, file);
+
+      const { error: uploadError } = await supabase.storage.from("trade-screenshots").upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('trade-screenshots')
-        .getPublicUrl(fileName);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("trade-screenshots").getPublicUrl(fileName);
 
       setScreenshotUrl(publicUrl);
       toast({ title: "התמונה הועלתה בהצלחה" });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error("Error uploading image:", error);
       toast({ title: "שגיאה בהעלאת התמונה", variant: "destructive" });
       setScreenshotPreview(null);
     } finally {
@@ -115,7 +117,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
     setScreenshotUrl(null);
     setScreenshotPreview(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -140,12 +142,19 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
         entryDate = `${formData.tradeDate}T00:00:00`;
       }
 
-      const pnlValue = formData.pnl 
-        ? (pnlSign === "negative" ? -Math.abs(parseFloat(formData.pnl)) : Math.abs(parseFloat(formData.pnl)))
+      const pnlValue = formData.pnl
+        ? pnlSign === "negative"
+          ? -Math.abs(parseFloat(formData.pnl))
+          : Math.abs(parseFloat(formData.pnl))
         : null;
 
+      const combinedNotes =
+        formData.entryReason || formData.conclusions
+          ? `${formData.entryReason || ""}\n\n[CONCLUSIONS]\n${formData.conclusions || ""}`.trim()
+          : null;
+
       const { error } = await supabase
-        .from('trades')
+        .from("trades")
         .update({
           symbol: formData.symbol.toUpperCase(),
           trade_type: tradeType,
@@ -159,20 +168,54 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           rr: formData.rr ? parseFloat(formData.rr) : null,
           rating: rating || null,
           strategy: formData.strategy || null,
-          entry_reason: formData.entryReason || null,
-          conclusions: formData.conclusions || null,
+          notes: combinedNotes,
           is_closed: true,
           screenshot_url: screenshotUrl,
         })
-        .eq('id', trade.id);
+        .eq("id", trade.id);
 
       if (error) throw error;
+
+      // Check if user wants to sync to OTHER portfolios (creating copies)
+      const otherPortfolioIds = selectedPortfolioIds.filter((id) => id !== trade.portfolio_id);
+
+      if (otherPortfolioIds.length > 0) {
+        const tradesToInsert = otherPortfolioIds.map((portfolioId) => ({
+          user_id: user.id,
+          portfolio_id: portfolioId,
+          symbol: formData.symbol.toUpperCase(),
+          trade_type: tradeType,
+          quantity: parseFloat(formData.quantity) || 1,
+          entry_date: entryDate,
+          entry_price: formData.entryPrice ? parseFloat(formData.entryPrice) : 0,
+          exit_price: formData.exitPrice ? parseFloat(formData.exitPrice) : null,
+          pnl: pnlValue,
+          pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
+          risk: formData.risk ? parseFloat(formData.risk) : null,
+          rr: formData.rr ? parseFloat(formData.rr) : null,
+          rating: rating || null,
+          strategy: formData.strategy || null,
+          notes: combinedNotes,
+          is_closed: true,
+          screenshot_url: screenshotUrl,
+        }));
+
+        const { error: syncError } = await supabase.from("trades").insert(tradesToInsert);
+        if (syncError) {
+          console.error("Error syncing trade to other portfolios:", syncError);
+          toast({
+            title: "שגיאה בסנכרון",
+            description: "העסקה המקורית עודכנה, אך לא ניתן היה לסנכרן לתיקים נוספים",
+            variant: "destructive",
+          });
+        }
+      }
 
       toast({ title: "העסקה עודכנה בהצלחה!", description: `${formData.symbol} - ${tradeType.toUpperCase()}` });
       onOpenChange(false);
       onTradeUpdated?.();
     } catch (error) {
-      console.error('Error updating trade:', error);
+      console.error("Error updating trade:", error);
       toast({ title: "שגיאה", description: "לא ניתן לעדכן את העסקה", variant: "destructive" });
     } finally {
       setLoading(false);
@@ -181,7 +224,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-right">ערוך עסקה</DialogTitle>
         </DialogHeader>
@@ -298,9 +341,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
                   onChange={(e) => setFormData({ ...formData, pnl: e.target.value })}
                   className={cn(
                     "font-bold text-center text-lg",
-                    pnlSign === "positive" 
-                      ? "bg-success/20 border-success/30 text-success" 
-                      : "bg-destructive/20 border-destructive/30 text-destructive"
+                    pnlSign === "positive"
+                      ? "bg-success/20 border-success/30 text-success"
+                      : "bg-destructive/20 border-destructive/30 text-destructive",
                   )}
                 />
                 <Button
@@ -317,7 +360,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           </div>
 
           {/* Row 3 */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-5 gap-4">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סיכון ($)</Label>
               <Input
@@ -353,7 +396,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
                     <Star
                       className={cn(
                         "h-5 w-5 transition-colors",
-                        star <= rating ? "fill-warning text-warning" : "text-muted-foreground"
+                        star <= rating ? "fill-warning text-warning" : "text-muted-foreground",
                       )}
                     />
                   </button>
@@ -361,39 +404,122 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-2">
               <Label className="text-muted-foreground text-sm">אסטרטגיה</Label>
-              <Input
-                value={formData.strategy}
-                onChange={(e) => setFormData({ ...formData, strategy: e.target.value })}
-                className="bg-input border-border"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={formData.strategy}
+                  onChange={(e) => setFormData({ ...formData, strategy: e.target.value })}
+                  className="bg-input border-border flex-1"
+                />
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "bg-input border-border gap-2 whitespace-nowrap px-3",
+                        selectedPortfolioIds.length > 1 && "border-primary/50 bg-primary/5",
+                      )}
+                    >
+                      <Layers className="h-4 w-4 text-primary" />
+                      <span className="hidden sm:inline">סנכרון תיקים</span>
+                      {selectedPortfolioIds.length > 1 && (
+                        <span className="bg-primary text-primary-foreground text-[10px] px-1.5 rounded-full">
+                          {selectedPortfolioIds.length}
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3 bg-card border-border" align="end">
+                    <h4 className="font-medium text-sm mb-3 text-right">סנכרן עם תיקים נוספים</h4>
+                    <p className="text-[10px] text-muted-foreground mb-3 text-right">
+                      בחירת תיקים נוספים תיצור עותק של העסקה בהם
+                    </p>
+                    <div className="space-y-2">
+                      {portfolios.map((portfolio) => (
+                        <div key={portfolio.id} className="flex items-center gap-2 justify-end">
+                          <Label htmlFor={`sync-edit-${portfolio.id}`} className="text-sm cursor-pointer order-1">
+                            {portfolio.name}
+                          </Label>
+                          <Checkbox
+                            id={`sync-edit-${portfolio.id}`}
+                            checked={selectedPortfolioIds.includes(portfolio.id)}
+                            className="order-2"
+                            onCheckedChange={(checked) => {
+                              setSelectedPortfolioIds((prev) =>
+                                checked ? [...prev, portfolio.id] : prev.filter((id) => id !== portfolio.id),
+                              );
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
 
-          {/* Entry Reason & Conclusions */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Notes & Screenshot */}
+          <div className="grid grid-cols-2 gap-4 animate-fade-in">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סיבת כניסה לעסקה</Label>
-              <Textarea
-                placeholder="למה נכנסת לעסקה? מה היו הסיגנלים?"
-                value={formData.entryReason}
-                onChange={(e) => setFormData({ ...formData, entryReason: e.target.value })}
-                className="bg-input border-border min-h-[120px] max-h-[200px] overflow-y-auto resize-none"
-              />
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b border-border">
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="font-bold text-sm">B</span>
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="italic text-sm">I</span>
+                  </button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    גדול
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    קטן
+                  </button>
+                </div>
+                <Textarea
+                  placeholder="למה נכנסת לעסקה? מה היו הסיגנלים?"
+                  value={formData.entryReason}
+                  onChange={(e) => setFormData({ ...formData, entryReason: e.target.value })}
+                  className="bg-input border-0 min-h-[120px] max-h-[200px] overflow-y-auto resize-none focus-visible:ring-0 text-right"
+                  dir="rtl"
+                />
+              </div>
             </div>
+
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">מסקנות לאחר העסקה</Label>
-              <Textarea
-                placeholder="מה למדת מהעסקה? מה היית עושה אחרת?"
-                value={formData.conclusions}
-                onChange={(e) => setFormData({ ...formData, conclusions: e.target.value })}
-                className="bg-input border-border min-h-[120px] max-h-[200px] overflow-y-auto resize-none"
-              />
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b border-border">
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="font-bold text-sm">B</span>
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="italic text-sm">I</span>
+                  </button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    גדול
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    קטן
+                  </button>
+                </div>
+                <Textarea
+                  placeholder="מה למדת מהעסקה? מה היית עושה אחרת?"
+                  value={formData.conclusions}
+                  onChange={(e) => setFormData({ ...formData, conclusions: e.target.value })}
+                  className="bg-input border-0 min-h-[120px] max-h-[200px] overflow-y-auto resize-none focus-visible:ring-0 text-right"
+                  dir="rtl"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Screenshot */}
           <div className="space-y-2">
             <Label className="text-muted-foreground text-sm">צילום מסך</Label>
             <div className="border-2 border-dashed border-border rounded-lg p-4 min-h-[120px] flex flex-col items-center justify-center relative">
