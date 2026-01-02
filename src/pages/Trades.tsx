@@ -378,7 +378,6 @@ const Trades = () => {
                   <TableHead className="text-right text-muted-foreground">RR</TableHead>
                   <TableHead className="text-right text-muted-foreground">רווח/הפסד</TableHead>
                   <TableHead className="text-right text-muted-foreground">דירוג</TableHead>
-                  <TableHead className="text-right text-muted-foreground">הערות</TableHead>
                   <TableHead className="text-right text-muted-foreground w-12">פעולות</TableHead>
                 </TableRow>
               </TableHeader>
@@ -443,32 +442,6 @@ const Trades = () => {
                         {formatPnl(trade.pnl)}
                       </TableCell>
                       <TableCell>{renderRating(trade.rating)}</TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        {trade.notes ? (
-                          <div className="flex flex-col gap-1 min-w-[150px] max-w-[250px]">
-                            {(() => {
-                              const [reason, ...rest] = (trade.notes || "").split("\n\n[CONCLUSIONS]\n");
-                              const conclusions = rest.join("\n\n[CONCLUSIONS]\n");
-                              return (
-                                <>
-                                  <div className="bg-secondary/20 p-1.5 rounded text-[10px] border border-border/50">
-                                    <span className="font-bold block mb-0.5 opacity-70">סיבה:</span>
-                                    <div className="max-h-[40px] overflow-y-auto scrollbar-none">{reason || "—"}</div>
-                                  </div>
-                                  <div className="bg-secondary/20 p-1.5 rounded text-[10px] border border-border/50">
-                                    <span className="font-bold block mb-0.5 opacity-70">מסקנות:</span>
-                                    <div className="max-h-[40px] overflow-y-auto scrollbar-none">
-                                      {conclusions || "—"}
-                                    </div>
-                                  </div>
-                                </>
-                              );
-                            })()}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        )}
-                      </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
