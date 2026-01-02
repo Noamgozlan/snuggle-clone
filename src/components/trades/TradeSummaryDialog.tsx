@@ -145,10 +145,32 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit }: TradeS
             </div>
           </div>
 
-          {/* Notes */}
+          {/* Entry Reason & Conclusions */}
+          {((trade as any).entry_reason || (trade as any).conclusions) && (
+            <div className="grid grid-cols-2 gap-4">
+              {(trade as any).entry_reason && (
+                <Card className="p-4 bg-secondary/30">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">סיבת כניסה לעסקה</h4>
+                  <div className="max-h-[180px] overflow-y-auto">
+                    <p className="text-foreground whitespace-pre-wrap break-words">{(trade as any).entry_reason}</p>
+                  </div>
+                </Card>
+              )}
+              {(trade as any).conclusions && (
+                <Card className="p-4 bg-secondary/30">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">מסקנות לאחר העסקה</h4>
+                  <div className="max-h-[180px] overflow-y-auto">
+                    <p className="text-foreground whitespace-pre-wrap break-words">{(trade as any).conclusions}</p>
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Legacy Notes */}
           {trade.notes && (
             <Card className="p-4 bg-secondary/30">
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">הערות</h4>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">הערות (ישן)</h4>
               <div className="max-h-[240px] overflow-y-auto">
                 <p className="text-foreground whitespace-pre-wrap break-words">{trade.notes}</p>
               </div>

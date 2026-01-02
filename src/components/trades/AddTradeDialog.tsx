@@ -69,7 +69,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     pnlPoints: "",
     risk: "",
     rr: "",
-    notes: "",
+    entryReason: "",
+    conclusions: "",
   });
 
   const resetForm = () => {
@@ -83,7 +84,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       pnlPoints: "",
       risk: "",
       rr: "",
-      notes: "",
+      entryReason: "",
+      conclusions: "",
     });
     setTradeDate(new Date());
     setRating(0);
@@ -227,7 +229,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
         rr: formData.rr ? parseFloat(formData.rr) : null,
         rating: rating || null,
         strategy: selectedStrategy?.name || null,
-        notes: formData.notes || null,
+        entry_reason: formData.entryReason || null,
+        conclusions: formData.conclusions || null,
         is_closed: true,
         screenshot_url: screenshotUrl,
       }).select('id').single();
@@ -649,30 +652,24 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             )}
           </div>
 
-          {/* Notes */}
-          <div className="space-y-2 animate-fade-in">
-            <Label className="text-muted-foreground text-sm">הערות</Label>
-            <div className="border border-border rounded-lg overflow-hidden">
-              <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b border-border">
-                <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
-                  <span className="font-bold text-sm">B</span>
-                </button>
-                <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
-                  <span className="italic text-sm">I</span>
-                </button>
-                <div className="w-px h-4 bg-border mx-1" />
-                <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
-                  גדול
-                </button>
-                <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
-                  קטן
-                </button>
-              </div>
+          {/* Entry Reason & Conclusions */}
+          <div className="grid grid-cols-2 gap-4 animate-fade-in">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">סיבת כניסה לעסקה</Label>
               <Textarea
-                placeholder="רשום עסקה, אסטרטגיה או תצפיות... (ניתן להוסיף תמונות)"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="border-0 min-h-[120px] max-h-[200px] overflow-y-auto resize-none focus-visible:ring-0"
+                placeholder="למה נכנסת לעסקה? מה היו הסיגנלים?"
+                value={formData.entryReason}
+                onChange={(e) => setFormData({ ...formData, entryReason: e.target.value })}
+                className="bg-input border-border min-h-[120px] max-h-[200px] overflow-y-auto resize-none"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">מסקנות לאחר העסקה</Label>
+              <Textarea
+                placeholder="מה למדת מהעסקה? מה היית עושה אחרת?"
+                value={formData.conclusions}
+                onChange={(e) => setFormData({ ...formData, conclusions: e.target.value })}
+                className="bg-input border-border min-h-[120px] max-h-[200px] overflow-y-auto resize-none"
               />
             </div>
           </div>
