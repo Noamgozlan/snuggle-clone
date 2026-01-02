@@ -8,14 +8,7 @@ import { CSVImportDialog } from "@/components/trades/CSVImportDialog";
 import { useTrades, Trade } from "@/hooks/useTrades";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,17 +20,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, Filter, Trash2, Plus, FileDown, Star, Loader2, X, CheckCircle2, Image } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Filter,
+  Trash2,
+  Plus,
+  FileDown,
+  Star,
+  Loader2,
+  X,
+  CheckCircle2,
+  Image,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -70,11 +67,9 @@ const Trades = () => {
   useEffect(() => {
     const fetchConfirmations = async () => {
       if (!user) return;
-      
-      const { data, error } = await supabase
-        .from('trade_confirmations')
-        .select('trade_id, confirmation_name');
-      
+
+      const { data, error } = await supabase.from("trade_confirmations").select("trade_id, confirmation_name");
+
       if (!error && data) {
         setTradeConfirmations(data);
       }
@@ -84,9 +79,7 @@ const Trades = () => {
   }, [user, trades]);
 
   const getTradeConfirmations = (tradeId: string) => {
-    return tradeConfirmations
-      .filter(tc => tc.trade_id === tradeId)
-      .map(tc => tc.confirmation_name);
+    return tradeConfirmations.filter((tc) => tc.trade_id === tradeId).map((tc) => tc.confirmation_name);
   };
 
   const handleDeleteAll = async () => {
@@ -129,7 +122,7 @@ const Trades = () => {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "—";
-    return new Date(dateString).toLocaleDateString('he-IL');
+    return new Date(dateString).toLocaleDateString("he-IL");
   };
 
   const formatPrice = (price: number | null) => {
@@ -150,7 +143,7 @@ const Trades = () => {
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
-            className={`h-3 w-3 ${star <= rating ? 'fill-warning text-warning' : 'text-muted-foreground'}`}
+            className={`h-3 w-3 ${star <= rating ? "fill-warning text-warning" : "text-muted-foreground"}`}
           />
         ))}
       </div>
@@ -158,7 +151,7 @@ const Trades = () => {
   };
 
   // Filter trades by date
-  const filteredTrades = trades.filter(trade => {
+  const filteredTrades = trades.filter((trade) => {
     const tradeDate = new Date(trade.entry_date || trade.created_at);
     if (fromDate && tradeDate < fromDate) return false;
     if (toDate) {
@@ -190,8 +183,8 @@ const Trades = () => {
         {/* Filters - Mobile Responsive */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between animate-fade-in mt-8 md:mt-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               className="gap-2 bg-primary hover:bg-primary/90 hover:scale-105 transition-all text-sm"
               onClick={() => setIsAddTradeOpen(true)}
             >
@@ -199,9 +192,9 @@ const Trades = () => {
               <span className="hidden sm:inline">הוסף עסקה</span>
               <span className="sm:hidden">הוסף</span>
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="gap-2 hover:scale-105 transition-transform"
               onClick={() => setIsCSVImportOpen(true)}
             >
@@ -210,9 +203,9 @@ const Trades = () => {
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
+                <Button
+                  variant="destructive"
+                  size="sm"
                   className="gap-2 hover:scale-105 transition-transform"
                   disabled={trades.length === 0}
                 >
@@ -240,10 +233,14 @@ const Trades = () => {
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn(
-                  "hover:scale-105 transition-transform text-xs md:text-sm",
-                  fromDate && "bg-primary/10 border-primary"
-                )}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "hover:scale-105 transition-transform text-xs md:text-sm",
+                    fromDate && "bg-primary/10 border-primary",
+                  )}
+                >
                   <CalendarIcon className="h-4 w-4 ml-1 md:ml-2" />
                   {fromDate ? format(fromDate, "dd/MM/yy") : "מתאריך"}
                 </Button>
@@ -260,10 +257,14 @@ const Trades = () => {
             </Popover>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn(
-                  "hover:scale-105 transition-transform text-xs md:text-sm",
-                  toDate && "bg-primary/10 border-primary"
-                )}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "hover:scale-105 transition-transform text-xs md:text-sm",
+                    toDate && "bg-primary/10 border-primary",
+                  )}
+                >
                   <CalendarIcon className="h-4 w-4 ml-1 md:ml-2" />
                   {toDate ? format(toDate, "dd/MM/yy") : "עד תאריך"}
                 </Button>
@@ -284,8 +285,12 @@ const Trades = () => {
               </Button>
             )}
             <div className="hidden md:flex gap-1">
-              <Button variant="default" size="sm" className="bg-primary">כסף $</Button>
-              <Button variant="secondary" size="sm">נקודות</Button>
+              <Button variant="default" size="sm" className="bg-primary">
+                כסף $
+              </Button>
+              <Button variant="secondary" size="sm">
+                נקודות
+              </Button>
             </div>
             <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
               <Filter className="h-4 w-4 md:ml-2" />
@@ -300,20 +305,24 @@ const Trades = () => {
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">רווח/הפסד מצטבר נטו</p>
-                <p className={`text-2xl font-bold animate-bounce-in ${stats.totalPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                  {stats.totalPnl >= 0 ? '+' : ''}${stats.totalPnl.toFixed(2)}
+                <p
+                  className={`text-2xl font-bold animate-bounce-in ${stats.totalPnl >= 0 ? "text-success" : "text-destructive"}`}
+                >
+                  {stats.totalPnl >= 0 ? "+" : ""}${stats.totalPnl.toFixed(2)}
                 </p>
-                <span className={`inline-block w-2 h-2 rounded-full ml-2 animate-pulse ${stats.totalPnl >= 0 ? 'bg-success' : 'bg-destructive'}`} />
+                <span
+                  className={`inline-block w-2 h-2 rounded-full ml-2 animate-pulse ${stats.totalPnl >= 0 ? "bg-success" : "bg-destructive"}`}
+                />
               </div>
             </div>
             <div className="mt-4 flex gap-2">
-              <div 
-                className="h-2 bg-destructive rounded-full transition-all duration-500" 
-                style={{ width: `${stats.totalTrades > 0 ? (stats.losingTrades / stats.totalTrades) * 100 : 50}%` }} 
+              <div
+                className="h-2 bg-destructive rounded-full transition-all duration-500"
+                style={{ width: `${stats.totalTrades > 0 ? (stats.losingTrades / stats.totalTrades) * 100 : 50}%` }}
               />
-              <div 
-                className="h-2 bg-success rounded-full transition-all duration-500" 
-                style={{ width: `${stats.totalTrades > 0 ? (stats.winningTrades / stats.totalTrades) * 100 : 50}%` }} 
+              <div
+                className="h-2 bg-success rounded-full transition-all duration-500"
+                style={{ width: `${stats.totalTrades > 0 ? (stats.winningTrades / stats.totalTrades) * 100 : 50}%` }}
               />
             </div>
             <div className="flex justify-between text-xs text-muted-foreground mt-2">
@@ -325,7 +334,7 @@ const Trades = () => {
           <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
             <p className="text-sm text-muted-foreground mb-2">זכייה מרבית/הפסד מקסימלי</p>
             <p className="text-3xl font-bold text-foreground animate-scale-in">
-              {stats.maxLoss !== 0 ? (Math.abs(stats.maxWin / stats.maxLoss)).toFixed(2) : "—"}
+              {stats.maxLoss !== 0 ? Math.abs(stats.maxWin / stats.maxLoss).toFixed(2) : "—"}
             </p>
           </Card>
 
@@ -338,9 +347,7 @@ const Trades = () => {
 
           <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
             <p className="text-sm text-muted-foreground mb-2">Avg RR</p>
-            <p className="text-3xl font-bold text-foreground animate-scale-in">
-              {stats.avgRR.toFixed(2)}
-            </p>
+            <p className="text-3xl font-bold text-foreground animate-scale-in">{stats.avgRR.toFixed(2)}</p>
           </Card>
         </div>
 
@@ -353,11 +360,7 @@ const Trades = () => {
           ) : trades.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">אין עסקאות להצגה</p>
-              <Button 
-                variant="default" 
-                className="bg-primary"
-                onClick={() => setIsAddTradeOpen(true)}
-              >
+              <Button variant="default" className="bg-primary" onClick={() => setIsAddTradeOpen(true)}>
                 <Plus className="h-4 w-4 ml-2" />
                 הוסף עסקה ראשונה
               </Button>
@@ -375,6 +378,7 @@ const Trades = () => {
                   <TableHead className="text-right text-muted-foreground">RR</TableHead>
                   <TableHead className="text-right text-muted-foreground">רווח/הפסד</TableHead>
                   <TableHead className="text-right text-muted-foreground">דירוג</TableHead>
+                  <TableHead className="text-right text-muted-foreground">הערות</TableHead>
                   <TableHead className="text-right text-muted-foreground w-12">פעולות</TableHead>
                 </TableRow>
               </TableHeader>
@@ -382,15 +386,15 @@ const Trades = () => {
                 {filteredTrades.map((trade, index) => {
                   const confirmations = getTradeConfirmations(trade.id);
                   return (
-                    <TableRow 
-                      key={trade.id} 
+                    <TableRow
+                      key={trade.id}
                       className="border-border hover:bg-secondary/50 transition-colors cursor-pointer animate-fade-in"
                       style={{ animationDelay: `${index * 0.05}s` }}
                       onClick={() => handleTradeClick(trade)}
                     >
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         {trade.screenshot_url ? (
-                          <div 
+                          <div
                             className="w-14 h-10 rounded-md overflow-hidden border border-border cursor-pointer hover:border-primary transition-colors"
                             onClick={() => setImagePreview(trade.screenshot_url)}
                           >
@@ -402,10 +406,14 @@ const Trades = () => {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="font-medium text-sm">{formatDate(trade.entry_date || trade.created_at)}</TableCell>
+                      <TableCell className="font-medium text-sm">
+                        {formatDate(trade.entry_date || trade.created_at)}
+                      </TableCell>
                       <TableCell className="font-semibold">{trade.symbol}</TableCell>
                       <TableCell>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${trade.trade_type === 'long' ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-medium ${trade.trade_type === "long" ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"}`}
+                        >
                           {trade.trade_type.toUpperCase()}
                         </span>
                       </TableCell>
@@ -414,8 +422,8 @@ const Trades = () => {
                         {confirmations.length > 0 ? (
                           <div className="flex flex-wrap gap-1 max-w-[200px]">
                             {confirmations.slice(0, 3).map((conf, i) => (
-                              <span 
-                                key={i} 
+                              <span
+                                key={i}
                                 className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary border border-primary/20"
                               >
                                 <CheckCircle2 className="h-3 w-3" />
@@ -431,15 +439,41 @@ const Trades = () => {
                         )}
                       </TableCell>
                       <TableCell className="font-medium">{trade.rr ? trade.rr.toFixed(2) : "—"}</TableCell>
-                      <TableCell className={`font-bold ${(trade.pnl || 0) >= 0 ? 'text-success' : 'text-destructive'}`}>
+                      <TableCell className={`font-bold ${(trade.pnl || 0) >= 0 ? "text-success" : "text-destructive"}`}>
                         {formatPnl(trade.pnl)}
                       </TableCell>
                       <TableCell>{renderRating(trade.rating)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
+                        {trade.notes ? (
+                          <div className="flex flex-col gap-1 min-w-[150px] max-w-[250px]">
+                            {(() => {
+                              const [reason, ...rest] = (trade.notes || "").split("\n\n[CONCLUSIONS]\n");
+                              const conclusions = rest.join("\n\n[CONCLUSIONS]\n");
+                              return (
+                                <>
+                                  <div className="bg-secondary/20 p-1.5 rounded text-[10px] border border-border/50">
+                                    <span className="font-bold block mb-0.5 opacity-70">סיבה:</span>
+                                    <div className="max-h-[40px] overflow-y-auto scrollbar-none">{reason || "—"}</div>
+                                  </div>
+                                  <div className="bg-secondary/20 p-1.5 rounded text-[10px] border border-border/50">
+                                    <span className="font-bold block mb-0.5 opacity-70">מסקנות:</span>
+                                    <div className="max-h-[40px] overflow-y-auto scrollbar-none">
+                                      {conclusions || "—"}
+                                    </div>
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                             >
@@ -459,7 +493,7 @@ const Trades = () => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>ביטול</AlertDialogCancel>
-                              <AlertDialogAction 
+                              <AlertDialogAction
                                 onClick={() => handleDeleteTrade(trade.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
@@ -480,24 +514,14 @@ const Trades = () => {
         {/* Image Preview Dialog */}
         <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
           <DialogContent className="max-w-4xl p-2">
-            {imagePreview && (
-              <img src={imagePreview} alt="Trade screenshot" className="w-full h-auto rounded-lg" />
-            )}
+            {imagePreview && <img src={imagePreview} alt="Trade screenshot" className="w-full h-auto rounded-lg" />}
           </DialogContent>
         </Dialog>
       </div>
 
-      <AddTradeDialog 
-        open={isAddTradeOpen} 
-        onOpenChange={setIsAddTradeOpen} 
-        onTradeAdded={fetchTrades}
-      />
-      
-      <CSVImportDialog
-        open={isCSVImportOpen}
-        onOpenChange={setIsCSVImportOpen}
-        onImportComplete={fetchTrades}
-      />
+      <AddTradeDialog open={isAddTradeOpen} onOpenChange={setIsAddTradeOpen} onTradeAdded={fetchTrades} />
+
+      <CSVImportDialog open={isCSVImportOpen} onOpenChange={setIsCSVImportOpen} onImportComplete={fetchTrades} />
 
       <TradeSummaryDialog
         trade={selectedTrade}
