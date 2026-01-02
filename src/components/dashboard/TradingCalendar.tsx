@@ -2,7 +2,19 @@ import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, startOfWeek, endOfWeek, isSameMonth, isToday } from "date-fns";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  getDay,
+  addMonths,
+  subMonths,
+  startOfWeek,
+  endOfWeek,
+  isSameMonth,
+  isToday,
+} from "date-fns";
 import { he } from "date-fns/locale";
 
 interface Trade {
@@ -18,8 +30,18 @@ interface TradingCalendarProps {
 
 const hebrewDays = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 const hebrewMonths = [
-  "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
-  "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"
+  "ינואר",
+  "פברואר",
+  "מרץ",
+  "אפריל",
+  "מאי",
+  "יוני",
+  "יולי",
+  "אוגוסט",
+  "ספטמבר",
+  "אוקטובר",
+  "נובמבר",
+  "דצמבר",
 ];
 
 export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
@@ -27,23 +49,23 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  
+
   // Get trades grouped by date
   const tradesByDate = useMemo(() => {
     const grouped: Record<string, { pnl: number; count: number }> = {};
-    
+
     trades.forEach((trade) => {
-      const dateStr = trade.entry_date 
+      const dateStr = trade.entry_date
         ? format(new Date(trade.entry_date), "yyyy-MM-dd")
         : format(new Date(trade.created_at), "yyyy-MM-dd");
-      
+
       if (!grouped[dateStr]) {
         grouped[dateStr] = { pnl: 0, count: 0 };
       }
       grouped[dateStr].pnl += trade.pnl || 0;
       grouped[dateStr].count += 1;
     });
-    
+
     return grouped;
   }, [trades]);
 
@@ -51,7 +73,7 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
   const monthlyStats = useMemo(() => {
     let totalPnl = 0;
     let tradingDays = 0;
-    
+
     Object.entries(tradesByDate).forEach(([dateStr, data]) => {
       const date = new Date(dateStr);
       if (isSameMonth(date, currentDate)) {
@@ -59,7 +81,7 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
         tradingDays += 1;
       }
     });
-    
+
     return { totalPnl, tradingDays };
   }, [tradesByDate, currentDate]);
 
@@ -67,11 +89,10 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
   const calendarDays = useMemo(() => {
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-    // We render the grid in LTR but reverse the headers (Sat..Sun) for Hebrew.
-    // Therefore, the first visible column corresponds to Saturday.
-    // getDay: 0=Sunday, 6=Saturday -> convert to Saturday-first offset.
-    const firstDayOfWeek = getDay(monthStart);
-    const paddingCount = (6 - firstDayOfWeek + 7) % 7;
+    // We render the grid in RTL.
+    // The first visible column (rightmost) corresponds to Sunday.
+    // getDay: 0=Sunday, 1=Monday... matches the number of empty slots needed at start.
+    const paddingCount = getDay(monthStart);
     const paddingDays = Array(paddingCount).fill(null);
 
     return [...paddingDays, ...days];
@@ -83,18 +104,18 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
     let currentWeek = 1;
     let weekPnl = 0;
     let weekDays = 0;
-    
+
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-    
+
     days.forEach((day, index) => {
       const dateStr = format(day, "yyyy-MM-dd");
       const dayData = tradesByDate[dateStr];
-      
+
       if (dayData) {
         weekPnl += dayData.pnl;
         weekDays += 1;
       }
-      
+
       // Every 7 days or at the end, push the week data
       if ((index + getDay(monthStart) + 1) % 7 === 0 || index === days.length - 1) {
         weeks.push({ weekNum: currentWeek, pnl: weekPnl, days: weekDays });
@@ -103,7 +124,7 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
         weekDays = 0;
       }
     });
-    
+
     return weeks;
   }, [monthStart, monthEnd, tradesByDate]);
 
@@ -114,9 +135,9 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
     <Card className="bg-card border-border p-4 hover-glow">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={goToPreviousMonth}
           className="hover:scale-110 transition-transform"
         >
@@ -130,12 +151,7 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
             חודשי: ${monthlyStats.totalPnl.toFixed(0)}, {monthlyStats.tradingDays} יום
           </p>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={goToNextMonth}
-          className="hover:scale-110 transition-transform"
-        >
+        <Button variant="ghost" size="icon" onClick={goToNextMonth} className="hover:scale-110 transition-transform">
           <ChevronLeft className="h-4 w-4" />
         </Button>
       </div>
@@ -148,14 +164,14 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
             שבועי
           </div>
           {weeklyData.map((week) => (
-            <div 
+            <div
               key={week.weekNum}
               className="flex-1 min-h-[72px] bg-secondary/30 border-b border-border flex flex-col items-center justify-center p-1"
             >
               <span className="text-xs font-medium">שבוע {week.weekNum}</span>
               {week.days > 0 ? (
                 <>
-                  <span className={`text-xs font-bold ${week.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  <span className={`text-xs font-bold ${week.pnl >= 0 ? "text-success" : "text-destructive"}`}>
                     ${week.pnl.toFixed(0)}
                   </span>
                   <span className="text-[10px] text-muted-foreground">{week.days} יום</span>
@@ -168,11 +184,14 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
         </div>
 
         {/* Main Calendar */}
-        <div className="flex-1" dir="ltr">
+        <div className="flex-1" dir="rtl">
           {/* Days Header */}
           <div className="grid grid-cols-7 gap-1">
-            {[...hebrewDays].reverse().map((day) => (
-              <div key={day} className="h-8 flex items-center justify-center text-xs text-muted-foreground border-b border-border">
+            {hebrewDays.map((day) => (
+              <div
+                key={day}
+                className="h-8 flex items-center justify-center text-xs text-muted-foreground border-b border-border"
+              >
                 {day}
               </div>
             ))}
@@ -203,15 +222,17 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
                       : "bg-secondary/30"
                   } ${isCurrentDay ? "ring-2 ring-primary" : ""}`}
                 >
-                  <span className={`text-sm ${isCurrentDay ? "font-bold text-primary" : hasData ? (pnl >= 0 ? "text-success" : "text-destructive") : "text-foreground"}`}>
+                  <span
+                    className={`text-sm ${isCurrentDay ? "font-bold text-primary" : hasData ? (pnl >= 0 ? "text-success" : "text-destructive") : "text-foreground"}`}
+                  >
                     {format(day, "d")}
                   </span>
                   {hasData && (
                     <>
-                      <span className={`text-sm font-bold ${pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                      <span className={`text-sm font-bold ${pnl >= 0 ? "text-success" : "text-destructive"}`}>
                         ${Math.abs(pnl).toFixed(0)}
                       </span>
-                      <span className={`text-[10px] ${pnl >= 0 ? 'text-success/70' : 'text-destructive/70'}`}>
+                      <span className={`text-[10px] ${pnl >= 0 ? "text-success/70" : "text-destructive/70"}`}>
                         {tradeCount} עסקה
                       </span>
                     </>
