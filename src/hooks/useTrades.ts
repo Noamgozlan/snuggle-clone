@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePortfolio } from "@/contexts/PortfolioContext";
-import { useBreakEvenConfig } from "./useBreakEvenConfig";
+import { useBreakEvenConfig } from "@/pages/Settings";
 
 export interface Trade {
   id: string;
