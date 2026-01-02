@@ -14,6 +14,7 @@ import {
   endOfWeek,
   isSameMonth,
   isToday,
+  subDays,
 } from "date-fns";
 import { he } from "date-fns/locale";
 
@@ -93,7 +94,13 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
     // The first visible column (rightmost) corresponds to Sunday.
     // getDay: 0=Sunday, 1=Monday... matches the number of empty slots needed at start.
     const paddingCount = getDay(monthStart);
-    const paddingDays = Array(paddingCount).fill(null);
+    const paddingDays =
+      paddingCount > 0
+        ? eachDayOfInterval({
+            start: subDays(monthStart, paddingCount),
+            end: subDays(monthStart, 1),
+          })
+        : [];
 
     return [...paddingDays, ...days];
   }, [monthStart, monthEnd]);
@@ -200,14 +207,11 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
           {/* Calendar Days */}
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map((day, index) => {
-              if (!day) {
-                return <div key={`empty-${index}`} className="min-h-[72px] bg-secondary/20 rounded" />;
-              }
-
               const dateStr = format(day, "yyyy-MM-dd");
               const dayData = tradesByDate[dateStr];
               const hasData = !!dayData;
               const isCurrentDay = isToday(day);
+              const isCurrentMonth = isSameMonth(day, currentDate);
               const pnl = dayData?.pnl || 0;
               const tradeCount = dayData?.count || 0;
 
@@ -220,10 +224,10 @@ export const TradingCalendar = ({ trades }: TradingCalendarProps) => {
                         ? "bg-success/20 border border-success/40"
                         : "bg-destructive/20 border border-destructive/40"
                       : "bg-secondary/30"
-                  } ${isCurrentDay ? "ring-2 ring-primary" : ""}`}
+                  } ${isCurrentDay ? "ring-2 ring-primary" : ""} ${!isCurrentMonth ? "opacity-30 bg-secondary/10" : ""}`}
                 >
                   <span
-                    className={`text-sm ${isCurrentDay ? "font-bold text-primary" : hasData ? (pnl >= 0 ? "text-success" : "text-destructive") : "text-foreground"}`}
+                    className={`text-sm ${isCurrentDay ? "font-bold text-primary" : hasData ? (pnl >= 0 ? "text-success" : "text-destructive") : isCurrentMonth ? "text-foreground" : "text-muted-foreground"}`}
                   >
                     {format(day, "d")}
                   </span>
