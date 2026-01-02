@@ -28,8 +28,39 @@ import { toast } from "sonner";
 import { MentorSettings as MentorSettingsSection } from "@/components/mentor/MentorSettings";
 import { StudentFeedbackView } from "@/components/mentor/StudentFeedbackView";
 import { BrokerIntegrations } from "@/components/settings/BrokerIntegrations";
-import { useBreakEvenConfig } from "@/hooks/useBreakEvenConfig";
 import { Scale } from "lucide-react";
+import { useState, useEffect } from "react";
+
+export interface BreakEvenConfig {
+  min: number;
+  max: number;
+}
+
+const STORAGE_KEY = "be-config";
+const DEFAULT_CONFIG: BreakEvenConfig = { min: 0, max: 0 };
+
+export const useBreakEvenConfig = () => {
+  const [config, setConfig] = useState<BreakEvenConfig>(DEFAULT_CONFIG);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setConfig(JSON.parse(saved));
+      } catch (e) {
+        setConfig(DEFAULT_CONFIG);
+      }
+    }
+  }, []);
+
+  const setRange = (min: number, max: number) => {
+    const newConfig = { min, max };
+    setConfig(newConfig);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
+  };
+
+  return { ...config, setRange };
+};
 
 const visualStyleIcons: Record<string, React.ReactNode> = {
   layout: <LayoutGrid className="h-6 w-6" />,
