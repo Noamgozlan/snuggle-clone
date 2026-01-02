@@ -375,7 +375,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
               <Textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="bg-input border-border min-h-[120px]"
+                className="bg-input border-border min-h-[120px] max-h-[200px] overflow-y-auto resize-none"
               />
             </div>
 

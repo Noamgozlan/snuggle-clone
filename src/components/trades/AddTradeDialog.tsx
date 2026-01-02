@@ -672,7 +672,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                 placeholder="רשום עסקה, אסטרטגיה או תצפיות... (ניתן להוסיף תמונות)"
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="border-0 min-h-[150px] resize-none focus-visible:ring-0"
+                className="border-0 min-h-[120px] max-h-[200px] overflow-y-auto resize-none focus-visible:ring-0"
               />
             </div>
           </div>
