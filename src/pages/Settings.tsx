@@ -4,7 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowRight, Type, Check, BookOpen, Palette, Sun, Moon, Globe, Lock, LayoutGrid, MinusSquare, Zap, Square } from "lucide-react";
+import {
+  ArrowRight,
+  Type,
+  Check,
+  BookOpen,
+  Palette,
+  Sun,
+  Moon,
+  Globe,
+  Lock,
+  LayoutGrid,
+  MinusSquare,
+  Zap,
+  Square,
+} from "lucide-react";
 import { useFont, fontOptions, FontFamily } from "@/contexts/FontContext";
 import { useTheme, colorSchemeOptions, visualStyleOptions } from "@/contexts/ThemeContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -14,6 +28,8 @@ import { toast } from "sonner";
 import { MentorSettings as MentorSettingsSection } from "@/components/mentor/MentorSettings";
 import { StudentFeedbackView } from "@/components/mentor/StudentFeedbackView";
 import { BrokerIntegrations } from "@/components/settings/BrokerIntegrations";
+import { useBreakEvenConfig } from "@/hooks/useBreakEvenConfig";
+import { Scale } from "lucide-react";
 
 const visualStyleIcons: Record<string, React.ReactNode> = {
   layout: <LayoutGrid className="h-6 w-6" />,
@@ -27,6 +43,7 @@ const Settings = () => {
   const { theme, colorScheme, visualStyle, toggleTheme, setColorScheme, setVisualStyle } = useTheme();
   const { startTour } = useOnboarding();
   const { profile, updateProfile } = useProfile();
+  const { min: beMin, max: beMax, setRange: setBeRange } = useBreakEvenConfig();
 
   const handlePublicToggle = async (checked: boolean) => {
     const success = await updateProfile({ is_public: checked });
@@ -59,9 +76,7 @@ const Settings = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-foreground">פונט</h2>
-              <p className="text-muted-foreground text-sm">
-                בחר את הפונט המועדף עליך לכל האתר
-              </p>
+              <p className="text-muted-foreground text-sm">בחר את הפונט המועדף עליך לכל האתר</p>
             </div>
           </div>
 
@@ -73,9 +88,7 @@ const Settings = () => {
                 className={cn(
                   "relative p-4 rounded-xl border-2 transition-all duration-200 text-right",
                   "hover:border-primary/50 hover:bg-primary/5",
-                  font === option.value
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-card"
+                  font === option.value ? "border-primary bg-primary/10" : "border-border bg-card",
                 )}
               >
                 {font === option.value && (
@@ -83,12 +96,8 @@ const Settings = () => {
                     <Check className="h-3 w-3 text-primary-foreground" />
                   </div>
                 )}
-                <p className={cn("text-lg font-medium text-foreground", option.className)}>
-                  {option.label}
-                </p>
-                <p className={cn("text-sm text-muted-foreground mt-1", option.className)}>
-                  זהו טקסט לדוגמה
-                </p>
+                <p className={cn("text-lg font-medium text-foreground", option.className)}>{option.label}</p>
+                <p className={cn("text-sm text-muted-foreground mt-1", option.className)}>זהו טקסט לדוגמה</p>
               </button>
             ))}
           </div>
@@ -102,9 +111,7 @@ const Settings = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-foreground">ערכת עיצוב</h2>
-              <p className="text-muted-foreground text-sm">
-                בחר את הצבעים והסגנון המועדפים עליך
-              </p>
+              <p className="text-muted-foreground text-sm">בחר את הצבעים והסגנון המועדפים עליך</p>
             </div>
           </div>
 
@@ -117,9 +124,7 @@ const Settings = () => {
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
                   "hover:border-primary/50",
-                  theme === "dark"
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-card"
+                  theme === "dark" ? "border-primary bg-primary/10" : "border-border bg-card",
                 )}
               >
                 <Moon className="h-5 w-5" />
@@ -135,9 +140,7 @@ const Settings = () => {
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
                   "hover:border-primary/50",
-                  theme === "light"
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-card"
+                  theme === "light" ? "border-primary bg-primary/10" : "border-border bg-card",
                 )}
               >
                 <Sun className="h-5 w-5" />
@@ -165,9 +168,7 @@ const Settings = () => {
                   className={cn(
                     "relative p-4 rounded-xl border-2 transition-all duration-200",
                     "hover:border-primary/50 hover:scale-[1.02]",
-                    colorScheme === option.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-card"
+                    colorScheme === option.value ? "border-primary bg-primary/10" : "border-border bg-card",
                   )}
                 >
                   {colorScheme === option.value && (
@@ -176,10 +177,7 @@ const Settings = () => {
                     </div>
                   )}
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-8 h-8 rounded-full shadow-lg"
-                      style={{ backgroundColor: option.primary }}
-                    />
+                    <div className="w-8 h-8 rounded-full shadow-lg" style={{ backgroundColor: option.primary }} />
                     <span className="font-medium text-foreground">{option.label}</span>
                   </div>
                 </button>
@@ -201,9 +199,7 @@ const Settings = () => {
                   className={cn(
                     "relative p-4 rounded-xl border-2 transition-all duration-200 text-right",
                     "hover:border-primary/50 hover:scale-[1.02]",
-                    visualStyle === option.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-card"
+                    visualStyle === option.value ? "border-primary bg-primary/10" : "border-border bg-card",
                   )}
                 >
                   {visualStyle === option.value && (
@@ -212,10 +208,12 @@ const Settings = () => {
                     </div>
                   )}
                   <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "p-2 rounded-lg",
-                      visualStyle === option.value ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
-                    )}>
+                    <div
+                      className={cn(
+                        "p-2 rounded-lg",
+                        visualStyle === option.value ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground",
+                      )}
+                    >
                       {visualStyleIcons[option.icon]}
                     </div>
                     <div>
@@ -225,6 +223,52 @@ const Settings = () => {
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* Break Even Settings */}
+        <Card className="bg-card border-border p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Scale className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">הגדרת Break Even</h2>
+              <p className="text-muted-foreground text-sm">הגדר טווח (בדולרים) שיחשב כ"ברייק איבן" (0) בסטטיסטיקות</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            <div className="space-y-2">
+              <Label htmlFor="be-min">מינימום (הפסד מותר)</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <Input
+                  id="be-min"
+                  type="number"
+                  value={beMin}
+                  onChange={(e) => setBeRange(Number(e.target.value), beMax)}
+                  className="pl-8 text-left"
+                  placeholder="-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">לדוגמה: -20 (הפסד של עד $20 יחשב כ-0)</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="be-max">מקסימום (רווח מותר)</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <Input
+                  id="be-max"
+                  type="number"
+                  value={beMax}
+                  onChange={(e) => setBeRange(beMin, Number(e.target.value))}
+                  className="pl-8 text-left"
+                  placeholder="10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">לדוגמה: 20 (רווח של עד $20 יחשב כ-0)</p>
             </div>
           </div>
         </Card>
@@ -241,9 +285,7 @@ const Settings = () => {
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-bold text-foreground">פרטיות פרופיל</h2>
-              <p className="text-muted-foreground text-sm">
-                קבע אם אחרים יכולים לראות את הפרופיל וצבעי הגרף שלך
-              </p>
+              <p className="text-muted-foreground text-sm">קבע אם אחרים יכולים לראות את הפרופיל וצבעי הגרף שלך</p>
             </div>
           </div>
 
@@ -255,20 +297,15 @@ const Settings = () => {
                 <Lock className="h-5 w-5 text-muted-foreground" />
               )}
               <div>
-                <p className="font-medium text-foreground">
-                  {profile?.is_public ? "פרופיל ציבורי" : "פרופיל פרטי"}
-                </p>
+                <p className="font-medium text-foreground">{profile?.is_public ? "פרופיל ציבורי" : "פרופיל פרטי"}</p>
                 <p className="text-xs text-muted-foreground">
-                  {profile?.is_public 
-                    ? "אחרים יכולים לראות את הפרופיל וצבעי הגרף שלך" 
+                  {profile?.is_public
+                    ? "אחרים יכולים לראות את הפרופיל וצבעי הגרף שלך"
                     : "רק אתה יכול לראות את הפרופיל שלך"}
                 </p>
               </div>
             </div>
-            <Switch
-              checked={profile?.is_public ?? false}
-              onCheckedChange={handlePublicToggle}
-            />
+            <Switch checked={profile?.is_public ?? false} onCheckedChange={handlePublicToggle} />
           </div>
         </Card>
 
@@ -289,16 +326,10 @@ const Settings = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-foreground">מדריך משתמש</h2>
-              <p className="text-muted-foreground text-sm">
-                הצג שוב את המדריך האינטראקטיבי למערכת
-              </p>
+              <p className="text-muted-foreground text-sm">הצג שוב את המדריך האינטראקטיבי למערכת</p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={startTour}
-          >
+          <Button variant="outline" className="mt-4" onClick={startTour}>
             הצג מדריך שוב
           </Button>
         </Card>
