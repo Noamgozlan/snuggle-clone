@@ -35,7 +35,7 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit }: TradeS
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-card border-border">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain bg-card border-border">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <span className={cn(
@@ -149,7 +149,9 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit }: TradeS
           {trade.notes && (
             <Card className="p-4 bg-secondary/30">
               <h4 className="text-sm font-medium text-muted-foreground mb-2">הערות</h4>
-              <p className="text-foreground whitespace-pre-wrap">{trade.notes}</p>
+              <div className="max-h-[240px] overflow-y-auto">
+                <p className="text-foreground whitespace-pre-wrap break-words">{trade.notes}</p>
+              </div>
             </Card>
           )}
 
