@@ -45,7 +45,8 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
     risk: "",
     rr: "",
     strategy: "",
-    notes: "",
+    entryReason: "",
+    conclusions: "",
   });
 
   // Load trade data when trade changes
@@ -63,7 +64,8 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
         risk: trade.risk ? String(trade.risk) : "",
         rr: trade.rr ? String(trade.rr) : "",
         strategy: trade.strategy || "",
-        notes: trade.notes || "",
+        entryReason: (trade as any).entry_reason || "",
+        conclusions: (trade as any).conclusions || "",
       });
       setRating(trade.rating || 0);
       setTradeType(trade.trade_type as "long" | "short" || "long");
@@ -157,7 +159,8 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           rr: formData.rr ? parseFloat(formData.rr) : null,
           rating: rating || null,
           strategy: formData.strategy || null,
-          notes: formData.notes || null,
+          entry_reason: formData.entryReason || null,
+          conclusions: formData.conclusions || null,
           is_closed: true,
           screenshot_url: screenshotUrl,
         })
@@ -368,57 +371,68 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
             </div>
           </div>
 
-          {/* Notes & Screenshot */}
-          <div className="grid grid-cols-2 gap-6">
+          {/* Entry Reason & Conclusions */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">הערות</Label>
+              <Label className="text-muted-foreground text-sm">סיבת כניסה לעסקה</Label>
               <Textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="למה נכנסת לעסקה? מה היו הסיגנלים?"
+                value={formData.entryReason}
+                onChange={(e) => setFormData({ ...formData, entryReason: e.target.value })}
                 className="bg-input border-border min-h-[120px] max-h-[200px] overflow-y-auto resize-none"
               />
             </div>
-
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">צילום מסך</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-4 min-h-[120px] flex flex-col items-center justify-center relative">
-                {screenshotPreview ? (
-                  <div className="relative w-full h-full">
-                    <img
-                      src={screenshotPreview}
-                      alt="Screenshot preview"
-                      className="w-full h-auto max-h-[200px] object-contain rounded"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-1 right-1 h-6 w-6"
-                      onClick={removeScreenshot}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <label className="cursor-pointer flex flex-col items-center">
-                    {uploadingImage ? (
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    ) : (
-                      <>
-                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">לחץ להעלאת תמונה</span>
-                      </>
-                    )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
+              <Label className="text-muted-foreground text-sm">מסקנות לאחר העסקה</Label>
+              <Textarea
+                placeholder="מה למדת מהעסקה? מה היית עושה אחרת?"
+                value={formData.conclusions}
+                onChange={(e) => setFormData({ ...formData, conclusions: e.target.value })}
+                className="bg-input border-border min-h-[120px] max-h-[200px] overflow-y-auto resize-none"
+              />
+            </div>
+          </div>
+
+          {/* Screenshot */}
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-sm">צילום מסך</Label>
+            <div className="border-2 border-dashed border-border rounded-lg p-4 min-h-[120px] flex flex-col items-center justify-center relative">
+              {screenshotPreview ? (
+                <div className="relative w-full h-full">
+                  <img
+                    src={screenshotPreview}
+                    alt="Screenshot preview"
+                    className="w-full h-auto max-h-[200px] object-contain rounded"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6"
+                    onClick={removeScreenshot}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <label className="cursor-pointer flex flex-col items-center">
+                  {uploadingImage ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  ) : (
+                    <>
+                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                      <span className="text-sm text-muted-foreground">לחץ להעלאת תמונה</span>
+                    </>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
           </div>
 

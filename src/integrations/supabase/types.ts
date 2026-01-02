@@ -653,8 +653,10 @@ export type Database = {
       }
       shared_trades: {
         Row: {
+          conclusions: string | null
           created_at: string
           entry_price: number
+          entry_reason: string | null
           exit_price: number | null
           id: string
           is_closed: boolean
@@ -670,8 +672,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          conclusions?: string | null
           created_at?: string
           entry_price: number
+          entry_reason?: string | null
           exit_price?: number | null
           id?: string
           is_closed?: boolean
@@ -687,8 +691,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          conclusions?: string | null
           created_at?: string
           entry_price?: number
+          entry_reason?: string | null
           exit_price?: number | null
           id?: string
           is_closed?: boolean
@@ -764,9 +770,11 @@ export type Database = {
       trades: {
         Row: {
           commission: number | null
+          conclusions: string | null
           created_at: string
           entry_date: string | null
           entry_price: number
+          entry_reason: string | null
           exit_date: string | null
           exit_price: number | null
           external_trade_id: string | null
@@ -789,9 +797,11 @@ export type Database = {
         }
         Insert: {
           commission?: number | null
+          conclusions?: string | null
           created_at?: string
           entry_date?: string | null
           entry_price: number
+          entry_reason?: string | null
           exit_date?: string | null
           exit_price?: number | null
           external_trade_id?: string | null
@@ -814,9 +824,11 @@ export type Database = {
         }
         Update: {
           commission?: number | null
+          conclusions?: string | null
           created_at?: string
           entry_date?: string | null
           entry_price?: number
+          entry_reason?: string | null
           exit_date?: string | null
           exit_price?: number | null
           external_trade_id?: string | null
