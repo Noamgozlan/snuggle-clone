@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Plus, Minus, Star, Upload, Loader2, X, CalendarIcon, Layers } from "lucide-react";
-import { TemplateSelector } from "./TemplateSelector";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -676,14 +675,23 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           {/* Notes - Split into Entry Reason and Conclusions */}
           <div className="grid grid-cols-2 gap-4 animate-fade-in">
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <TemplateSelector 
-                  type="entry" 
-                  onSelect={(template) => setFormData({ ...formData, entryReason: formData.entryReason ? `${formData.entryReason}\n${template}` : template })}
-                />
-                <Label className="text-muted-foreground text-sm">סיבת כניסה לעסקה</Label>
-              </div>
+              <Label className="text-muted-foreground text-sm">סיבת כניסה לעסקה</Label>
               <div className="border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b border-border">
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="font-bold text-sm">B</span>
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="italic text-sm">I</span>
+                  </button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    גדול
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    קטן
+                  </button>
+                </div>
                 <Textarea
                   placeholder="למה נכנסת לעסקה? מה היו הסיגנלים?"
                   value={formData.entryReason}
@@ -695,14 +703,23 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <TemplateSelector 
-                  type="conclusions" 
-                  onSelect={(template) => setFormData({ ...formData, conclusions: formData.conclusions ? `${formData.conclusions}\n${template}` : template })}
-                />
-                <Label className="text-muted-foreground text-sm">מסקנות לאחר העסקה</Label>
-              </div>
+              <Label className="text-muted-foreground text-sm">מסקנות לאחר העסקה</Label>
               <div className="border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b border-border">
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="font-bold text-sm">B</span>
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
+                    <span className="italic text-sm">I</span>
+                  </button>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    גדול
+                  </button>
+                  <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
+                    קטן
+                  </button>
+                </div>
                 <Textarea
                   placeholder="מה למדת מהעסקה? מה היית עושה אחרת?"
                   value={formData.conclusions}
