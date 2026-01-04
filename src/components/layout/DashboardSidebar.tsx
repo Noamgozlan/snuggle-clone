@@ -14,6 +14,8 @@ import {
   Target,
   GraduationCap,
   Shield,
+  Download,
+  MessageSquare,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -22,7 +24,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useMentorRelationships } from "@/hooks/useMentorRelationships";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageSquare } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "דף ראשי", href: "/dashboard" },
@@ -50,6 +63,20 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
 
   const hasMentorAccess = myStudents.length > 0 || pendingRequests.length > 0;
   const hasApprovedMentor = myMentor?.status === 'accepted';
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+  const [showInstallDialog, setShowInstallDialog] = useState(false);
+
+  const handleInstallClick = async () => {
+    setShowInstallDialog(true);
+  };
+
+  const handleConfirmInstall = async () => {
+    setShowInstallDialog(false);
+    const success = await promptInstall();
+    if (success) {
+      toast.success("האפליקציה הותקנה בהצלחה!");
+    }
+  };
 
   useEffect(() => {
     const checkAdminRole = async () => {
@@ -201,8 +228,40 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
               </Link>
             </li>
           )}
+
+          {/* Install App - only show if installable and not already installed */}
+          {isInstallable && !isInstalled && (
+            <li>
+              <button
+                onClick={handleInstallClick}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors w-full text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <Download className="h-5 w-5" />
+                <span>התקן אפליקציה</span>
+              </button>
+            </li>
+          )}
         </ul>
       </nav>
+
+      {/* Install App Dialog */}
+      <AlertDialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>התקנת האפליקציה</AlertDialogTitle>
+            <AlertDialogDescription>
+              האם ברצונך להתקין את GozlanJournal כאפליקציה על המכשיר שלך? 
+              תוכל לגשת אליה מהמסך הראשי ללא צורך בדפדפן.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmInstall}>
+              התקן
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Social Links */}
       <div className="p-4 border-t border-sidebar-border hidden md:block">
