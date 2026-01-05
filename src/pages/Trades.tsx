@@ -501,6 +501,7 @@ const Trades = () => {
         open={isSummaryOpen}
         onOpenChange={setIsSummaryOpen}
         onEdit={handleEditFromSummary}
+        confirmations={selectedTrade ? getTradeConfirmations(selectedTrade.id) : []}
       />
 
       <EditTradeDialog
