@@ -377,7 +377,7 @@ const Trades = () => {
         </div>
 
         {/* Trades Table */}
-        <Card className="bg-card border-border hover-glow animate-slide-up">
+        <Card className="bg-card border-border hover-glow animate-slide-up overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -391,7 +391,8 @@ const Trades = () => {
               </Button>
             </div>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="text-right text-muted-foreground w-16">תמונה</TableHead>
@@ -506,6 +507,7 @@ const Trades = () => {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </Card>
 

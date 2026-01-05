@@ -28,8 +28,9 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, A
 import { format, subMonths, startOfMonth, endOfMonth, getDay, differenceInSeconds, differenceInMinutes } from "date-fns";
 import { he } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePortfolio } from "@/contexts/PortfolioContext";
 
-type DisplayMode = "money" | "points";
+type DisplayMode = "money" | "points" | "percentage";
 type MonthlyViewMode = "pnl" | "trades" | "winrate" | "points";
 
 const Dashboard = () => {
@@ -39,6 +40,7 @@ const Dashboard = () => {
   const [monthlyViewMode, setMonthlyViewMode] = useState<MonthlyViewMode>("pnl");
   const { trades, stats, fetchTrades } = useTrades();
   const { user } = useAuth();
+  const { activePortfolio } = usePortfolio();
 
   // Get recent trades (last 5)
   const recentTrades = trades.slice(0, 5);
@@ -226,7 +228,17 @@ const Dashboard = () => {
       .sort((a, b) => a.duration - b.duration);
   }, [trades]);
 
-  const totalDisplay = displayMode === "money" ? stats.totalPnl : stats.totalPoints;
+  // Calculate percentage of portfolio
+  const portfolioBalance = activePortfolio?.balance || 0;
+  const percentageDisplay = portfolioBalance > 0 
+    ? (stats.totalPnl / portfolioBalance) * 100 
+    : 0;
+
+  const totalDisplay = displayMode === "money" 
+    ? stats.totalPnl 
+    : displayMode === "points" 
+      ? stats.totalPoints 
+      : percentageDisplay;
   const avgDisplay = displayMode === "money" ? stats.avgPnl : stats.avgPoints;
 
   return (
@@ -248,7 +260,7 @@ const Dashboard = () => {
                 className={`transition-all text-xs md:text-sm ${displayMode === "money" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
                 onClick={() => setDisplayMode("money")}
               >
-                💵 כסף
+                💵 <span className="hidden sm:inline ml-1">כסף</span>
               </Button>
               <Button 
                 variant="ghost"
@@ -256,7 +268,16 @@ const Dashboard = () => {
                 className={`transition-all text-xs md:text-sm ${displayMode === "points" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
                 onClick={() => setDisplayMode("points")}
               >
-                📊 נקודות
+                📊 <span className="hidden sm:inline ml-1">נקודות</span>
+              </Button>
+              <Button 
+                variant="ghost"
+                size="sm"
+                className={`transition-all text-xs md:text-sm ${displayMode === "percentage" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
+                onClick={() => setDisplayMode("percentage")}
+                title="אחוז מיתרת התיק"
+              >
+                📈 <span className="hidden sm:inline ml-1">אחוזים</span>
               </Button>
             </div>
             <Button 
@@ -286,9 +307,16 @@ const Dashboard = () => {
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-primary/50" />
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground mb-1">סה״כ רווח/הפסד</p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-1">
+                  {displayMode === "percentage" ? "תשואה על התיק" : "סה״כ רווח/הפסד"}
+                </p>
                 <p className={`text-xl md:text-3xl font-bold ${totalDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
-                  {totalDisplay >= 0 ? '+' : ''}{displayMode === "money" ? `$${totalDisplay.toFixed(2)}` : `${totalDisplay.toFixed(1)}`}
+                  {totalDisplay >= 0 ? '+' : ''}
+                  {displayMode === "money" 
+                    ? `$${totalDisplay.toFixed(2)}` 
+                    : displayMode === "points" 
+                      ? `${totalDisplay.toFixed(1)}` 
+                      : `${totalDisplay.toFixed(2)}%`}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{stats.totalTrades} עסקאות</p>
               </div>
@@ -773,7 +801,7 @@ const Dashboard = () => {
       </div>
 
       <AddTradeDialog open={isAddTradeOpen} onOpenChange={setIsAddTradeOpen} onTradeAdded={fetchTrades} />
-      <ShareStatsDialog open={isShareOpen} onOpenChange={setIsShareOpen} stats={stats} displayMode={displayMode} />
+      <ShareStatsDialog open={isShareOpen} onOpenChange={setIsShareOpen} stats={stats} displayMode={displayMode === "percentage" ? "money" : displayMode} />
     </DashboardLayout>
   );
 };

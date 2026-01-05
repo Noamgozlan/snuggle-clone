@@ -41,13 +41,17 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
     <>
       <header className="h-14 md:h-16 border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="flex items-center justify-between h-full px-3 md:px-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Portfolio Selector - visible on mobile */}
+            <div className="sm:hidden">
+              <PortfolioSelector />
+            </div>
             {/* Install App Button - Always visible */}
             {!isInstalled && (
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="gap-2"
+                className="gap-2 min-h-[36px]"
                 onClick={handleInstallClick}
               >
                 <Download className="h-4 w-4" />
