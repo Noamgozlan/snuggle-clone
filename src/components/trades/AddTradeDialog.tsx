@@ -35,8 +35,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const [pnlSign, setPnlSign] = useState<"positive" | "negative">("positive");
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [screenshots, setScreenshots] = useState<{ url: string; preview: string }[]>([]);
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
   const [selectedConfirmations, setSelectedConfirmations] = useState<string[]>([]);
   const [riskType, setRiskType] = useState<"dollars" | "percent">("dollars");
@@ -88,8 +87,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setRating(0);
     setTradeType("long");
     setPnlSign("positive");
-    setScreenshotUrl(null);
-    setScreenshotPreview(null);
+    setScreenshots([]);
     setSelectedStrategy(null);
     setSelectedConfirmations([]);
     setRiskType("dollars");
@@ -110,32 +108,39 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    // Show preview immediately
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setScreenshotPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) return;
 
     setUploadingImage(true);
+    
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Show preview immediately
+        const reader = new FileReader();
+        const previewPromise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        const preview = await previewPromise;
 
-      const { error: uploadError } = await supabase.storage.from("trade-screenshots").upload(fileName, file);
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${user.id}/${Date.now()}-${i}.${fileExt}`;
 
-      if (uploadError) throw uploadError;
+        const { error: uploadError } = await supabase.storage.from("trade-screenshots").upload(fileName, file);
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("trade-screenshots").getPublicUrl(fileName);
+        if (uploadError) throw uploadError;
 
-      setScreenshotUrl(publicUrl);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("trade-screenshots").getPublicUrl(fileName);
+
+        setScreenshots(prev => [...prev, { url: publicUrl, preview }]);
+      }
+      
       toast({
-        title: "התמונה הועלתה בהצלחה",
+        title: files.length > 1 ? `${files.length} תמונות הועלו בהצלחה` : "התמונה הועלתה בהצלחה",
       });
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -143,18 +148,16 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
         title: "שגיאה בהעלאת התמונה",
         variant: "destructive",
       });
-      setScreenshotPreview(null);
     } finally {
       setUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
-  const removeScreenshot = () => {
-    setScreenshotUrl(null);
-    setScreenshotPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  const removeScreenshot = (index: number) => {
+    setScreenshots(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -243,12 +246,26 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                 ? `${formData.entryReason || ""}\n\n[CONCLUSIONS]\n${formData.conclusions || ""}`.trim()
                 : null,
             is_closed: true,
-            screenshot_url: screenshotUrl,
+            screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
           })
           .select("id")
           .single();
 
         if (error) throw error;
+
+        // Save all screenshots to trade_screenshots table
+        if (tradeData && screenshots.length > 0) {
+          const screenshotsToInsert = screenshots.map((ss, index) => ({
+            trade_id: tradeData.id,
+            screenshot_url: ss.url,
+            position: index,
+          }));
+
+          const { error: ssError } = await supabase.from("trade_screenshots").insert(screenshotsToInsert);
+          if (ssError) {
+            console.error("Error saving screenshots:", ssError);
+          }
+        }
 
         // Save selected confirmations for this trade
         if (tradeData && selectedConfirmations.length > 0) {
@@ -677,37 +694,53 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
 
           {/* Screenshot Upload */}
           <div className="space-y-2 animate-fade-in">
-            <Label className="text-muted-foreground text-sm">צילום מסך של העסקה</Label>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-            {screenshotPreview ? (
-              <div className="relative border border-border rounded-xl overflow-hidden">
-                <img
-                  src={screenshotPreview}
-                  alt="צילום מסך"
-                  className="w-full max-h-64 object-contain bg-secondary/30"
-                />
-                <button
-                  type="button"
-                  onClick={removeScreenshot}
-                  className="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-full hover:scale-110 transition-transform"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-                {uploadingImage && (
-                  <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Label className="text-muted-foreground text-sm">צילומי מסך של העסקה</Label>
+            <input 
+              ref={fileInputRef} 
+              type="file" 
+              accept="image/*" 
+              multiple
+              onChange={handleImageUpload} 
+              className="hidden" 
+            />
+            
+            {screenshots.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {screenshots.map((ss, index) => (
+                  <div key={index} className="relative border border-border rounded-lg overflow-hidden aspect-video">
+                    <img
+                      src={ss.preview}
+                      alt={`צילום מסך ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeScreenshot(index)}
+                      className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:scale-110 transition-transform"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
                   </div>
-                )}
-              </div>
-            ) : (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors cursor-pointer group"
-              >
-                <Upload className="h-8 w-8 mb-2 group-hover:scale-110 transition-transform" />
-                <p>לחץ להעלאת צילום מסך</p>
+                ))}
               </div>
             )}
+            
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors cursor-pointer group"
+            >
+              {uploadingImage ? (
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              ) : (
+                <>
+                  <Upload className="h-8 w-8 mb-2 group-hover:scale-110 transition-transform" />
+                  <p className="text-sm">
+                    {screenshots.length > 0 ? "הוסף עוד תמונות" : "לחץ להעלאת צילומי מסך"}
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">ניתן לבחור מספר תמונות</p>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Notes - Split into Entry Reason and Conclusions */}
