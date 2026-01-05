@@ -1,7 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Star, TrendingUp, TrendingDown, Calendar, Target, DollarSign, Edit } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Star, TrendingUp, TrendingDown, Calendar, Target, DollarSign, Edit, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Trade } from "@/hooks/useTrades";
 import { ImageViewer } from "@/components/ui/image-viewer";
@@ -11,9 +12,10 @@ interface TradeSummaryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEdit?: () => void;
+  confirmations?: string[];
 }
 
-export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit }: TradeSummaryDialogProps) => {
+export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirmations = [] }: TradeSummaryDialogProps) => {
   if (!trade) return null;
 
   const formatDate = (dateString: string | null) => {
@@ -143,7 +145,24 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit }: TradeS
                 >
                   {trade.is_closed ? "סגורה" : "פתוחה"}
                 </span>
+          </div>
+
+          {/* Confirmations */}
+          {confirmations.length > 0 && (
+            <Card className="p-4 bg-secondary/30">
+              <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                אישורים ({confirmations.length})
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {confirmations.map((confirmation, index) => (
+                  <Badge key={index} variant="secondary" className="bg-primary/20 text-primary">
+                    {confirmation}
+                  </Badge>
+                ))}
               </div>
+            </Card>
+          )}
             </div>
           </div>
 
