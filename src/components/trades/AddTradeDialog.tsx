@@ -58,6 +58,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     durationHours: "",
     durationMinutes: "",
     durationSeconds: "",
+    entryPrice: "",
+    exitPrice: "",
     pnl: "",
     pnlPoints: "",
     risk: "",
@@ -73,6 +75,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       durationHours: "",
       durationMinutes: "",
       durationSeconds: "",
+      entryPrice: "",
+      exitPrice: "",
       pnl: "",
       pnlPoints: "",
       risk: "",
@@ -174,6 +178,15 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       return;
     }
 
+    if (!formData.entryPrice) {
+      toast({
+        title: "שגיאה",
+        description: "יש למלא מחיר כניסה",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -217,8 +230,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             quantity: parseFloat(formData.quantity) || 1,
             entry_date: entryDate,
             exit_date: exitDate,
-            entry_price: 0,
-            exit_price: null,
+            entry_price: formData.entryPrice ? parseFloat(formData.entryPrice) : 0,
+            exit_price: formData.exitPrice ? parseFloat(formData.exitPrice) : null,
             pnl: pnlValue,
             pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
             risk: formData.risk ? parseFloat(formData.risk) : null,
@@ -399,8 +412,33 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             </div>
           </div>
 
-          {/* Row 2: PnL, Points */}
-          <div className="grid grid-cols-3 gap-4 stagger-children">
+          {/* Row 2: Entry/Exit Prices, PnL, Points */}
+          <div className="grid grid-cols-5 gap-4 stagger-children">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">מחיר כניסה *</Label>
+              <Input
+                type="number"
+                step="any"
+                placeholder="100.25"
+                value={formData.entryPrice}
+                onChange={(e) => setFormData({ ...formData, entryPrice: e.target.value })}
+                className="bg-input border-border hover:border-primary/50 transition-colors"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">מחיר יציאה</Label>
+              <Input
+                type="number"
+                step="any"
+                placeholder="101.00"
+                value={formData.exitPrice}
+                onChange={(e) => setFormData({ ...formData, exitPrice: e.target.value })}
+                className="bg-input border-border hover:border-primary/50 transition-colors"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">נקודות</Label>
               <Input
