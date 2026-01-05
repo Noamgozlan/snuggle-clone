@@ -263,14 +263,14 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-right">ערוך עסקה</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           {/* Row 1 */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סימול *</Label>
               <Input
@@ -327,7 +327,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           </div>
 
           {/* Row 2 */}
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">מחיר כניסה</Label>
               <Input
@@ -399,7 +399,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           </div>
 
           {/* Row 3 */}
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סיכון ($)</Label>
               <Input

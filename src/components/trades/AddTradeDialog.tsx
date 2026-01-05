@@ -45,11 +45,19 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [tradeDate, setTradeDate] = useState<Date>(new Date());
 
+  // Always sync with active portfolio when it changes
   useEffect(() => {
-    if (activePortfolio && selectedPortfolioIds.length === 0) {
+    if (activePortfolio) {
       setSelectedPortfolioIds([activePortfolio.id]);
     }
   }, [activePortfolio]);
+
+  // Also sync when dialog opens
+  useEffect(() => {
+    if (open && activePortfolio) {
+      setSelectedPortfolioIds([activePortfolio.id]);
+    }
+  }, [open, activePortfolio]);
 
   const [formData, setFormData] = useState({
     symbol: "",
@@ -305,7 +313,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-card border-border animate-scale-in">
+      <DialogContent className="w-[95vw] max-w-5xl max-h-[90vh] overflow-y-auto bg-card border-border animate-scale-in">
         <DialogHeader className="animate-fade-in">
           <DialogTitle className="text-xl font-bold text-right">הוסף עסקה חדשה</DialogTitle>
           <p className="text-sm text-muted-foreground text-right">הזן את פרטי העסקה להלן</p>
@@ -313,7 +321,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           {/* Row 1: Symbol, Quantity, Direction, Entry/Exit Times */}
-          <div className="grid grid-cols-6 gap-4 stagger-children">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 stagger-children">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סימול *</Label>
               <Input
@@ -430,7 +438,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           </div>
 
           {/* Row 2: Entry/Exit Prices, PnL, Points */}
-          <div className="grid grid-cols-5 gap-4 stagger-children">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 stagger-children">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">מחיר כניסה *</Label>
               <Input
