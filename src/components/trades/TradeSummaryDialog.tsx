@@ -96,11 +96,13 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">מחיר כניסה:</span>
-                <span className="font-medium">{formatPrice(trade.entry_price)}</span>
+                <span className="font-medium">{trade.entry_price !== 0 ? formatPrice(trade.entry_price) : "—"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">מחיר יציאה:</span>
-                <span className="font-medium">{formatPrice(trade.exit_price)}</span>
+                <span className="font-medium">
+                  {trade.exit_price !== null && trade.exit_price !== 0 ? formatPrice(trade.exit_price) : "—"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">כמות:</span>
