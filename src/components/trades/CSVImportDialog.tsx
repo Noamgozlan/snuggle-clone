@@ -17,9 +17,11 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useToast } from "@/hooks/use-toast";
-import { FileUp, Upload, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { FileUp, Upload, AlertCircle, CheckCircle2, Loader2, Zap } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 interface CSVImportDialogProps {
   open: boolean;
@@ -46,6 +48,8 @@ interface ColumnMapping {
   notes: string;
 }
 
+type DetectedFormat = "tradovate" | "apex" | "generic" | null;
+
 const defaultMapping: ColumnMapping = {
   symbol: "",
   trade_type: "",
@@ -61,12 +65,42 @@ const defaultMapping: ColumnMapping = {
   notes: "",
 };
 
+// Clean symbol name (remove prefixes like CM.)
+const cleanSymbol = (symbol: string): string => {
+  if (!symbol) return "UNKNOWN";
+  // Remove CM. prefix and trailing contract codes (e.g., MNQH6 -> MNQ)
+  let cleaned = symbol.replace(/^CM\./, "");
+  // Extract base symbol (letters only, up to 3-4 chars)
+  const match = cleaned.match(/^([A-Z]{2,4})/i);
+  return match ? match[1].toUpperCase() : cleaned.toUpperCase();
+};
+
+// Parse various date formats
+const parseDate = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
+  
+  // Try standard parsing first
+  let date = new Date(dateStr);
+  if (!isNaN(date.getTime())) return date;
+  
+  // Try MM/DD/YYYY HH:MM:SS format (Tradovate)
+  const tradovateMatch = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
+  if (tradovateMatch) {
+    const [, month, day, year, hour, min, sec] = tradovateMatch;
+    date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(min), parseInt(sec));
+    if (!isNaN(date.getTime())) return date;
+  }
+  
+  return null;
+};
+
 export const CSVImportDialog = ({
   open,
   onOpenChange,
   onImportComplete,
 }: CSVImportDialogProps) => {
   const { user } = useAuth();
+  const { activePortfolio } = usePortfolio();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -75,25 +109,27 @@ export const CSVImportDialog = ({
   const [mapping, setMapping] = useState<ColumnMapping>(defaultMapping);
   const [importing, setImporting] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [step, setStep] = useState<"upload" | "map" | "importing" | "done">("upload");
+  const [step, setStep] = useState<"upload" | "preview" | "map" | "importing" | "done">("upload");
   const [importResults, setImportResults] = useState({ success: 0, failed: 0 });
+  const [detectedFormat, setDetectedFormat] = useState<DetectedFormat>(null);
+  const [parsedTrades, setParsedTrades] = useState<any[]>([]);
 
   const parseCSV = (text: string): { headers: string[]; rows: CSVRow[] } => {
-    const lines = text.split("\n").filter((line) => line.trim());
+    // Remove BOM if present
+    const cleanText = text.replace(/^\uFEFF/, "");
+    const lines = cleanText.split("\n").filter((line) => line.trim());
     if (lines.length === 0) return { headers: [], rows: [] };
 
-    // Parse headers
     const headerLine = lines[0];
     const headers = parseCSVLine(headerLine);
 
-    // Parse data rows
     const rows: CSVRow[] = [];
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i]);
-      if (values.length === headers.length) {
+      if (values.length >= headers.length - 1) {
         const row: CSVRow = {};
         headers.forEach((header, index) => {
-          row[header] = values[index];
+          row[header] = values[index] || "";
         });
         rows.push(row);
       }
@@ -124,6 +160,83 @@ export const CSVImportDialog = ({
     return result;
   };
 
+  // Detect CSV format based on headers
+  const detectFormat = (headers: string[]): DetectedFormat => {
+    const headerSet = new Set(headers.map(h => h.toLowerCase()));
+    
+    // Tradovate format: ContractName, EnteredAt, ExitedAt, EntryPrice, ExitPrice, PnL, Size, Type
+    if (headerSet.has("contractname") && headerSet.has("entryprice") && headerSet.has("exitprice")) {
+      return "tradovate";
+    }
+    
+    // Apex/Rithmic format: symbol, mov_time, mov_type, exec_qty, price_done, points, profit
+    if (headerSet.has("symbol") && headerSet.has("mov_type") && headerSet.has("price_done")) {
+      return "apex";
+    }
+    
+    return "generic";
+  };
+
+  // Parse Tradovate format - each row is a complete trade
+  const parseTradovateFormat = (rows: CSVRow[]): any[] => {
+    return rows.map(row => {
+      const entryDate = parseDate(row["EnteredAt"]);
+      const exitDate = parseDate(row["ExitedAt"]);
+      const tradeType = row["Type"]?.toLowerCase() === "short" ? "short" : "long";
+      
+      return {
+        symbol: cleanSymbol(row["ContractName"]),
+        trade_type: tradeType,
+        entry_price: parseFloat(row["EntryPrice"]) || 0,
+        exit_price: parseFloat(row["ExitPrice"]) || null,
+        entry_date: entryDate?.toISOString() || null,
+        exit_date: exitDate?.toISOString() || null,
+        pnl: parseFloat(row["PnL"]) || null,
+        quantity: Math.abs(parseInt(row["Size"])) || 1,
+        commission: parseFloat(row["Fees"]) || 0,
+        is_closed: true,
+      };
+    }).filter(t => t.symbol && t.symbol !== "UNKNOWN");
+  };
+
+  // Parse Apex format - aggregate orders into trades
+  const parseApexFormat = (rows: CSVRow[]): any[] => {
+    // Group by created_on (trade session) to find related orders
+    const trades: any[] = [];
+    
+    // Process rows that have profit/points (these are exit orders with complete trade info)
+    rows.forEach(row => {
+      const profit = row["profit"];
+      const points = row["points"];
+      
+      // Only process rows with profit data (these represent completed trades)
+      if (profit && profit !== "" && !isNaN(parseFloat(profit))) {
+        const execQty = parseInt(row["exec_qty"]) || 1;
+        const movType = parseInt(row["mov_type"]) || 0;
+        // mov_type 2 = exit, exec_qty negative = sell
+        const isShort = movType === 2 && execQty < 0 ? false : movType === 1 && execQty > 0 ? false : true;
+        
+        const entryDate = parseDate(row["mov_time"]);
+        
+        trades.push({
+          symbol: cleanSymbol(row["symbol"]),
+          trade_type: execQty < 0 ? "short" : "long",
+          entry_price: parseFloat(row["price_done"]) || 0,
+          exit_price: null,
+          entry_date: entryDate?.toISOString() || null,
+          exit_date: null,
+          pnl: parseFloat(profit) || null,
+          pnl_points: parseFloat(points) || null,
+          quantity: Math.abs(execQty),
+          commission: 0,
+          is_closed: true,
+        });
+      }
+    });
+    
+    return trades.filter(t => t.symbol && t.symbol !== "UNKNOWN");
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -137,53 +250,99 @@ export const CSVImportDialog = ({
       setHeaders(headers);
       setCsvData(rows);
       
-      // Auto-detect column mapping
-      const autoMapping = { ...defaultMapping };
-      headers.forEach((header) => {
-        const lowerHeader = header.toLowerCase();
-        if (lowerHeader.includes("symbol") || lowerHeader.includes("ticker") || lowerHeader.includes("סימול")) {
-          autoMapping.symbol = header;
-        }
-        if (lowerHeader.includes("type") || lowerHeader.includes("direction") || lowerHeader.includes("סוג") || lowerHeader.includes("כיוון")) {
-          autoMapping.trade_type = header;
-        }
-        if (lowerHeader.includes("entry") && lowerHeader.includes("price") || lowerHeader.includes("כניסה")) {
-          autoMapping.entry_price = header;
-        }
-        if (lowerHeader.includes("exit") && lowerHeader.includes("price") || lowerHeader.includes("יציאה")) {
-          autoMapping.exit_price = header;
-        }
-        if (lowerHeader.includes("entry") && lowerHeader.includes("date") || lowerHeader.includes("תאריך כניסה")) {
-          autoMapping.entry_date = header;
-        }
-        if (lowerHeader.includes("exit") && lowerHeader.includes("date") || lowerHeader.includes("תאריך יציאה")) {
-          autoMapping.exit_date = header;
-        }
-        if ((lowerHeader.includes("pnl") || lowerHeader.includes("profit") || lowerHeader.includes("רווח")) && !lowerHeader.includes("point")) {
-          autoMapping.pnl = header;
-        }
-        if (lowerHeader.includes("point") || lowerHeader.includes("נקודות")) {
-          autoMapping.pnl_points = header;
-        }
-        if (lowerHeader.includes("quantity") || lowerHeader.includes("qty") || lowerHeader.includes("כמות") || lowerHeader.includes("contracts")) {
-          autoMapping.quantity = header;
-        }
-        if (lowerHeader.includes("commission") || lowerHeader.includes("fee") || lowerHeader.includes("עמלה")) {
-          autoMapping.commission = header;
-        }
-        if (lowerHeader.includes("strategy") || lowerHeader.includes("אסטרטגיה")) {
-          autoMapping.strategy = header;
-        }
-        if (lowerHeader.includes("notes") || lowerHeader.includes("הערות") || lowerHeader.includes("comment")) {
-          autoMapping.notes = header;
-        }
-      });
-      setMapping(autoMapping);
-      setStep("map");
+      // Detect format
+      const format = detectFormat(headers);
+      setDetectedFormat(format);
+      
+      if (format === "tradovate") {
+        const trades = parseTradovateFormat(rows);
+        setParsedTrades(trades);
+        setStep("preview");
+      } else if (format === "apex") {
+        const trades = parseApexFormat(rows);
+        setParsedTrades(trades);
+        setStep("preview");
+      } else {
+        // Generic format - go to manual mapping
+        const autoMapping = { ...defaultMapping };
+        headers.forEach((header) => {
+          const lowerHeader = header.toLowerCase();
+          if (lowerHeader.includes("symbol") || lowerHeader.includes("ticker") || lowerHeader.includes("סימול") || lowerHeader.includes("contractname")) {
+            autoMapping.symbol = header;
+          }
+          if (lowerHeader.includes("type") || lowerHeader.includes("direction") || lowerHeader.includes("סוג") || lowerHeader.includes("כיוון")) {
+            autoMapping.trade_type = header;
+          }
+          if ((lowerHeader.includes("entry") && lowerHeader.includes("price")) || lowerHeader === "entryprice") {
+            autoMapping.entry_price = header;
+          }
+          if ((lowerHeader.includes("exit") && lowerHeader.includes("price")) || lowerHeader === "exitprice") {
+            autoMapping.exit_price = header;
+          }
+          if ((lowerHeader.includes("entry") && lowerHeader.includes("date")) || lowerHeader === "enteredat") {
+            autoMapping.entry_date = header;
+          }
+          if ((lowerHeader.includes("exit") && lowerHeader.includes("date")) || lowerHeader === "exitedat") {
+            autoMapping.exit_date = header;
+          }
+          if ((lowerHeader.includes("pnl") || lowerHeader.includes("profit") || lowerHeader.includes("רווח")) && !lowerHeader.includes("point")) {
+            autoMapping.pnl = header;
+          }
+          if (lowerHeader.includes("point") || lowerHeader.includes("נקודות")) {
+            autoMapping.pnl_points = header;
+          }
+          if (lowerHeader.includes("quantity") || lowerHeader.includes("qty") || lowerHeader.includes("כמות") || lowerHeader.includes("size")) {
+            autoMapping.quantity = header;
+          }
+          if (lowerHeader.includes("commission") || lowerHeader.includes("fee") || lowerHeader.includes("עמלה")) {
+            autoMapping.commission = header;
+          }
+          if (lowerHeader.includes("strategy") || lowerHeader.includes("אסטרטגיה")) {
+            autoMapping.strategy = header;
+          }
+          if (lowerHeader.includes("notes") || lowerHeader.includes("הערות") || lowerHeader.includes("comment")) {
+            autoMapping.notes = header;
+          }
+        });
+        setMapping(autoMapping);
+        setStep("map");
+      }
     };
     reader.readAsText(file);
   };
 
+  // Import auto-detected trades
+  const handleAutoImport = async () => {
+    if (!user || parsedTrades.length === 0) return;
+
+    setImporting(true);
+    setStep("importing");
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const trade of parsedTrades) {
+      try {
+        const tradeData = {
+          user_id: user.id,
+          portfolio_id: activePortfolio?.id || null,
+          ...trade,
+        };
+
+        const { error } = await supabase.from("trades").insert(tradeData);
+        if (error) throw error;
+        successCount++;
+      } catch (error) {
+        console.error("Error importing trade:", error);
+        failCount++;
+      }
+    }
+
+    setImportResults({ success: successCount, failed: failCount });
+    setImporting(false);
+    setStep("done");
+  };
+
+  // Import with manual mapping
   const handleImport = async () => {
     if (!user) return;
 
@@ -199,12 +358,13 @@ export const CSVImportDialog = ({
 
         const tradeData = {
           user_id: user.id,
-          symbol: (mapping.symbol ? row[mapping.symbol] : "UNKNOWN").toUpperCase(),
+          portfolio_id: activePortfolio?.id || null,
+          symbol: cleanSymbol(mapping.symbol ? row[mapping.symbol] : "UNKNOWN"),
           trade_type: validTradeType,
           entry_price: mapping.entry_price ? parseFloat(row[mapping.entry_price]) || 0 : 0,
           exit_price: mapping.exit_price && row[mapping.exit_price] ? parseFloat(row[mapping.exit_price]) : null,
-          entry_date: mapping.entry_date && row[mapping.entry_date] ? new Date(row[mapping.entry_date]).toISOString() : null,
-          exit_date: mapping.exit_date && row[mapping.exit_date] ? new Date(row[mapping.exit_date]).toISOString() : null,
+          entry_date: mapping.entry_date && row[mapping.entry_date] ? parseDate(row[mapping.entry_date])?.toISOString() : null,
+          exit_date: mapping.exit_date && row[mapping.exit_date] ? parseDate(row[mapping.exit_date])?.toISOString() : null,
           pnl: mapping.pnl && row[mapping.pnl] ? parseFloat(row[mapping.pnl]) : null,
           pnl_points: mapping.pnl_points && row[mapping.pnl_points] ? parseFloat(row[mapping.pnl_points]) : null,
           quantity: mapping.quantity && row[mapping.quantity] ? parseFloat(row[mapping.quantity]) : 1,
@@ -235,6 +395,8 @@ export const CSVImportDialog = ({
     setFileName(null);
     setStep("upload");
     setImportResults({ success: 0, failed: 0 });
+    setDetectedFormat(null);
+    setParsedTrades([]);
     onOpenChange(false);
     if (importResults.success > 0) {
       onImportComplete();
@@ -245,8 +407,14 @@ export const CSVImportDialog = ({
     setMapping((prev) => ({ ...prev, [field]: value }));
   };
 
-  const requiredFields: (keyof ColumnMapping)[] = ["symbol", "entry_price"];
+  const requiredFields: (keyof ColumnMapping)[] = ["symbol"];
   const isValid = requiredFields.every((field) => mapping[field]);
+
+  const formatLabel = {
+    tradovate: "Tradovate",
+    apex: "Apex / Rithmic",
+    generic: "כללי",
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -257,7 +425,7 @@ export const CSVImportDialog = ({
             יבוא עסקאות מ-CSV
           </DialogTitle>
           <DialogDescription>
-            העלה קובץ CSV עם העסקאות שלך ומפה את העמודות
+            העלה קובץ CSV - המערכת תזהה אוטומטית את הפורמט
           </DialogDescription>
         </DialogHeader>
 
@@ -271,6 +439,12 @@ export const CSVImportDialog = ({
               <p className="text-foreground font-medium mb-1">לחץ להעלאת קובץ CSV</p>
               <p className="text-sm text-muted-foreground">או גרור ושחרר כאן</p>
             </div>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Badge variant="secondary" className="text-xs">Tradovate</Badge>
+              <Badge variant="secondary" className="text-xs">Apex</Badge>
+              <Badge variant="secondary" className="text-xs">Rithmic</Badge>
+              <Badge variant="secondary" className="text-xs">CSV כללי</Badge>
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -278,6 +452,52 @@ export const CSVImportDialog = ({
               className="hidden"
               onChange={handleFileUpload}
             />
+          </div>
+        )}
+
+        {step === "preview" && (
+          <div className="space-y-4">
+            <Alert className="bg-success/10 border-success/30">
+              <Zap className="h-4 w-4 text-success" />
+              <AlertDescription className="text-success">
+                <span className="font-medium">זוהה פורמט {formatLabel[detectedFormat!]}</span>
+                <br />
+                נמצאו {parsedTrades.length} עסקאות מוכנות לייבוא
+              </AlertDescription>
+            </Alert>
+
+            <div className="bg-secondary/30 rounded-lg p-3 max-h-[200px] overflow-y-auto">
+              <p className="text-xs text-muted-foreground mb-2">תצוגה מקדימה:</p>
+              <div className="space-y-1">
+                {parsedTrades.slice(0, 5).map((trade, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm">
+                    <Badge variant={trade.trade_type === "long" ? "default" : "destructive"} className="text-[10px] px-1.5">
+                      {trade.trade_type.toUpperCase()}
+                    </Badge>
+                    <span className="font-medium">{trade.symbol}</span>
+                    <span className="text-muted-foreground">@{trade.entry_price?.toFixed(2)}</span>
+                    {trade.pnl !== null && (
+                      <span className={trade.pnl >= 0 ? "text-success" : "text-destructive"}>
+                        {trade.pnl >= 0 ? "+" : ""}{trade.pnl?.toFixed(2)}$
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {parsedTrades.length > 5 && (
+                  <p className="text-xs text-muted-foreground">...ועוד {parsedTrades.length - 5} עסקאות</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep("map")} className="flex-1">
+                מיפוי ידני
+              </Button>
+              <Button onClick={handleAutoImport} className="flex-1 gap-2">
+                <Zap className="h-4 w-4" />
+                ייבא {parsedTrades.length} עסקאות
+              </Button>
+            </div>
           </div>
         )}
 
@@ -320,7 +540,7 @@ export const CSVImportDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm">מחיר כניסה *</Label>
+                <Label className="text-sm">מחיר כניסה</Label>
                 <Select value={mapping.entry_price} onValueChange={(v) => updateMapping("entry_price", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="בחר עמודה" />
