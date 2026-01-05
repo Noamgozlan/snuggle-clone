@@ -29,8 +29,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   const [pnlSign, setPnlSign] = useState<"positive" | "negative">("positive");
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [screenshots, setScreenshots] = useState<{ url: string; preview: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { portfolios } = usePortfolio();
   const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
@@ -51,7 +50,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
 
   // Load trade data when trade changes
   useEffect(() => {
-    if (trade) {
+    if (trade && open) {
       const pnl = trade.pnl || 0;
       const fullNotes = trade.notes || "";
       const [reason, ...rest] = fullNotes.split("\n\n[CONCLUSIONS]\n");
@@ -73,52 +72,78 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       setRating(trade.rating || 0);
       setTradeType((trade.trade_type as "long" | "short") || "long");
       setPnlSign(pnl >= 0 ? "positive" : "negative");
-      setScreenshotUrl(trade.screenshot_url);
-      setScreenshotPreview(trade.screenshot_url);
       setSelectedPortfolioIds(trade.portfolio_id ? [trade.portfolio_id] : []);
+      
+      // Load existing screenshots
+      if (trade.screenshot_url) {
+        setScreenshots([{ url: trade.screenshot_url, preview: trade.screenshot_url }]);
+      } else {
+        setScreenshots([]);
+      }
+      
+      // Fetch screenshots from trade_screenshots table
+      const fetchScreenshots = async () => {
+        const { data, error } = await supabase
+          .from("trade_screenshots")
+          .select("screenshot_url, position")
+          .eq("trade_id", trade.id)
+          .order("position", { ascending: true });
+          
+        if (!error && data && data.length > 0) {
+          setScreenshots(data.map(ss => ({ url: ss.screenshot_url, preview: ss.screenshot_url })));
+        }
+      };
+      fetchScreenshots();
     }
-  }, [trade]);
+  }, [trade, open]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setScreenshotPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) return;
 
     setUploadingImage(true);
+    
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        const reader = new FileReader();
+        const previewPromise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        const preview = await previewPromise;
 
-      const { error: uploadError } = await supabase.storage.from("trade-screenshots").upload(fileName, file);
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${user.id}/${Date.now()}-${i}.${fileExt}`;
 
-      if (uploadError) throw uploadError;
+        const { error: uploadError } = await supabase.storage.from("trade-screenshots").upload(fileName, file);
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("trade-screenshots").getPublicUrl(fileName);
+        if (uploadError) throw uploadError;
 
-      setScreenshotUrl(publicUrl);
-      toast({ title: "התמונה הועלתה בהצלחה" });
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("trade-screenshots").getPublicUrl(fileName);
+
+        setScreenshots(prev => [...prev, { url: publicUrl, preview }]);
+      }
+      
+      toast({
+        title: files.length > 1 ? `${files.length} תמונות הועלו בהצלחה` : "התמונה הועלתה בהצלחה",
+      });
     } catch (error) {
       console.error("Error uploading image:", error);
       toast({ title: "שגיאה בהעלאת התמונה", variant: "destructive" });
-      setScreenshotPreview(null);
     } finally {
       setUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
-  const removeScreenshot = () => {
-    setScreenshotUrl(null);
-    setScreenshotPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  const removeScreenshot = (index: number) => {
+    setScreenshots(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -170,11 +195,25 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           strategy: formData.strategy || null,
           notes: combinedNotes,
           is_closed: true,
-          screenshot_url: screenshotUrl,
+          screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
         })
         .eq("id", trade.id);
 
       if (error) throw error;
+
+      // Update screenshots in trade_screenshots table
+      // First delete existing
+      await supabase.from("trade_screenshots").delete().eq("trade_id", trade.id);
+      
+      // Then insert new ones
+      if (screenshots.length > 0) {
+        const screenshotsToInsert = screenshots.map((ss, index) => ({
+          trade_id: trade.id,
+          screenshot_url: ss.url,
+          position: index,
+        }));
+        await supabase.from("trade_screenshots").insert(screenshotsToInsert);
+      }
 
       // Check if user wants to sync to OTHER portfolios (creating copies)
       const otherPortfolioIds = selectedPortfolioIds.filter((id) => id !== trade.portfolio_id);
@@ -197,7 +236,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           strategy: formData.strategy || null,
           notes: combinedNotes,
           is_closed: true,
-          screenshot_url: screenshotUrl,
+          screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
         }));
 
         const { error: syncError } = await supabase.from("trades").insert(tradesToInsert);
@@ -521,43 +560,51 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           </div>
 
           <div className="space-y-2">
-            <Label className="text-muted-foreground text-sm">צילום מסך</Label>
-            <div className="border-2 border-dashed border-border rounded-lg p-4 min-h-[120px] flex flex-col items-center justify-center relative">
-              {screenshotPreview ? (
-                <div className="relative w-full h-full">
-                  <img
-                    src={screenshotPreview}
-                    alt="Screenshot preview"
-                    className="w-full h-auto max-h-[200px] object-contain rounded"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-1 right-1 h-6 w-6"
-                    onClick={removeScreenshot}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
+            <Label className="text-muted-foreground text-sm">צילומי מסך</Label>
+            <input 
+              ref={fileInputRef} 
+              type="file" 
+              accept="image/*" 
+              multiple
+              onChange={handleImageUpload} 
+              className="hidden" 
+            />
+            
+            {screenshots.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {screenshots.map((ss, index) => (
+                  <div key={index} className="relative border border-border rounded-lg overflow-hidden aspect-video">
+                    <img
+                      src={ss.preview}
+                      alt={`צילום מסך ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeScreenshot(index)}
+                      className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:scale-110 transition-transform"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+            >
+              {uploadingImage ? (
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               ) : (
-                <label className="cursor-pointer flex flex-col items-center">
-                  {uploadingImage ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">לחץ להעלאת תמונה</span>
-                    </>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </label>
+                <>
+                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                  <span className="text-sm text-muted-foreground">
+                    {screenshots.length > 0 ? "הוסף עוד תמונות" : "לחץ להעלאת צילומי מסך"}
+                  </span>
+                  <span className="text-xs text-muted-foreground/70 mt-1">ניתן לבחור מספר תמונות</span>
+                </>
               )}
             </div>
           </div>

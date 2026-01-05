@@ -767,6 +767,38 @@ export type Database = {
           },
         ]
       }
+      trade_screenshots: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          screenshot_url: string
+          trade_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position?: number
+          screenshot_url: string
+          trade_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          screenshot_url?: string
+          trade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_screenshots_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trades: {
         Row: {
           commission: number | null

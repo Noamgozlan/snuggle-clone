@@ -47,6 +47,13 @@ interface TradeConfirmation {
   confirmation_name: string;
 }
 
+interface TradeScreenshot {
+  id: string;
+  trade_id: string;
+  screenshot_url: string;
+  position: number;
+}
+
 const Trades = () => {
   const { trades, stats, loading, fetchTrades, deleteTrade, deleteAllTrades } = useTrades();
   const [deletingTradeId, setDeletingTradeId] = useState<string | null>(null);
@@ -61,25 +68,43 @@ const Trades = () => {
   const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
   const [toDate, setToDate] = useState<Date | undefined>(undefined);
   const [tradeConfirmations, setTradeConfirmations] = useState<TradeConfirmation[]>([]);
+  const [tradeScreenshots, setTradeScreenshots] = useState<TradeScreenshot[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Fetch confirmations for all trades
+  // Fetch confirmations and screenshots for all trades
   useEffect(() => {
-    const fetchConfirmations = async () => {
+    const fetchTradeData = async () => {
       if (!user) return;
 
-      const { data, error } = await supabase.from("trade_confirmations").select("trade_id, confirmation_name");
+      // Fetch confirmations
+      const { data: confData, error: confError } = await supabase
+        .from("trade_confirmations")
+        .select("trade_id, confirmation_name");
 
-      if (!error && data) {
-        setTradeConfirmations(data);
+      if (!confError && confData) {
+        setTradeConfirmations(confData);
+      }
+
+      // Fetch screenshots
+      const { data: ssData, error: ssError } = await supabase
+        .from("trade_screenshots")
+        .select("id, trade_id, screenshot_url, position")
+        .order("position", { ascending: true });
+
+      if (!ssError && ssData) {
+        setTradeScreenshots(ssData);
       }
     };
 
-    fetchConfirmations();
+    fetchTradeData();
   }, [user, trades]);
 
   const getTradeConfirmations = (tradeId: string) => {
     return tradeConfirmations.filter((tc) => tc.trade_id === tradeId).map((tc) => tc.confirmation_name);
+  };
+
+  const getTradeScreenshots = (tradeId: string) => {
+    return tradeScreenshots.filter((ss) => ss.trade_id === tradeId);
   };
 
   const handleDeleteAll = async () => {
@@ -502,6 +527,7 @@ const Trades = () => {
         onOpenChange={setIsSummaryOpen}
         onEdit={handleEditFromSummary}
         confirmations={selectedTrade ? getTradeConfirmations(selectedTrade.id) : []}
+        screenshots={selectedTrade ? getTradeScreenshots(selectedTrade.id) : []}
       />
 
       <EditTradeDialog

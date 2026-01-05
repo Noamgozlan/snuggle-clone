@@ -2,10 +2,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, TrendingUp, TrendingDown, Calendar, Target, DollarSign, Edit, CheckCircle2 } from "lucide-react";
+import { Star, TrendingUp, TrendingDown, Calendar, Target, DollarSign, Edit, CheckCircle2, ChevronLeft, ChevronRight, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Trade } from "@/hooks/useTrades";
 import { ImageViewer } from "@/components/ui/image-viewer";
+import { useState } from "react";
+
+interface TradeScreenshot {
+  id: string;
+  screenshot_url: string;
+  position: number;
+}
 
 interface TradeSummaryDialogProps {
   trade: Trade | null;
@@ -13,10 +20,30 @@ interface TradeSummaryDialogProps {
   onOpenChange: (open: boolean) => void;
   onEdit?: () => void;
   confirmations?: string[];
+  screenshots?: TradeScreenshot[];
 }
 
-export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirmations = [] }: TradeSummaryDialogProps) => {
+export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirmations = [], screenshots = [] }: TradeSummaryDialogProps) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
   if (!trade) return null;
+
+  // Combine legacy screenshot_url with new screenshots array
+  const allScreenshots = screenshots.length > 0 
+    ? screenshots.sort((a, b) => a.position - b.position)
+    : trade.screenshot_url 
+      ? [{ id: 'legacy', screenshot_url: trade.screenshot_url, position: 0 }]
+      : [];
+
+  const hasMultipleImages = allScreenshots.length > 1;
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % allScreenshots.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + allScreenshots.length) % allScreenshots.length);
+  };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "—";
@@ -200,17 +227,61 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
             </div>
           )}
 
-          {/* Screenshot */}
-          {trade.screenshot_url && (
+          {/* Screenshots */}
+          {allScreenshots.length > 0 && (
             <Card className="p-4 bg-secondary/30">
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">צילום מסך</h4>
-              <div className="rounded-lg overflow-hidden border border-border">
+              <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <Image className="h-4 w-4" />
+                צילומי מסך {allScreenshots.length > 1 && `(${currentImageIndex + 1}/${allScreenshots.length})`}
+              </h4>
+              <div className="relative rounded-lg overflow-hidden border border-border">
                 <ImageViewer
-                  src={trade.screenshot_url}
-                  alt="Trade screenshot"
+                  src={allScreenshots[currentImageIndex].screenshot_url}
+                  alt={`Trade screenshot ${currentImageIndex + 1}`}
                   className="w-full h-auto max-h-[400px] object-contain bg-background"
                 />
+                
+                {hasMultipleImages && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-background/80 hover:bg-background rounded-full border border-border transition-colors"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-background/80 hover:bg-background rounded-full border border-border transition-colors"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
               </div>
+              
+              {/* Thumbnails */}
+              {hasMultipleImages && (
+                <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+                  {allScreenshots.map((ss, index) => (
+                    <button
+                      key={ss.id}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={cn(
+                        "flex-shrink-0 w-16 h-12 rounded-md overflow-hidden border-2 transition-all",
+                        currentImageIndex === index 
+                          ? "border-primary" 
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <img 
+                        src={ss.screenshot_url} 
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </Card>
           )}
         </div>
