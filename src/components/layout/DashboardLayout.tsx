@@ -15,14 +15,14 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Menu Button - positioned lower to avoid overlap */}
+      {/* Mobile Menu Button - positioned in header area, left side */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-16 right-4 z-[60] md:hidden"
+        className="fixed top-3 left-4 z-[60] md:hidden h-8 w-8"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
-        {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
       {/* Mobile Overlay */}

@@ -45,6 +45,9 @@ const Dashboard = () => {
   // Get recent trades (last 5)
   const recentTrades = trades.slice(0, 5);
 
+  // Calculate portfolio balance first (needed for weeklyData)
+  const portfolioBalance = activePortfolio?.balance || 0;
+
   // Calculate weekly data from real trades (reversed for RTL display)
   const weeklyData = useMemo(() => {
     const days = ["ש׳", "ו׳", "ה׳", "ד׳", "ג׳", "ב׳", "א׳"];
@@ -63,13 +66,27 @@ const Dashboard = () => {
         return tradeDate === dateStr;
       });
       
-      const value = displayMode === "money" 
-        ? dayTrades.reduce((sum, t) => sum + (t.pnl || 0), 0)
-        : dayTrades.reduce((sum, t) => sum + (t.pnl_points || 0), 0);
+      const pnlValue = dayTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+      const pointsValue = dayTrades.reduce((sum, t) => sum + (t.pnl_points || 0), 0);
       
-      return { day, value, trades: dayTrades.length };
+      let value: number;
+      switch (displayMode) {
+        case "points":
+          value = pointsValue;
+          break;
+        case "percentage":
+          value = portfolioBalance > 0 ? (pnlValue / portfolioBalance) * 100 : 0;
+          break;
+        case "balance":
+        case "money":
+        default:
+          value = pnlValue;
+          break;
+      }
+      
+      return { day, value, pnl: pnlValue, points: pointsValue, trades: dayTrades.length };
     });
-  }, [trades, displayMode]);
+  }, [trades, displayMode, portfolioBalance]);
 
   // Calculate monthly breakdown from real trades
   const monthlyBreakdown = useMemo(() => {
@@ -228,8 +245,7 @@ const Dashboard = () => {
       .sort((a, b) => a.duration - b.duration);
   }, [trades]);
 
-  // Calculate percentage of portfolio
-  const portfolioBalance = activePortfolio?.balance || 0;
+  // Calculate percentage of portfolio (portfolioBalance already defined above)
   const percentageDisplay = portfolioBalance > 0 
     ? (stats.totalPnl / portfolioBalance) * 100 
     : 0;
@@ -242,7 +258,11 @@ const Dashboard = () => {
       : displayMode === "percentage"
         ? percentageDisplay
         : balanceWithPnl;
-  const avgDisplay = displayMode === "money" ? stats.avgPnl : stats.avgPoints;
+  const avgDisplay = displayMode === "money" || displayMode === "balance" 
+    ? stats.avgPnl 
+    : displayMode === "points" 
+      ? stats.avgPoints 
+      : portfolioBalance > 0 ? (stats.avgPnl / portfolioBalance) * 100 : 0;
 
   return (
     <DashboardLayout>
@@ -402,11 +422,15 @@ const Dashboard = () => {
               <div>
                 <p className="text-xs md:text-sm text-muted-foreground mb-1">ממוצע לעסקה</p>
                 <p className={`text-xl md:text-3xl font-bold ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
-                  {displayMode === "money" ? `$${avgDisplay.toFixed(2)}` : avgDisplay.toFixed(1)}
+                  {displayMode === "money" || displayMode === "balance"
+                    ? `$${stats.avgPnl.toFixed(2)}` 
+                    : displayMode === "points"
+                      ? stats.avgPoints.toFixed(1)
+                      : `${avgDisplay.toFixed(2)}%`}
                 </p>
                 <div className="flex items-center gap-1 mt-1">
-                  <span className="text-xs text-success">↑ ${stats.maxWin.toFixed(0)}</span>
-                  <span className="text-xs text-destructive">↓ ${Math.abs(stats.maxLoss).toFixed(0)}</span>
+                  <span className="text-xs text-success">↑ {displayMode === "points" ? `${stats.maxWin.toFixed(0)} נק׳` : `$${stats.maxWin.toFixed(0)}`}</span>
+                  <span className="text-xs text-destructive">↓ {displayMode === "points" ? `${Math.abs(stats.maxLoss).toFixed(0)} נק׳` : `$${Math.abs(stats.maxLoss).toFixed(0)}`}</span>
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-success/10">
@@ -420,7 +444,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
           {/* Calendar */}
           <div className="lg:col-span-7 space-y-4">
-            <TradingCalendar trades={trades} />
+            <TradingCalendar trades={trades} displayMode={displayMode} portfolioBalance={portfolioBalance} />
 
             {/* Streaks & Records */}
             <Card className="bg-card/50 border-border/50 p-5">
@@ -462,7 +486,11 @@ const Dashboard = () => {
                       <Trophy className="h-4 w-4 text-success" />
                       <span className="text-sm text-muted-foreground">העסקה הטובה ביותר</span>
                     </div>
-                    <p className="text-lg font-bold text-success">+${(tradingStreaks.bestTrade.pnl || 0).toFixed(0)}</p>
+                    <p className="text-lg font-bold text-success">
+                      {displayMode === "points" 
+                        ? `+${(tradingStreaks.bestTrade.pnl_points || 0).toFixed(0)} נק׳`
+                        : `+$${(tradingStreaks.bestTrade.pnl || 0).toFixed(0)}`}
+                    </p>
                     <p className="text-xs text-muted-foreground">{tradingStreaks.bestTrade.symbol}</p>
                   </div>
                 )}
@@ -474,7 +502,11 @@ const Dashboard = () => {
                       <Skull className="h-4 w-4 text-destructive" />
                       <span className="text-sm text-muted-foreground">העסקה הגרועה ביותר</span>
                     </div>
-                    <p className="text-lg font-bold text-destructive">${(tradingStreaks.worstTrade.pnl || 0).toFixed(0)}</p>
+                    <p className="text-lg font-bold text-destructive">
+                      {displayMode === "points" 
+                        ? `${(tradingStreaks.worstTrade.pnl_points || 0).toFixed(0)} נק׳`
+                        : `$${(tradingStreaks.worstTrade.pnl || 0).toFixed(0)}`}
+                    </p>
                     <p className="text-xs text-muted-foreground">{tradingStreaks.worstTrade.symbol}</p>
                   </div>
                 )}
@@ -520,7 +552,23 @@ const Dashboard = () => {
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px'
                       }}
-                      formatter={(value: number) => [displayMode === "money" ? `$${value.toFixed(2)}` : `${value.toFixed(1)} נק׳`, "רווח/הפסד"]}
+                      formatter={(value: number) => {
+                        let formatted: string;
+                        switch (displayMode) {
+                          case "points":
+                            formatted = `${value.toFixed(1)} נק׳`;
+                            break;
+                          case "percentage":
+                            formatted = `${value.toFixed(2)}%`;
+                            break;
+                          case "balance":
+                          case "money":
+                          default:
+                            formatted = `$${value.toFixed(2)}`;
+                            break;
+                        }
+                        return [formatted, "רווח/הפסד"];
+                      }}
                     />
                     <Bar 
                       dataKey="value" 
@@ -560,8 +608,24 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   recentTrades.map((trade) => {
-                    const value = displayMode === "money" ? (trade.pnl || 0) : (trade.pnl_points || 0);
-                    const isProfit = value >= 0;
+                    const moneyValue = trade.pnl || 0;
+                    const pointsValue = trade.pnl_points || 0;
+                    const isProfit = moneyValue >= 0;
+                    
+                    const getDisplayValue = () => {
+                      switch (displayMode) {
+                        case "points":
+                          return `${isProfit ? '+' : ''}${pointsValue.toFixed(1)} נק׳`;
+                        case "percentage":
+                          const pct = portfolioBalance > 0 ? (moneyValue / portfolioBalance) * 100 : 0;
+                          return `${isProfit ? '+' : ''}${pct.toFixed(2)}%`;
+                        case "balance":
+                        case "money":
+                        default:
+                          return `${isProfit ? '+' : ''}$${moneyValue.toFixed(2)}`;
+                      }
+                    };
+                    
                     return (
                       <div 
                         key={trade.id}
@@ -585,7 +649,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <span className={`font-bold ${isProfit ? 'text-success' : 'text-destructive'}`}>
-                          {isProfit ? '+' : ''}{displayMode === "money" ? `$${value.toFixed(2)}` : `${value.toFixed(1)}`}
+                          {getDisplayValue()}
                         </span>
                       </div>
                     );
