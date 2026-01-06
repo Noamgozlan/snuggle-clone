@@ -9,7 +9,6 @@ import {
   Gift,
   User,
   Settings,
-  LogOut,
   MessageCircle,
   Target,
   GraduationCap,
@@ -63,7 +62,6 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
         .eq("user_id", user.id)
         .eq("role", "admin")
         .maybeSingle();
-
       setIsAdmin(!!data);
     };
     checkAdminRole();
@@ -93,7 +91,7 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
     .slice(0, 2);
 
   return (
-    <aside className="h-svh w-[85vw] max-w-xs md:w-64 bg-sidebar border-l border-sidebar-border flex flex-col">
+    <aside className="h-svh w-[90vw] max-w-xs md:w-64 bg-sidebar border-l border-sidebar-border flex flex-col">
       <div className="p-6 border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-2" onClick={handleLinkClick}>
           <Logo size="md" />
