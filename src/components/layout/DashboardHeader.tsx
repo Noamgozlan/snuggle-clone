@@ -22,7 +22,7 @@ interface DashboardHeaderProps {
 
 export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
   const { theme, toggleTheme } = useTheme();
-  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+  const { isInstalled, promptInstall } = usePWAInstall();
   const [showInstallDialog, setShowInstallDialog] = useState(false);
 
   const handleInstallClick = () => {
@@ -48,7 +48,6 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
             <div className="sm:hidden">
               <PortfolioSelector />
             </div>
-
             {!isInstalled && (
               <Button
                 variant="outline"
