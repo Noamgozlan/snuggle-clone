@@ -429,8 +429,8 @@ const Dashboard = () => {
                       : `${avgDisplay.toFixed(2)}%`}
                 </p>
                 <div className="flex items-center gap-1 mt-1">
-                  <span className="text-xs text-success">↑ {displayMode === "points" ? `${stats.maxWin.toFixed(0)} נק׳` : `$${stats.maxWin.toFixed(0)}`}</span>
-                  <span className="text-xs text-destructive">↓ {displayMode === "points" ? `${Math.abs(stats.maxLoss).toFixed(0)} נק׳` : `$${Math.abs(stats.maxLoss).toFixed(0)}`}</span>
+                  <span className="text-xs text-success">↑ {displayMode === "points" ? `${stats.maxWinPoints.toFixed(0)} נק׳` : `$${stats.maxWin.toFixed(0)}`}</span>
+                  <span className="text-xs text-destructive">↓ {displayMode === "points" ? `${Math.abs(stats.maxLossPoints).toFixed(0)} נק׳` : `$${Math.abs(stats.maxLoss).toFixed(0)}`}</span>
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-success/10">

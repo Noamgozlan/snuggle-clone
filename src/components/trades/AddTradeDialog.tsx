@@ -201,9 +201,12 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setLoading(true);
 
     try {
-      // Build entry date from selected date
-      const tradeDateStr = format(tradeDate, "yyyy-MM-dd");
-      const entryDate = `${tradeDateStr}T00:00:00`;
+      // Build entry date from selected date - use local date components to avoid timezone issues
+      const year = tradeDate.getFullYear();
+      const month = String(tradeDate.getMonth() + 1).padStart(2, '0');
+      const day = String(tradeDate.getDate()).padStart(2, '0');
+      const tradeDateStr = `${year}-${month}-${day}`;
+      const entryDate = `${tradeDateStr}T12:00:00`; // Use noon to avoid timezone edge cases
 
       // Calculate exit date based on duration
       let exitDate = null;

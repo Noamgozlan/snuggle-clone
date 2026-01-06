@@ -34,6 +34,7 @@ interface Trade {
   entry_price?: number;
   exit_price?: number | null;
   strategy?: string | null;
+  screenshot_url?: string | null;
 }
 
 interface TradingCalendarProps {
@@ -367,6 +368,18 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
                       }
                     </span>
                   </div>
+                  
+                  {/* Trade Screenshot */}
+                  {trade.screenshot_url && (
+                    <div className="mb-3">
+                      <img 
+                        src={trade.screenshot_url} 
+                        alt={`צילום מסך - ${trade.symbol}`}
+                        className="w-full h-40 object-cover rounded-lg border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(trade.screenshot_url!, '_blank')}
+                      />
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                     {trade.entry_price && (
