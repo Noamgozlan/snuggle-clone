@@ -1,60 +1,106 @@
-import { ReactNode, useEffect, useState } from "react";
-import { DashboardSidebar } from "./DashboardSidebar";
-import { DashboardHeader } from "./DashboardHeader";
-import { Menu, X } from "lucide-react";
+import { Bell, Sun, Moon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
+import { PortfolioSelector } from "@/components/portfolio/PortfolioSelector";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { toast } from "sonner";
 
-interface DashboardLayoutProps {
-  children: ReactNode;
+interface DashboardHeaderProps {
   title?: string;
 }
 
-export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
+  const { theme, toggleTheme } = useTheme();
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+  const [showInstallDialog, setShowInstallDialog] = useState(false);
 
-  useEffect(() => {
-    const body = document.body;
-    body.style.overflow = isMobileMenuOpen ? "hidden" : "";
-    return () => {
-      body.style.overflow = "";
-    };
-  }, [isMobileMenuOpen]);
+  const handleInstallClick = () => {
+    setShowInstallDialog(true);
+  };
+
+  const handleConfirmInstall = async () => {
+    setShowInstallDialog(false);
+    const success = await promptInstall();
+    if (success) {
+      toast.success("האפליקציה הותקנה בהצלחה!");
+    }
+  };
 
   return (
-    <div className="min-h-svh bg-background">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-3 right-4 z-[60] md:hidden h-8 w-8"
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        aria-label="פתח תפריט"
+    <>
+      <header
+        className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
+        <div className="flex items-center justify-between h-12 md:h-16 px-3 md:px-6">
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="sm:hidden">
+              <PortfolioSelector />
+            </div>
 
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+            {!isInstalled && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 min-h-[36px] px-2 md:px-3"
+                onClick={handleInstallClick}
+                aria-label="התקן אפליקציה"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">התקן אפליקציה</span>
+              </Button>
+            )}
+          </div>
 
-      <div
-        className={cn(
-          "fixed right-0 top-0 z-50 h-svh transition-transform duration-300 md:translate-x-0",
-          isMobileMenuOpen ? "translate-x-0" : "translate-x-full md:translate-x-0",
-        )}
-        role="dialog"
-        aria-modal="true"
-      >
-        <DashboardSidebar onNavigate={() => setIsMobileMenuOpen(false)} />
-      </div>
+          {title && <h1 className="text-base md:text-xl font-semibold text-foreground hidden md:block">{title}</h1>}
 
-      <div className="md:mr-64">
-        <DashboardHeader title={title} />
-        <main className="p-3 md:p-6">{children}</main>
-      </div>
-    </div>
+          <div className="flex items-center gap-1 md:gap-3 mr-auto md:mr-0">
+            <div className="hidden sm:block">
+              <PortfolioSelector />
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10" aria-label="התראות">
+              <Bell className="h-4 w-4 md:h-5 md:w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 md:h-10 md:w-10"
+              onClick={toggleTheme}
+              aria-label="החלף מצב תצוגה"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4 md:h-5 md:w-5" />
+              ) : (
+                <Moon className="h-4 w-4 md:h-5 md:w-5" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <AlertDialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>התקנת האפליקציה</AlertDialogTitle>
+            <AlertDialogDescription>האם ברצונך להתקין את GozlanJournal כאפליקציה על המכשיר שלך?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmInstall}>התקן</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
