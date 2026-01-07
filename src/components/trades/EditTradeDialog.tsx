@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Minus, Star, Upload, Loader2, X, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { portfolios } = usePortfolio();
   const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
+  const [session, setSession] = useState<string>("");
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
@@ -73,6 +75,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       setTradeType((trade.trade_type as "long" | "short") || "long");
       setPnlSign(pnl >= 0 ? "positive" : "negative");
       setSelectedPortfolioIds(trade.portfolio_id ? [trade.portfolio_id] : []);
+      setSession((trade as any).session || "");
       
       // Load existing screenshots
       if (trade.screenshot_url) {
@@ -193,10 +196,11 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           rr: formData.rr ? parseFloat(formData.rr) : null,
           rating: rating || null,
           strategy: formData.strategy || null,
+          session: session || null,
           notes: combinedNotes,
           is_closed: true,
           screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
-        })
+        } as any)
         .eq("id", trade.id);
 
       if (error) throw error;
@@ -234,6 +238,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           rr: formData.rr ? parseFloat(formData.rr) : null,
           rating: rating || null,
           strategy: formData.strategy || null,
+          session: session || null,
           notes: combinedNotes,
           is_closed: true,
           screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
@@ -323,6 +328,20 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
                 onChange={(e) => setFormData({ ...formData, tradeDate: e.target.value })}
                 className="bg-input border-border"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">סשן מסחר</Label>
+              <Select value={session} onValueChange={setSession}>
+                <SelectTrigger className="bg-input border-border">
+                  <SelectValue placeholder="בחר סשן" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asia">אסיה</SelectItem>
+                  <SelectItem value="london">לונדון</SelectItem>
+                  <SelectItem value="new_york">ניו יורק</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

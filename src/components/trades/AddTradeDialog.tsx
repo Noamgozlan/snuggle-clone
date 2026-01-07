@@ -59,6 +59,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     }
   }, [open, activePortfolio]);
 
+  const [session, setSession] = useState<string>("");
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
@@ -101,6 +102,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setRiskType("dollars");
     setSelectedPortfolioIds(activePortfolio ? [activePortfolio.id] : []);
     setIsBreakeven(false);
+    setSession("");
   };
 
   const handleStrategyChange = (strategyId: string) => {
@@ -252,13 +254,14 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             rr: formData.rr ? parseFloat(formData.rr) : null,
             rating: rating || null,
             strategy: selectedStrategy?.name || null,
+            session: session || null,
             notes:
               formData.entryReason || formData.conclusions
                 ? `${formData.entryReason || ""}\n\n[CONCLUSIONS]\n${formData.conclusions || ""}`.trim()
                 : null,
             is_closed: true,
             screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
-          })
+          } as any)
           .select("id")
           .single();
 
@@ -394,6 +397,20 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">סשן מסחר</Label>
+              <Select value={session} onValueChange={setSession}>
+                <SelectTrigger className="bg-input border-border hover:border-primary/50 transition-colors">
+                  <SelectValue placeholder="בחר סשן" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asia">אסיה</SelectItem>
+                  <SelectItem value="london">לונדון</SelectItem>
+                  <SelectItem value="new_york">ניו יורק</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
