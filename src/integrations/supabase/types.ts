@@ -821,6 +821,7 @@ export type Database = {
           risk: number | null
           rr: number | null
           screenshot_url: string | null
+          session: string | null
           strategy: string | null
           symbol: string
           trade_type: string
@@ -848,6 +849,7 @@ export type Database = {
           risk?: number | null
           rr?: number | null
           screenshot_url?: string | null
+          session?: string | null
           strategy?: string | null
           symbol: string
           trade_type: string
@@ -875,6 +877,7 @@ export type Database = {
           risk?: number | null
           rr?: number | null
           screenshot_url?: string | null
+          session?: string | null
           strategy?: string | null
           symbol?: string
           trade_type?: string

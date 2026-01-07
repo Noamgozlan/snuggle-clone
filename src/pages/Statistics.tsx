@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrades } from "@/hooks/useTrades";
-import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText, Bot } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText, Bot, Globe } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -159,6 +159,32 @@ const Statistics = () => {
       maxLossStreak = Math.max(maxLossStreak, currentLossStreak);
     }
   });
+
+  // Calculate session statistics
+  const sessionNames: Record<string, string> = {
+    'asia': 'אסיה',
+    'london': 'לונדון',
+    'new_york': 'ניו יורק'
+  };
+  
+  const sessionStats = trades.reduce((acc, trade) => {
+    const session = (trade as any).session;
+    if (session) {
+      if (!acc[session]) {
+        acc[session] = { pnl: 0, trades: 0, wins: 0 };
+      }
+      acc[session].pnl += trade.pnl || 0;
+      acc[session].trades++;
+      if ((trade.pnl || 0) > 0) {
+        acc[session].wins++;
+      }
+    }
+    return acc;
+  }, {} as Record<string, { pnl: number; trades: number; wins: number }>);
+
+  const sortedSessions = Object.entries(sessionStats).sort((a, b) => b[1].pnl - a[1].pnl);
+  const bestSession = sortedSessions[0];
+  const worstSession = sortedSessions[sortedSessions.length - 1];
 
   // Calculate max drawdown
   let peak = 0;
@@ -432,6 +458,67 @@ const Statistics = () => {
               <div className="mt-4 p-3 bg-success/10 border border-success/30 rounded-lg">
                 <p className="text-sm text-success">
                   💡 <strong>תובנה:</strong> רוב העסקאות המנצחות שלך כוללות את האישור "{confirmationStats[0].name}" עם {confirmationStats[0].winRate.toFixed(0)}% הצלחה!
+                </p>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Session Statistics */}
+        {sortedSessions.length > 0 && (
+          <Card className="bg-card border-border p-6">
+            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              ניתוח לפי סשן מסחר
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {sortedSessions.map(([session, data]) => {
+                const winRate = data.trades > 0 ? (data.wins / data.trades) * 100 : 0;
+                const isProfit = data.pnl >= 0;
+                return (
+                  <div 
+                    key={session}
+                    className={`p-4 rounded-lg border ${
+                      isProfit 
+                        ? 'border-success/30 bg-success/5' 
+                        : 'border-destructive/30 bg-destructive/5'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Globe className={`h-5 w-5 ${isProfit ? 'text-success' : 'text-destructive'}`} />
+                        <span className="font-medium text-foreground">{sessionNames[session] || session}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">{data.trades} עסקאות</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">אחוז הצלחה:</span>
+                        <span className={winRate >= 50 ? 'text-success font-bold' : 'text-destructive font-bold'}>
+                          {winRate.toFixed(0)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">רווח/הפסד:</span>
+                        <span className={isProfit ? 'text-success font-bold' : 'text-destructive font-bold'}>
+                          ${data.pnl.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full transition-all ${winRate >= 50 ? 'bg-success' : 'bg-destructive'}`}
+                          style={{ width: `${winRate}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {bestSession && bestSession[1].pnl > 0 && (
+              <div className="mt-4 p-3 bg-success/10 border border-success/30 rounded-lg">
+                <p className="text-sm text-success">
+                  💡 <strong>תובנה:</strong> הסשן הרווחי ביותר שלך הוא {sessionNames[bestSession[0]] || bestSession[0]} עם ${bestSession[1].pnl.toFixed(2)} רווח!
                 </p>
               </div>
             )}
