@@ -122,11 +122,11 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     if (!files || files.length === 0 || !user) return;
 
     setUploadingImage(true);
-    
+
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
+
         // Show preview immediately
         const reader = new FileReader();
         const previewPromise = new Promise<string>((resolve) => {
@@ -146,9 +146,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           data: { publicUrl },
         } = supabase.storage.from("trade-screenshots").getPublicUrl(fileName);
 
-        setScreenshots(prev => [...prev, { url: publicUrl, preview }]);
+        setScreenshots((prev) => [...prev, { url: publicUrl, preview }]);
       }
-      
+
       toast({
         title: files.length > 1 ? `${files.length} תמונות הועלו בהצלחה` : "התמונה הועלתה בהצלחה",
       });
@@ -167,7 +167,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   };
 
   const removeScreenshot = (index: number) => {
-    setScreenshots(prev => prev.filter((_, i) => i !== index));
+    setScreenshots((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -190,23 +190,13 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       });
       return;
     }
-
-    if (!formData.entryPrice) {
-      toast({
-        title: "שגיאה",
-        description: "יש למלא מחיר כניסה",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
       // Build entry date from selected date - use local date components to avoid timezone issues
       const year = tradeDate.getFullYear();
-      const month = String(tradeDate.getMonth() + 1).padStart(2, '0');
-      const day = String(tradeDate.getDate()).padStart(2, '0');
+      const month = String(tradeDate.getMonth() + 1).padStart(2, "0");
+      const day = String(tradeDate.getDate()).padStart(2, "0");
       const tradeDateStr = `${year}-${month}-${day}`;
       const entryDate = `${tradeDateStr}T12:00:00`; // Use noon to avoid timezone edge cases
 
@@ -723,24 +713,20 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           {/* Screenshot Upload */}
           <div className="space-y-2 animate-fade-in">
             <Label className="text-muted-foreground text-sm">צילומי מסך של העסקה</Label>
-            <input 
-              ref={fileInputRef} 
-              type="file" 
-              accept="image/*" 
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
               multiple
-              onChange={handleImageUpload} 
-              className="hidden" 
+              onChange={handleImageUpload}
+              className="hidden"
             />
-            
+
             {screenshots.length > 0 && (
               <div className="grid grid-cols-3 gap-2">
                 {screenshots.map((ss, index) => (
                   <div key={index} className="relative border border-border rounded-lg overflow-hidden aspect-video">
-                    <img
-                      src={ss.preview}
-                      alt={`צילום מסך ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={ss.preview} alt={`צילום מסך ${index + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => removeScreenshot(index)}
@@ -752,7 +738,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                 ))}
               </div>
             )}
-            
+
             <div
               onClick={() => fileInputRef.current?.click()}
               className="border border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors cursor-pointer group"
@@ -762,9 +748,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
               ) : (
                 <>
                   <Upload className="h-8 w-8 mb-2 group-hover:scale-110 transition-transform" />
-                  <p className="text-sm">
-                    {screenshots.length > 0 ? "הוסף עוד תמונות" : "לחץ להעלאת צילומי מסך"}
-                  </p>
+                  <p className="text-sm">{screenshots.length > 0 ? "הוסף עוד תמונות" : "לחץ להעלאת צילומי מסך"}</p>
                   <p className="text-xs text-muted-foreground/70 mt-1">ניתן לבחור מספר תמונות</p>
                 </>
               )}
