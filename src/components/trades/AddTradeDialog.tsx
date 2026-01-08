@@ -236,7 +236,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             quantity: parseFloat(formData.quantity) || 1,
             entry_date: entryDate,
             exit_date: exitDate,
-            entry_price: formData.entryPrice ? parseFloat(formData.entryPrice) : 0,
+            entry_price: formData.entryPrice ? parseFloat(formData.entryPrice) : null,
             exit_price: formData.exitPrice ? parseFloat(formData.exitPrice) : null,
             pnl: pnlValue,
             pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
