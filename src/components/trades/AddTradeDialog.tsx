@@ -342,6 +342,20 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             </div>
 
             <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">סשן מסחר</Label>
+              <Select value={session} onValueChange={setSession}>
+                <SelectTrigger className="bg-input border-border hover:border-primary/50 transition-colors">
+                  <SelectValue placeholder="בחר סשן" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asia">אסיה</SelectItem>
+                  <SelectItem value="london">לונדון</SelectItem>
+                  <SelectItem value="new_york">ניו יורק</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">כיוון</Label>
               <div className="flex gap-1">
                 <Button
@@ -389,19 +403,6 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
               </Popover>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">סשן מסחר</Label>
-              <Select value={session} onValueChange={setSession}>
-                <SelectTrigger className="bg-input border-border hover:border-primary/50 transition-colors">
-                  <SelectValue placeholder="בחר סשן" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asia">אסיה</SelectItem>
-                  <SelectItem value="london">לונדון</SelectItem>
-                  <SelectItem value="new_york">ניו יורק</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">משך העסקה</Label>
