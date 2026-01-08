@@ -187,6 +187,30 @@ const Trades = () => {
     return true;
   });
 
+  // Calculate average trade duration
+  const calculateAvgDuration = () => {
+    const tradesWithDuration = filteredTrades.filter(
+      (t) => t.entry_date && t.exit_date
+    );
+    if (tradesWithDuration.length === 0) return null;
+
+    const totalMs = tradesWithDuration.reduce((sum, t) => {
+      const entry = new Date(t.entry_date!);
+      const exit = new Date(t.exit_date!);
+      return sum + (exit.getTime() - entry.getTime());
+    }, 0);
+
+    const avgMs = totalMs / tradesWithDuration.length;
+    const totalSeconds = Math.floor(avgMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return { hours, minutes, seconds };
+  };
+
+  const avgDuration = calculateAvgDuration();
+
   const handleTradeClick = (trade: Trade) => {
     setSelectedTrade(trade);
     setIsSummaryOpen(true);
@@ -325,7 +349,7 @@ const Trades = () => {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 stagger-children">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 stagger-children">
           <Card className="bg-card border-border p-4 hover-lift">
             <div className="flex items-center gap-4">
               <div className="flex-1">
@@ -373,6 +397,15 @@ const Trades = () => {
           <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
             <p className="text-sm text-muted-foreground mb-2">Avg RR</p>
             <p className="text-3xl font-bold text-foreground animate-scale-in">{stats.avgRR.toFixed(2)}</p>
+          </Card>
+
+          <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
+            <p className="text-sm text-muted-foreground mb-2">משך עסקה ממוצע</p>
+            <p className="text-2xl font-bold text-foreground animate-scale-in">
+              {avgDuration
+                ? `${avgDuration.hours.toString().padStart(2, "0")}:${avgDuration.minutes.toString().padStart(2, "0")}:${avgDuration.seconds.toString().padStart(2, "0")}`
+                : "—"}
+            </p>
           </Card>
         </div>
 

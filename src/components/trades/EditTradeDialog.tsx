@@ -39,6 +39,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
     symbol: "",
     quantity: "1",
     tradeDate: "",
+    durationHours: "",
+    durationMinutes: "",
+    durationSeconds: "",
     entryPrice: "",
     exitPrice: "",
     pnl: "",
@@ -57,11 +60,30 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       const fullNotes = trade.notes || "";
       const [reason, ...rest] = fullNotes.split("\n\n[CONCLUSIONS]\n");
 
+      // Calculate duration from entry and exit dates
+      let hours = "";
+      let minutes = "";
+      let seconds = "";
+      if (trade.entry_date && trade.exit_date) {
+        const entry = new Date(trade.entry_date);
+        const exit = new Date(trade.exit_date);
+        const diffMs = exit.getTime() - entry.getTime();
+        if (diffMs > 0) {
+          const totalSeconds = Math.floor(diffMs / 1000);
+          hours = String(Math.floor(totalSeconds / 3600));
+          minutes = String(Math.floor((totalSeconds % 3600) / 60));
+          seconds = String(totalSeconds % 60);
+        }
+      }
+
       setFormData({
         symbol: trade.symbol || "",
         quantity: String(trade.quantity || 1),
         tradeDate: trade.entry_date ? trade.entry_date.split("T")[0] : "",
-        entryPrice: String(trade.entry_price || ""),
+        durationHours: hours,
+        durationMinutes: minutes,
+        durationSeconds: seconds,
+        entryPrice: trade.entry_price ? String(trade.entry_price) : "",
         exitPrice: trade.exit_price ? String(trade.exit_price) : "",
         pnl: String(Math.abs(pnl)),
         pnlPoints: trade.pnl_points ? String(trade.pnl_points) : "",
@@ -166,8 +188,22 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
 
     try {
       let entryDate = null;
+      let exitDate = null;
       if (formData.tradeDate) {
-        entryDate = `${formData.tradeDate}T00:00:00`;
+        entryDate = `${formData.tradeDate}T12:00:00`;
+        
+        // Calculate exit date based on duration
+        if (formData.durationHours || formData.durationMinutes || formData.durationSeconds) {
+          const hours = parseInt(formData.durationHours) || 0;
+          const minutes = parseInt(formData.durationMinutes) || 0;
+          const seconds = parseInt(formData.durationSeconds) || 0;
+
+          const entryDateTime = new Date(`${formData.tradeDate}T00:00:00`);
+          entryDateTime.setHours(entryDateTime.getHours() + hours);
+          entryDateTime.setMinutes(entryDateTime.getMinutes() + minutes);
+          entryDateTime.setSeconds(entryDateTime.getSeconds() + seconds);
+          exitDate = entryDateTime.toISOString();
+        }
       }
 
       const pnlValue = formData.pnl
@@ -188,7 +224,8 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           trade_type: tradeType,
           quantity: parseFloat(formData.quantity) || 1,
           entry_date: entryDate,
-          entry_price: formData.entryPrice ? parseFloat(formData.entryPrice) : 0,
+          exit_date: exitDate,
+          entry_price: formData.entryPrice ? parseFloat(formData.entryPrice) : null,
           exit_price: formData.exitPrice ? parseFloat(formData.exitPrice) : null,
           pnl: pnlValue,
           pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
@@ -342,6 +379,49 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
                   <SelectItem value="new_york">ניו יורק</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">משך העסקה</Label>
+              <div className="flex gap-1 items-center">
+                <div className="flex flex-col items-center">
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={formData.durationHours}
+                    onChange={(e) => setFormData({ ...formData, durationHours: e.target.value })}
+                    className="bg-input border-border text-center w-14"
+                  />
+                  <span className="text-[10px] text-muted-foreground">שעות</span>
+                </div>
+                <span className="text-muted-foreground">:</span>
+                <div className="flex flex-col items-center">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="59"
+                    placeholder="0"
+                    value={formData.durationMinutes}
+                    onChange={(e) => setFormData({ ...formData, durationMinutes: e.target.value })}
+                    className="bg-input border-border text-center w-14"
+                  />
+                  <span className="text-[10px] text-muted-foreground">דקות</span>
+                </div>
+                <span className="text-muted-foreground">:</span>
+                <div className="flex flex-col items-center">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="59"
+                    placeholder="0"
+                    value={formData.durationSeconds}
+                    onChange={(e) => setFormData({ ...formData, durationSeconds: e.target.value })}
+                    className="bg-input border-border text-center w-14"
+                  />
+                  <span className="text-[10px] text-muted-foreground">שניות</span>
+                </div>
+              </div>
             </div>
           </div>
 
