@@ -145,6 +145,35 @@ const Trades = () => {
     }
   };
 
+  const handleDeleteConfirmation = async (tradeId: string, confirmationName: string) => {
+    try {
+      const { error } = await supabase
+        .from("trade_confirmations")
+        .delete()
+        .eq("trade_id", tradeId)
+        .eq("confirmation_name", confirmationName);
+
+      if (error) throw error;
+
+      // Update local state
+      setTradeConfirmations((prev) =>
+        prev.filter((tc) => !(tc.trade_id === tradeId && tc.confirmation_name === confirmationName))
+      );
+
+      toast({
+        title: "אישור נמחק",
+        description: `האישור "${confirmationName}" הוסר בהצלחה`,
+      });
+    } catch (error) {
+      console.error("Error deleting confirmation:", error);
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן למחוק את האישור",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleDateString("he-IL");
@@ -400,10 +429,10 @@ const Trades = () => {
           </Card>
 
           <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
-            <p className="text-sm text-muted-foreground mb-2">משך עסקה ממוצע</p>
+            <p className="text-sm text-muted-foreground mb-2">זמן ממוצע לעסקה</p>
             <p className="text-2xl font-bold text-foreground animate-scale-in">
               {avgDuration
-                ? `${avgDuration.hours.toString().padStart(2, "0")}:${avgDuration.minutes.toString().padStart(2, "0")}:${avgDuration.seconds.toString().padStart(2, "0")}`
+                ? `${avgDuration.hours}ש׳ ${avgDuration.minutes}ד׳ ${avgDuration.seconds}ש׳׳`
                 : "—"}
             </p>
           </Card>
@@ -476,16 +505,26 @@ const Trades = () => {
                         </span>
                       </TableCell>
                       <TableCell className="text-sm">{trade.strategy || "—"}</TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         {confirmations.length > 0 ? (
                           <div className="flex flex-wrap gap-1 max-w-[200px]">
                             {confirmations.slice(0, 3).map((conf, i) => (
                               <span
                                 key={i}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary border border-primary/20"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary border border-primary/20 group"
                               >
                                 <CheckCircle2 className="h-3 w-3" />
                                 {conf}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteConfirmation(trade.id, conf);
+                                  }}
+                                  className="ml-1 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
                               </span>
                             ))}
                             {confirmations.length > 3 && (
