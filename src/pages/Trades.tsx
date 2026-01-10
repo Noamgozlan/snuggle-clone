@@ -21,7 +21,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Calendar as CalendarIcon,
@@ -70,6 +72,9 @@ const Trades = () => {
   const [tradeConfirmations, setTradeConfirmations] = useState<TradeConfirmation[]>([]);
   const [tradeScreenshots, setTradeScreenshots] = useState<TradeScreenshot[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
+  const [confirmationTradeId, setConfirmationTradeId] = useState<string | null>(null);
+  const [newConfirmationName, setNewConfirmationName] = useState("");
 
   // Fetch confirmations and screenshots for all trades
   useEffect(() => {
@@ -169,6 +174,49 @@ const Trades = () => {
       toast({
         title: "שגיאה",
         description: "לא ניתן למחוק את האישור",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddConfirmation = (tradeId: string) => {
+    setConfirmationTradeId(tradeId);
+    setNewConfirmationName("");
+    setConfirmationDialogOpen(true);
+  };
+
+  const handleSaveConfirmation = async () => {
+    if (!confirmationTradeId || !newConfirmationName.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from("trade_confirmations")
+        .insert({
+          trade_id: confirmationTradeId,
+          confirmation_name: newConfirmationName.trim(),
+        });
+
+      if (error) throw error;
+
+      // Update local state
+      setTradeConfirmations((prev) => [
+        ...prev,
+        { trade_id: confirmationTradeId, confirmation_name: newConfirmationName.trim() },
+      ]);
+
+      toast({
+        title: "אישור נוסף",
+        description: `האישור "${newConfirmationName.trim()}" נוסף בהצלחה`,
+      });
+
+      setConfirmationDialogOpen(false);
+      setNewConfirmationName("");
+      setConfirmationTradeId(null);
+    } catch (error) {
+      console.error("Error adding confirmation:", error);
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן להוסיף את האישור",
         variant: "destructive",
       });
     }
@@ -506,34 +554,41 @@ const Trades = () => {
                       </TableCell>
                       <TableCell className="text-sm">{trade.strategy || "—"}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        {confirmations.length > 0 ? (
-                          <div className="flex flex-wrap gap-1 max-w-[200px]">
-                            {confirmations.slice(0, 3).map((conf, i) => (
-                              <span
-                                key={i}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary border border-primary/20 group"
+                        <div className="flex flex-wrap gap-1 max-w-[200px] items-center">
+                          {confirmations.slice(0, 3).map((conf, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary border border-primary/20 group"
+                            >
+                              <CheckCircle2 className="h-3 w-3" />
+                              {conf}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteConfirmation(trade.id, conf);
+                                }}
+                                className="ml-1 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
                               >
-                                <CheckCircle2 className="h-3 w-3" />
-                                {conf}
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteConfirmation(trade.id, conf);
-                                  }}
-                                  className="ml-1 opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </span>
-                            ))}
-                            {confirmations.length > 3 && (
-                              <span className="text-xs text-muted-foreground">+{confirmations.length - 3}</span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        )}
+                                <X className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+                          {confirmations.length > 3 && (
+                            <span className="text-xs text-muted-foreground">+{confirmations.length - 3}</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddConfirmation(trade.id);
+                            }}
+                            className="inline-flex items-center justify-center h-5 w-5 rounded text-xs bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+                            title="הוסף אישור"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
                       </TableCell>
                       <TableCell className="font-medium">{trade.rr ? trade.rr.toFixed(2) : "—"}</TableCell>
                       <TableCell className={`font-bold ${(trade.pnl || 0) >= 0 ? "text-success" : "text-destructive"}`}>
@@ -610,6 +665,41 @@ const Trades = () => {
         onOpenChange={setIsEditOpen}
         onTradeUpdated={fetchTrades}
       />
+
+      {/* Add Confirmation Dialog */}
+      <Dialog open={confirmationDialogOpen} onOpenChange={setConfirmationDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-right">הוסף אישור</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="confirmation-name" className="text-right">שם האישור</Label>
+              <Input
+                id="confirmation-name"
+                value={newConfirmationName}
+                onChange={(e) => setNewConfirmationName(e.target.value)}
+                placeholder="הזן שם אישור..."
+                className="text-right"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSaveConfirmation();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setConfirmationDialogOpen(false)}>
+              ביטול
+            </Button>
+            <Button onClick={handleSaveConfirmation} disabled={!newConfirmationName.trim()}>
+              הוסף
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
