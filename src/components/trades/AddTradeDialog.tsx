@@ -236,7 +236,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             quantity: parseFloat(formData.quantity) || 1,
             entry_date: entryDate,
             exit_date: exitDate,
-            entry_price: formData.entryPrice ? parseFloat(formData.entryPrice) : null,
+            entry_price: formData.entryPrice ? parseFloat(formData.entryPrice) : 0,
             exit_price: formData.exitPrice ? parseFloat(formData.exitPrice) : null,
             pnl: pnlValue,
             pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
@@ -451,7 +451,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           {/* Row 2: Entry/Exit Prices, PnL, Points */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 stagger-children">
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">מחיר כניסה *</Label>
+              <Label className="text-muted-foreground text-sm">מחיר כניסה</Label>
               <Input
                 type="number"
                 step="any"
@@ -459,7 +459,6 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                 value={formData.entryPrice}
                 onChange={(e) => setFormData({ ...formData, entryPrice: e.target.value })}
                 className="bg-input border-border hover:border-primary/50 transition-colors"
-                required
               />
             </div>
 
