@@ -6,6 +6,7 @@ import { EditTradeDialog } from "@/components/trades/EditTradeDialog";
 import { TradeSummaryDialog } from "@/components/trades/TradeSummaryDialog";
 import { CSVImportDialog } from "@/components/trades/CSVImportDialog";
 import { useTrades, Trade } from "@/hooks/useTrades";
+import { useStrategies } from "@/hooks/useStrategies";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Calendar as CalendarIcon,
   Filter,
@@ -58,6 +60,7 @@ interface TradeScreenshot {
 
 const Trades = () => {
   const { trades, stats, loading, fetchTrades, deleteTrade, deleteAllTrades } = useTrades();
+  const { strategies } = useStrategies();
   const [deletingTradeId, setDeletingTradeId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -75,6 +78,17 @@ const Trades = () => {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
   const [confirmationTradeId, setConfirmationTradeId] = useState<string | null>(null);
   const [newConfirmationName, setNewConfirmationName] = useState("");
+  const [selectedStrategyForConfirmation, setSelectedStrategyForConfirmation] = useState<string>("");
+
+  // Update selectedTrade when trades array changes (after fetch)
+  useEffect(() => {
+    if (selectedTrade && trades.length > 0) {
+      const updatedTrade = trades.find(t => t.id === selectedTrade.id);
+      if (updatedTrade && JSON.stringify(updatedTrade) !== JSON.stringify(selectedTrade)) {
+        setSelectedTrade(updatedTrade);
+      }
+    }
+  }, [trades]);
 
   // Fetch confirmations and screenshots for all trades
   useEffect(() => {
@@ -182,6 +196,7 @@ const Trades = () => {
   const handleAddConfirmation = (tradeId: string) => {
     setConfirmationTradeId(tradeId);
     setNewConfirmationName("");
+    setSelectedStrategyForConfirmation("");
     setConfirmationDialogOpen(true);
   };
 
@@ -673,22 +688,57 @@ const Trades = () => {
             <DialogTitle className="text-right">הוסף אישור</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="confirmation-name" className="text-right">שם האישור</Label>
-              <Input
-                id="confirmation-name"
-                value={newConfirmationName}
-                onChange={(e) => setNewConfirmationName(e.target.value)}
-                placeholder="הזן שם אישור..."
-                className="text-right"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleSaveConfirmation();
-                  }
-                }}
-              />
-            </div>
+            {/* Strategy confirmations selector */}
+            {strategies.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-right">בחר מאסטרטגיה קיימת</Label>
+                <Select 
+                  value={selectedStrategyForConfirmation} 
+                  onValueChange={(value) => {
+                    setSelectedStrategyForConfirmation(value);
+                    if (value !== "custom") {
+                      setNewConfirmationName(value);
+                    } else {
+                      setNewConfirmationName("");
+                    }
+                  }}
+                >
+                  <SelectTrigger className="text-right">
+                    <SelectValue placeholder="בחר אישור מאסטרטגיה..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">הזן ידנית</SelectItem>
+                    {strategies.flatMap(strategy => 
+                      strategy.confirmations.map(conf => (
+                        <SelectItem key={conf.id} value={conf.name}>
+                          {strategy.name}: {conf.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Custom confirmation input */}
+            {(selectedStrategyForConfirmation === "custom" || selectedStrategyForConfirmation === "" || strategies.length === 0) && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmation-name" className="text-right">שם האישור</Label>
+                <Input
+                  id="confirmation-name"
+                  value={newConfirmationName}
+                  onChange={(e) => setNewConfirmationName(e.target.value)}
+                  placeholder="הזן שם אישור..."
+                  className="text-right"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSaveConfirmation();
+                    }
+                  }}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setConfirmationDialogOpen(false)}>

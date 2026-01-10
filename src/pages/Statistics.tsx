@@ -592,7 +592,26 @@ const Statistics = () => {
               <Clock className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">משך עסקה ממוצע</p>
             </div>
-            <p className="text-xl font-bold text-foreground">אין נתונים</p>
+            <p className="text-xl font-bold text-foreground">
+              {(() => {
+                const tradesWithDuration = trades.filter(t => t.entry_date && t.exit_date);
+                if (tradesWithDuration.length === 0) return "—";
+                
+                const totalMs = tradesWithDuration.reduce((sum, t) => {
+                  const entry = new Date(t.entry_date!);
+                  const exit = new Date(t.exit_date!);
+                  return sum + (exit.getTime() - entry.getTime());
+                }, 0);
+                
+                const avgMs = totalMs / tradesWithDuration.length;
+                const totalSeconds = Math.floor(avgMs / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                return `${hours}ש׳ ${minutes}ד׳ ${seconds}ש׳׳`;
+              })()}
+            </p>
           </Card>
 
           <Card className="bg-card border-border p-4">
