@@ -48,7 +48,7 @@ interface ColumnMapping {
   notes: string;
 }
 
-type DetectedFormat = "tradovate" | "apex" | "generic" | null;
+type DetectedFormat = "tradovate" | "tradovate_orders" | "apex" | "generic" | null;
 
 const defaultMapping: ColumnMapping = {
   symbol: "",
@@ -169,6 +169,11 @@ export const CSVImportDialog = ({
       return "tradovate";
     }
     
+    // Tradovate Orders format: orderId, B/S, Contract, Product, avgPrice, filledQty, Fill Time, Status
+    if (headerSet.has("orderid") && headerSet.has("b/s") && headerSet.has("contract") && headerSet.has("status")) {
+      return "tradovate_orders";
+    }
+    
     // Apex/Rithmic format: symbol, mov_time, mov_type, exec_qty, price_done, points, profit
     if (headerSet.has("symbol") && headerSet.has("mov_type") && headerSet.has("price_done")) {
       return "apex";
@@ -197,6 +202,112 @@ export const CSVImportDialog = ({
         is_closed: true,
       };
     }).filter(t => t.symbol && t.symbol !== "UNKNOWN");
+  };
+
+  // Parse Tradovate Orders format - aggregate orders into trades
+  const parseTradovateOrdersFormat = (rows: CSVRow[]): any[] => {
+    // Filter only filled orders
+    const filledOrders = rows.filter(row => row["Status"]?.trim().toLowerCase() === "filled");
+    
+    // Sort by Fill Time
+    filledOrders.sort((a, b) => {
+      const dateA = parseDate(a["Fill Time"]);
+      const dateB = parseDate(b["Fill Time"]);
+      return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+    });
+    
+    const trades: any[] = [];
+    const openPositions: Map<string, { type: string; qty: number; price: number; date: Date | null; orderId: string }> = new Map();
+    
+    for (const row of filledOrders) {
+      const symbol = cleanSymbol(row["Product"] || row["Contract"]);
+      const buySell = row["B/S"]?.trim().toLowerCase();
+      const qty = parseInt(row["filledQty"] || row["Filled Qty"]) || 0;
+      const price = parseFloat(row["avgPrice"] || row["Avg Fill Price"]) || 0;
+      const fillTime = parseDate(row["Fill Time"]);
+      const orderId = row["orderId"] || row["Order ID"];
+      
+      if (qty === 0 || !buySell) continue;
+      
+      const isBuy = buySell === "buy";
+      const positionKey = symbol;
+      
+      if (openPositions.has(positionKey)) {
+        const openPos = openPositions.get(positionKey)!;
+        const isClosing = (openPos.type === "long" && !isBuy) || (openPos.type === "short" && isBuy);
+        
+        if (isClosing && qty === openPos.qty) {
+          // Full close
+          const entryPrice = openPos.price;
+          const exitPrice = price;
+          const pnl = openPos.type === "long" 
+            ? (exitPrice - entryPrice) * qty 
+            : (entryPrice - exitPrice) * qty;
+          const pnlPoints = openPos.type === "long" 
+            ? exitPrice - entryPrice 
+            : entryPrice - exitPrice;
+          
+          trades.push({
+            symbol,
+            trade_type: openPos.type,
+            entry_price: entryPrice,
+            exit_price: exitPrice,
+            entry_date: openPos.date?.toISOString() || null,
+            exit_date: fillTime?.toISOString() || null,
+            pnl: pnl,
+            pnl_points: pnlPoints,
+            quantity: qty,
+            commission: 0,
+            is_closed: true,
+            external_trade_id: openPos.orderId,
+          });
+          
+          openPositions.delete(positionKey);
+        } else if (isClosing && qty < openPos.qty) {
+          // Partial close
+          const entryPrice = openPos.price;
+          const exitPrice = price;
+          const pnl = openPos.type === "long" 
+            ? (exitPrice - entryPrice) * qty 
+            : (entryPrice - exitPrice) * qty;
+          const pnlPoints = openPos.type === "long" 
+            ? exitPrice - entryPrice 
+            : entryPrice - exitPrice;
+          
+          trades.push({
+            symbol,
+            trade_type: openPos.type,
+            entry_price: entryPrice,
+            exit_price: exitPrice,
+            entry_date: openPos.date?.toISOString() || null,
+            exit_date: fillTime?.toISOString() || null,
+            pnl: pnl,
+            pnl_points: pnlPoints,
+            quantity: qty,
+            commission: 0,
+            is_closed: true,
+            external_trade_id: openPos.orderId,
+          });
+          
+          openPos.qty -= qty;
+        } else {
+          // Adding to position
+          openPos.qty += qty;
+          openPos.price = (openPos.price + price) / 2; // Average price
+        }
+      } else {
+        // New position
+        openPositions.set(positionKey, {
+          type: isBuy ? "long" : "short",
+          qty,
+          price,
+          date: fillTime,
+          orderId,
+        });
+      }
+    }
+    
+    return trades.filter(t => t.symbol && t.symbol !== "UNKNOWN");
   };
 
   // Parse Apex format - aggregate orders into trades
@@ -256,6 +367,10 @@ export const CSVImportDialog = ({
       
       if (format === "tradovate") {
         const trades = parseTradovateFormat(rows);
+        setParsedTrades(trades);
+        setStep("preview");
+      } else if (format === "tradovate_orders") {
+        const trades = parseTradovateOrdersFormat(rows);
         setParsedTrades(trades);
         setStep("preview");
       } else if (format === "apex") {
@@ -412,6 +527,7 @@ export const CSVImportDialog = ({
 
   const formatLabel = {
     tradovate: "Tradovate",
+    tradovate_orders: "Tradovate Orders",
     apex: "Apex / Rithmic",
     generic: "כללי",
   };
