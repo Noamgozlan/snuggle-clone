@@ -23,6 +23,7 @@ interface PortfolioContextType {
   createPortfolio: (data: { name: string; balance: number; drawdown?: number; profit_goal?: number }) => Promise<{ success: boolean; portfolio?: Portfolio }>;
   updatePortfolio: (id: string, data: Partial<Portfolio>) => Promise<{ success: boolean }>;
   deletePortfolio: (id: string) => Promise<{ success: boolean }>;
+  setDefaultPortfolio: (id: string) => Promise<{ success: boolean }>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -130,6 +131,32 @@ export const PortfolioProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const setDefaultPortfolio = async (id: string) => {
+    if (!user) return { success: false };
+
+    try {
+      // First, remove default from all portfolios
+      await supabase
+        .from('portfolios')
+        .update({ is_default: false })
+        .eq('user_id', user.id);
+
+      // Then set the selected one as default
+      const { error } = await supabase
+        .from('portfolios')
+        .update({ is_default: true })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchPortfolios();
+      return { success: true };
+    } catch (error) {
+      console.error('Error setting default portfolio:', error);
+      return { success: false };
+    }
+  };
+
   useEffect(() => {
     fetchPortfolios();
   }, [fetchPortfolios]);
@@ -144,6 +171,7 @@ export const PortfolioProvider = ({ children }: { children: ReactNode }) => {
       createPortfolio,
       updatePortfolio,
       deletePortfolio,
+      setDefaultPortfolio,
     }}>
       {children}
     </PortfolioContext.Provider>

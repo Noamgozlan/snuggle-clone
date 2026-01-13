@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, Plus, Wallet, Check, Loader2, Settings, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Wallet, Check, Loader2, Settings, Trash2, Star } from "lucide-react";
 import { usePortfolio, Portfolio } from "@/contexts/PortfolioContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const PortfolioSelector = () => {
-  const { portfolios, activePortfolio, setActivePortfolio, createPortfolio, updatePortfolio, deletePortfolio } = usePortfolio();
+  const { portfolios, activePortfolio, setActivePortfolio, createPortfolio, updatePortfolio, deletePortfolio, setDefaultPortfolio } = usePortfolio();
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -168,8 +168,26 @@ export const PortfolioSelector = () => {
                   )}>
                     {portfolio.name}
                   </span>
+                  {portfolio.is_default && (
+                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn("h-6 w-6", portfolio.is_default && "text-yellow-500")}
+                    title="קבע כברירת מחדל"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const result = await setDefaultPortfolio(portfolio.id);
+                      if (result.success) {
+                        toast({ title: `"${portfolio.name}" נקבע כברירת מחדל` });
+                      }
+                    }}
+                  >
+                    <Star className={cn("h-3 w-3", portfolio.is_default && "fill-current")} />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
