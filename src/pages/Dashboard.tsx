@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TradingCalendar } from "@/components/dashboard/TradingCalendar";
 import { TradingScore } from "@/components/dashboard/TradingScore";
 import { ShareStatsDialog } from "@/components/dashboard/ShareStatsDialog";
+import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
 import { useTrades } from "@/hooks/useTrades";
@@ -32,15 +33,81 @@ import { usePortfolio } from "@/contexts/PortfolioContext";
 
 type DisplayMode = "money" | "points" | "percentage" | "balance";
 type MonthlyViewMode = "pnl" | "trades" | "winrate" | "points";
+type DateRange = { from: Date | undefined; to: Date | undefined };
 
 const Dashboard = () => {
   const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>("money");
   const [monthlyViewMode, setMonthlyViewMode] = useState<MonthlyViewMode>("pnl");
-  const { trades, stats, fetchTrades } = useTrades();
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const { trades: allTrades, stats: allStats, fetchTrades } = useTrades();
   const { user } = useAuth();
   const { activePortfolio } = usePortfolio();
+
+  // Filter trades by date range
+  const trades = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return allTrades;
+    
+    return allTrades.filter(trade => {
+      const tradeDate = new Date(trade.entry_date || trade.created_at);
+      if (dateRange.from && tradeDate < dateRange.from) return false;
+      if (dateRange.to) {
+        const endOfDay = new Date(dateRange.to);
+        endOfDay.setHours(23, 59, 59, 999);
+        if (tradeDate > endOfDay) return false;
+      }
+      return true;
+    });
+  }, [allTrades, dateRange]);
+
+  // Recalculate stats for filtered trades
+  const stats = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return allStats;
+    
+    const closedTrades = trades.filter(t => t.is_closed);
+    const totalPnl = closedTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+    const totalPoints = closedTrades.reduce((sum, t) => sum + (t.pnl_points || 0), 0);
+    const winningTradesArr = closedTrades.filter(t => (t.pnl || 0) > 0);
+    const losingTradesArr = closedTrades.filter(t => (t.pnl || 0) < 0);
+    const winningTrades = winningTradesArr.length;
+    const losingTrades = losingTradesArr.length;
+    const breakevenTrades = closedTrades.filter(t => t.pnl === 0).length;
+    const winRate = closedTrades.length > 0 ? (winningTrades / closedTrades.length) * 100 : 0;
+    const avgPnl = closedTrades.length > 0 ? totalPnl / closedTrades.length : 0;
+    const avgPoints = closedTrades.length > 0 ? totalPoints / closedTrades.length : 0;
+    const tradesWithRR = closedTrades.filter(t => t.rr !== null && t.rr !== undefined);
+    const avgRR = tradesWithRR.length > 0 ? tradesWithRR.reduce((sum, t) => sum + (t.rr || 0), 0) / tradesWithRR.length : 0;
+    const maxWin = Math.max(...closedTrades.map(t => t.pnl || 0), 0);
+    const maxLoss = Math.min(...closedTrades.map(t => t.pnl || 0), 0);
+    const maxWinPoints = Math.max(...closedTrades.map(t => t.pnl_points || 0), 0);
+    const maxLossPoints = Math.min(...closedTrades.map(t => t.pnl_points || 0), 0);
+    const grossProfit = winningTradesArr.reduce((sum, t) => sum + (t.pnl || 0), 0);
+    const grossLoss = Math.abs(losingTradesArr.reduce((sum, t) => sum + (t.pnl || 0), 0));
+    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0;
+    const avgWin = winningTrades > 0 ? grossProfit / winningTrades : 0;
+    const avgLoss = losingTrades > 0 ? -grossLoss / losingTrades : 0;
+    
+    return {
+      totalPnl,
+      totalPoints,
+      winningTrades,
+      losingTrades,
+      breakevenTrades,
+      winRate,
+      avgPnl,
+      avgPoints,
+      avgRR,
+      totalTrades: trades.length,
+      maxWin,
+      maxLoss,
+      maxWinPoints,
+      maxLossPoints,
+      profitFactor,
+      avgWin,
+      avgLoss,
+    };
+  }, [trades, allStats, dateRange]);
 
   // Get recent trades (last 5)
   const recentTrades = trades.slice(0, 5);
@@ -276,6 +343,10 @@ const Dashboard = () => {
             <p className="text-muted-foreground mt-1 text-sm md:text-base">ניתוח הביצועים שלך במבט אחד</p>
           </div>
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+            <DateRangeFilter 
+              dateRange={dateRange} 
+              onDateRangeChange={setDateRange} 
+            />
             <div className="flex bg-secondary/50 rounded-lg p-1 flex-wrap">
               <Button 
                 variant="ghost"
