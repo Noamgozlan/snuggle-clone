@@ -734,11 +734,17 @@
 }
 
 /* Accessibility Styles */
-.high-contrast {
-  filter: contrast(1.4);
+html {
+  --accessibility-font-scale: 1;
+  --accessibility-line-height: 1.5;
+  --accessibility-letter-spacing: 0px;
 }
 
-.highlight-links a {
+.high-contrast {
+  filter: contrast(1.25);
+}
+
+.highlight-links a:not(.recharts-layer *):not([class*="recharts"]) {
   outline: 3px solid hsl(var(--primary)) !important;
   outline-offset: 2px;
   background-color: hsl(var(--primary) / 0.1) !important;
@@ -749,25 +755,50 @@
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='black' stroke='white' stroke-width='1'%3E%3Cpath d='M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'/%3E%3C/svg%3E") 0 0, auto !important;
 }
 
-.readable-font,
-.readable-font * {
+.readable-font h1,
+.readable-font h2,
+.readable-font h3,
+.readable-font h4,
+.readable-font h5,
+.readable-font h6,
+.readable-font p,
+.readable-font span,
+.readable-font label,
+.readable-font button,
+.readable-font a,
+.readable-font li,
+.readable-font td,
+.readable-font th {
   font-family: Arial, Helvetica, sans-serif !important;
 }
 
-html {
-  --accessibility-line-height: 100%;
-  --accessibility-letter-spacing: 0px;
-}
-
-body {
-  line-height: calc(1.5 * var(--accessibility-line-height) / 100) !important;
+/* Apply text scaling only to text elements, not charts */
+.accessibility-text-scaled h1,
+.accessibility-text-scaled h2,
+.accessibility-text-scaled h3,
+.accessibility-text-scaled h4,
+.accessibility-text-scaled h5,
+.accessibility-text-scaled h6,
+.accessibility-text-scaled p,
+.accessibility-text-scaled span:not(.recharts-layer *),
+.accessibility-text-scaled label,
+.accessibility-text-scaled button,
+.accessibility-text-scaled a,
+.accessibility-text-scaled li,
+.accessibility-text-scaled td,
+.accessibility-text-scaled th {
+  font-size: calc(1em * var(--accessibility-font-scale)) !important;
+  line-height: var(--accessibility-line-height) !important;
   letter-spacing: var(--accessibility-letter-spacing) !important;
 }
 
-body p,
-body li,
-body span,
-body div {
-  line-height: inherit !important;
-  letter-spacing: inherit !important;
+/* Exclude charts from accessibility modifications */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-layer,
+[class*="recharts-"] {
+  font-size: initial !important;
+  line-height: initial !important;
+  letter-spacing: initial !important;
+  filter: none !important;
 }
