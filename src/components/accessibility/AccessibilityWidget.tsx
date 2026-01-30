@@ -55,8 +55,16 @@ export const AccessibilityWidget = () => {
   const applySettings = (s: AccessibilitySettings) => {
     const root = document.documentElement;
 
-    // Font size
-    root.style.fontSize = `${s.fontSize}%`;
+    // Font scale - use CSS variable instead of changing root font-size
+    const fontScale = s.fontSize / 100;
+    root.style.setProperty("--accessibility-font-scale", String(fontScale));
+
+    // Add text scaling class only if font size is modified
+    if (s.fontSize !== 100) {
+      root.classList.add("accessibility-text-scaled");
+    } else {
+      root.classList.remove("accessibility-text-scaled");
+    }
 
     // High contrast
     if (s.highContrast) {
@@ -80,7 +88,7 @@ export const AccessibilityWidget = () => {
     }
 
     // Line height
-    root.style.setProperty("--accessibility-line-height", `${s.lineHeight}%`);
+    root.style.setProperty("--accessibility-line-height", String(s.lineHeight / 100 * 1.5));
 
     // Letter spacing
     root.style.setProperty("--accessibility-letter-spacing", `${s.letterSpacing}px`);
