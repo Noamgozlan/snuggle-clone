@@ -256,81 +256,84 @@ const Statistics = () => {
 
   return (
     <DashboardLayout title="סטטיסטיקות מתקדמות">
-      <Tabs defaultValue="overview" dir="rtl" className="space-y-6">
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart2 className="h-4 w-4" />
-            סקירה כללית
+      <Tabs defaultValue="overview" dir="rtl" className="space-y-4 md:space-y-6 max-w-full overflow-hidden">
+        <TabsList className="grid w-full max-w-lg grid-cols-3 text-xs md:text-sm">
+          <TabsTrigger value="overview" className="flex items-center gap-1 md:gap-2 px-2 md:px-4">
+            <BarChart2 className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">סקירה כללית</span>
+            <span className="sm:hidden">סקירה</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            דוחות מותאמים
+          <TabsTrigger value="reports" className="flex items-center gap-1 md:gap-2 px-2 md:px-4">
+            <FileText className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">דוחות מותאמים</span>
+            <span className="sm:hidden">דוחות</span>
           </TabsTrigger>
-          <TabsTrigger value="ai-advisor" className="flex items-center gap-2">
-            <Bot className="h-4 w-4" />
-            יועץ AI
+          <TabsTrigger value="ai-advisor" className="flex items-center gap-1 md:gap-2 px-2 md:px-4">
+            <Bot className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">יועץ AI</span>
+            <span className="sm:hidden">AI</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-4 md:space-y-6">
         {/* Top Stats Row */}
-        <div className="grid grid-cols-4 gap-4">
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">ממוצע רווח</p>
-                <p className="text-2xl font-bold text-success">${avgProfit.toFixed(2)}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs md:text-sm text-muted-foreground truncate">ממוצע רווח</p>
+                <p className="text-lg md:text-2xl font-bold text-success truncate">${avgProfit.toFixed(2)}</p>
               </div>
-              <div className="p-2 bg-success/10 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-success" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">ממוצע הפסד</p>
-                <p className="text-2xl font-bold text-destructive">${avgLoss.toFixed(2)}</p>
-              </div>
-              <div className="p-2 bg-destructive/10 rounded-lg">
-                <TrendingDown className="h-5 w-5 text-destructive" />
+              <div className="p-1.5 md:p-2 bg-success/10 rounded-lg shrink-0">
+                <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-success" />
               </div>
             </div>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">אחוז הצלחה</p>
-                <p className={`text-2xl font-bold ${stats.winRate >= 50 ? 'text-success' : 'text-destructive'}`}>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs md:text-sm text-muted-foreground truncate">ממוצע הפסד</p>
+                <p className="text-lg md:text-2xl font-bold text-destructive truncate">${avgLoss.toFixed(2)}</p>
+              </div>
+              <div className="p-1.5 md:p-2 bg-destructive/10 rounded-lg shrink-0">
+                <TrendingDown className="h-4 w-4 md:h-5 md:w-5 text-destructive" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs md:text-sm text-muted-foreground truncate">אחוז הצלחה</p>
+                <p className={`text-lg md:text-2xl font-bold truncate ${stats.winRate >= 50 ? 'text-success' : 'text-destructive'}`}>
                   {stats.winRate.toFixed(1)}%
                 </p>
-                <p className="text-xs text-muted-foreground">{stats.winningTrades} מתוך {stats.totalTrades}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">{stats.winningTrades} מתוך {stats.totalTrades}</p>
               </div>
-              <div className={`p-2 rounded-lg ${stats.winRate >= 50 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                <Target className={`h-5 w-5 ${stats.winRate >= 50 ? 'text-success' : 'text-destructive'}`} />
+              <div className={`p-1.5 md:p-2 rounded-lg shrink-0 ${stats.winRate >= 50 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                <Target className={`h-4 w-4 md:h-5 md:w-5 ${stats.winRate >= 50 ? 'text-success' : 'text-destructive'}`} />
               </div>
             </div>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">ממוצע רווח/הפסד לעסקה</p>
-                <p className={`text-2xl font-bold ${stats.avgPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs md:text-sm text-muted-foreground truncate">ממוצע לעסקה</p>
+                <p className={`text-lg md:text-2xl font-bold truncate ${stats.avgPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
                   ${stats.avgPnl.toFixed(2)}
                 </p>
               </div>
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <DollarSign className="h-5 w-5 text-primary" />
+              <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg shrink-0">
+                <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               </div>
             </div>
           </Card>
         </div>
 
         {/* Chart Section */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
           <Card className="bg-card border-border p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold flex items-center gap-2">
@@ -526,73 +529,73 @@ const Statistics = () => {
         )}
 
         {/* Detailed Stats Grid */}
-        <div className="grid grid-cols-4 gap-4">
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Award className="h-4 w-4 text-success" />
-              <p className="text-sm text-muted-foreground">הנכס הרווחי ביותר</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Award className="h-3 w-3 md:h-4 md:w-4 text-success shrink-0" />
+              <p className="text-xs md:text-sm text-muted-foreground truncate">הנכס הרווחי</p>
             </div>
-            <p className="text-xl font-bold text-success">{bestSymbol?.[0] || "—"}</p>
-            <p className="text-sm text-muted-foreground">${bestSymbol?.[1].pnl.toFixed(2) || "0.00"}</p>
+            <p className="text-base md:text-xl font-bold text-success truncate">{bestSymbol?.[0] || "—"}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">${bestSymbol?.[1].pnl.toFixed(2) || "0.00"}</p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="h-4 w-4 text-destructive" />
-              <p className="text-sm text-muted-foreground">הנכס המפסיד ביותר</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <TrendingDown className="h-3 w-3 md:h-4 md:w-4 text-destructive shrink-0" />
+              <p className="text-xs md:text-sm text-muted-foreground truncate">הנכס המפסיד</p>
             </div>
-            <p className="text-xl font-bold text-destructive">{worstSymbol?.[0] || "—"}</p>
-            <p className="text-sm text-muted-foreground">${worstSymbol?.[1].pnl.toFixed(2) || "0.00"}</p>
+            <p className="text-base md:text-xl font-bold text-destructive truncate">{worstSymbol?.[0] || "—"}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">${worstSymbol?.[1].pnl.toFixed(2) || "0.00"}</p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-destructive" />
-              <p className="text-sm text-muted-foreground">יום המפסיד ביותר</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Calendar className="h-3 w-3 md:h-4 md:w-4 text-destructive shrink-0" />
+              <p className="text-xs md:text-sm text-muted-foreground truncate">יום מפסיד</p>
             </div>
-            <p className="text-xl font-bold text-foreground">{worstDay ? dayNames[parseInt(worstDay[0])] : "—"}</p>
-            <p className="text-sm text-muted-foreground">${worstDay?.[1].pnl.toFixed(2) || "0.00"}</p>
+            <p className="text-base md:text-xl font-bold text-foreground">{worstDay ? dayNames[parseInt(worstDay[0])] : "—"}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">${worstDay?.[1].pnl.toFixed(2) || "0.00"}</p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-success" />
-              <p className="text-sm text-muted-foreground">יום הרווחי ביותר</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Calendar className="h-3 w-3 md:h-4 md:w-4 text-success shrink-0" />
+              <p className="text-xs md:text-sm text-muted-foreground truncate">יום רווחי</p>
             </div>
-            <p className="text-xl font-bold text-success">{bestDay ? dayNames[parseInt(bestDay[0])] : "—"}</p>
-            <p className="text-sm text-muted-foreground">${bestDay?.[1].pnl.toFixed(2) || "0.00"}</p>
+            <p className="text-base md:text-xl font-bold text-success">{bestDay ? dayNames[parseInt(bestDay[0])] : "—"}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">${bestDay?.[1].pnl.toFixed(2) || "0.00"}</p>
           </Card>
         </div>
 
         {/* More Stats */}
-        <div className="grid grid-cols-4 gap-4">
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">יום הרווח/הפסד ביותר</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+              <p className="text-xs md:text-sm text-muted-foreground truncate">יום הכי רווחי/מפסיד</p>
             </div>
-            <p className="text-success">${bestDayPnl?.[1].toFixed(2) || "0.00"}</p>
-            <p className="text-destructive">${worstDayPnl?.[1].toFixed(2) || "0.00"}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {bestDayPnl ? new Date(bestDayPnl[0]).toLocaleDateString('he-IL') : "—"} / {worstDayPnl ? new Date(worstDayPnl[0]).toLocaleDateString('he-IL') : "—"}
+            <p className="text-xs md:text-sm text-success">${bestDayPnl?.[1].toFixed(2) || "0.00"}</p>
+            <p className="text-xs md:text-sm text-destructive">${worstDayPnl?.[1].toFixed(2) || "0.00"}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1 truncate">
+              {bestDayPnl ? new Date(bestDayPnl[0]).toLocaleDateString('he-IL') : "—"}
             </p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Hash className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">מספר עסקאות סה״כ</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Hash className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+              <p className="text-xs md:text-sm text-muted-foreground truncate">עסקאות סה״כ</p>
             </div>
-            <p className="text-xl font-bold text-foreground">{stats.totalTrades}</p>
-            <p className="text-xs text-muted-foreground">{stats.winningTrades} ✓ | {stats.losingTrades} ✗</p>
+            <p className="text-base md:text-xl font-bold text-foreground">{stats.totalTrades}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">{stats.winningTrades} ✓ | {stats.losingTrades} ✗</p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">משך עסקה ממוצע</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Clock className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+              <p className="text-xs md:text-sm text-muted-foreground truncate">משך עסקה ממוצע</p>
             </div>
-            <p className="text-xl font-bold text-foreground">
+            <p className="text-base md:text-xl font-bold text-foreground">
               {(() => {
                 const tradesWithDuration = trades.filter(t => t.entry_date && t.exit_date);
                 if (tradesWithDuration.length === 0) return "—";
@@ -609,84 +612,84 @@ const Statistics = () => {
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
                 
-                return `${hours}ש׳ ${minutes}ד׳ ${seconds}ש׳׳`;
+                return `${hours}ש׳ ${minutes}ד׳`;
               })()}
             </p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">ממוצע חוזים לעסקה</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Zap className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+              <p className="text-xs md:text-sm text-muted-foreground truncate">ממוצע חוזים</p>
             </div>
-            <p className="text-xl font-bold text-foreground">{avgQuantity.toFixed(2)}</p>
+            <p className="text-base md:text-xl font-bold text-foreground">{avgQuantity.toFixed(2)}</p>
           </Card>
         </div>
 
         {/* Long/Short Analysis */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-card border-border p-4">
-            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-success" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          <Card className="bg-card border-border p-3 md:p-4">
+            <h3 className="font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-success" />
               ניתוח עסקאות לונג
             </h3>
             {longTrades.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">אין עסקאות לונג</p>
+              <p className="text-center py-6 md:py-8 text-muted-foreground text-sm">אין עסקאות לונג</p>
             ) : (
               <>
-                <p className="text-muted-foreground text-sm mb-4">{longTrades.length} עסקאות</p>
-                <div className="grid grid-cols-2 gap-4">
+                <p className="text-muted-foreground text-xs md:text-sm mb-3 md:mb-4">{longTrades.length} עסקאות</p>
+                <div className="grid grid-cols-2 gap-2 md:gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">אחוז הצלחה</p>
-                    <p className={`text-xl font-bold ${longWinRate >= 50 ? 'text-success' : 'text-destructive'}`}>
+                    <p className="text-xs md:text-sm text-muted-foreground">אחוז הצלחה</p>
+                    <p className={`text-base md:text-xl font-bold ${longWinRate >= 50 ? 'text-success' : 'text-destructive'}`}>
                       {longWinRate.toFixed(1)}%
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">ניצחונות/הפסדים</p>
-                    <p className="text-xl font-bold text-foreground">{longWins.length} - {longLosses.length}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">ניצחונות/הפסדים</p>
+                    <p className="text-base md:text-xl font-bold text-foreground">{longWins.length} - {longLosses.length}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">הפסד ממוצע</p>
-                    <p className="text-xl font-bold text-destructive">${longAvgLoss.toFixed(2)}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">הפסד ממוצע</p>
+                    <p className="text-base md:text-xl font-bold text-destructive">${longAvgLoss.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">רווח ממוצע</p>
-                    <p className="text-xl font-bold text-success">${longAvgWin.toFixed(2)}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">רווח ממוצע</p>
+                    <p className="text-base md:text-xl font-bold text-success">${longAvgWin.toFixed(2)}</p>
                   </div>
                 </div>
               </>
             )}
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-destructive" />
+          <Card className="bg-card border-border p-3 md:p-4">
+            <h3 className="font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
+              <TrendingDown className="h-4 w-4 md:h-5 md:w-5 text-destructive" />
               ניתוח עסקאות שורט
             </h3>
             {shortTrades.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">אין עסקאות שורט</p>
+              <p className="text-center py-6 md:py-8 text-muted-foreground text-sm">אין עסקאות שורט</p>
             ) : (
               <>
-                <p className="text-muted-foreground text-sm mb-4">{shortTrades.length} עסקאות</p>
-                <div className="grid grid-cols-2 gap-4">
+                <p className="text-muted-foreground text-xs md:text-sm mb-3 md:mb-4">{shortTrades.length} עסקאות</p>
+                <div className="grid grid-cols-2 gap-2 md:gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">אחוז הצלחה</p>
-                    <p className={`text-xl font-bold ${shortWinRate >= 50 ? 'text-success' : 'text-destructive'}`}>
+                    <p className="text-xs md:text-sm text-muted-foreground">אחוז הצלחה</p>
+                    <p className={`text-base md:text-xl font-bold ${shortWinRate >= 50 ? 'text-success' : 'text-destructive'}`}>
                       {shortWinRate.toFixed(1)}%
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">ניצחונות/הפסדים</p>
-                    <p className="text-xl font-bold text-foreground">{shortWins.length} - {shortLosses.length}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">ניצחונות/הפסדים</p>
+                    <p className="text-base md:text-xl font-bold text-foreground">{shortWins.length} - {shortLosses.length}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">הפסד ממוצע</p>
-                    <p className="text-xl font-bold text-destructive">${shortAvgLoss.toFixed(2)}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">הפסד ממוצע</p>
+                    <p className="text-base md:text-xl font-bold text-destructive">${shortAvgLoss.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">רווח ממוצע</p>
-                    <p className="text-xl font-bold text-success">${shortAvgWin.toFixed(2)}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">רווח ממוצע</p>
+                    <p className="text-base md:text-xl font-bold text-success">${shortAvgWin.toFixed(2)}</p>
                   </div>
                 </div>
               </>
@@ -695,66 +698,66 @@ const Statistics = () => {
         </div>
 
         {/* Bottom Stats Row */}
-        <div className="grid grid-cols-6 gap-4">
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">שעה רווחית ביותר</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Clock className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+              <p className="text-[10px] md:text-xs text-muted-foreground truncate">שעה רווחית</p>
             </div>
-            <p className="text-lg font-bold text-foreground">אין נתונים</p>
+            <p className="text-sm md:text-lg font-bold text-foreground">אין נתונים</p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">שעה מפסידה ביותר</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Clock className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+              <p className="text-[10px] md:text-xs text-muted-foreground truncate">שעה מפסידה</p>
             </div>
-            <p className="text-lg font-bold text-foreground">אין נתונים</p>
+            <p className="text-sm md:text-lg font-bold text-foreground">אין נתונים</p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="h-4 w-4 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">סטריק ניצחונות</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <Zap className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground shrink-0" />
+              <p className="text-[10px] md:text-xs text-muted-foreground truncate">סטריק ניצחונות</p>
             </div>
-            <p className="text-lg font-bold text-success">{maxWinStreak}</p>
-            <p className="text-xs text-muted-foreground">הארוך ביותר</p>
+            <p className="text-sm md:text-lg font-bold text-success">{maxWinStreak}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">הארוך ביותר</p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="h-4 w-4 text-destructive" />
-              <p className="text-xs text-muted-foreground">סטריק הפסדים</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <TrendingDown className="h-3 w-3 md:h-4 md:w-4 text-destructive shrink-0" />
+              <p className="text-[10px] md:text-xs text-muted-foreground truncate">סטריק הפסדים</p>
             </div>
-            <p className="text-lg font-bold text-destructive">{maxLossStreak}</p>
-            <p className="text-xs text-muted-foreground">הארוך ביותר</p>
+            <p className="text-sm md:text-lg font-bold text-destructive">{maxLossStreak}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">הארוך ביותר</p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="h-4 w-4 text-destructive" />
-              <p className="text-xs text-muted-foreground">Drawdown מקסימלי</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <TrendingDown className="h-3 w-3 md:h-4 md:w-4 text-destructive shrink-0" />
+              <p className="text-[10px] md:text-xs text-muted-foreground truncate">Drawdown</p>
             </div>
-            <p className="text-lg font-bold text-destructive">${maxDrawdown.toFixed(2)}</p>
+            <p className="text-sm md:text-lg font-bold text-destructive">${maxDrawdown.toFixed(2)}</p>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-primary" />
-              <p className="text-xs text-muted-foreground">משך עסקה הפסידה ממוצע</p>
+          <Card className="bg-card border-border p-3 md:p-4">
+            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
+              <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-primary shrink-0" />
+              <p className="text-[10px] md:text-xs text-muted-foreground truncate">עסקה הפסידה</p>
             </div>
-            <p className="text-lg font-bold text-foreground">אין נתונים</p>
+            <p className="text-sm md:text-lg font-bold text-foreground">אין נתונים</p>
           </Card>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-card border-border p-4">
-            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          <Card className="bg-card border-border p-3 md:p-4">
+            <h3 className="font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
+              <Zap className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               סיכום כללי
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">סה״כ רווח/הפסד</span>
                 <span className={`font-medium ${stats.totalPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
@@ -782,22 +785,23 @@ const Statistics = () => {
             </div>
           </Card>
 
-          <Card className="bg-card border-border p-4">
-            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Award className="h-5 w-5 text-primary" />
-              יחס רווח/הפסד (Profit Factor)
+          <Card className="bg-card border-border p-3 md:p-4">
+            <h3 className="font-semibold text-foreground mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
+              <Award className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+              <span className="hidden sm:inline">יחס רווח/הפסד (Profit Factor)</span>
+              <span className="sm:hidden">Profit Factor</span>
             </h3>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-muted-foreground">סה״כ רווחים</p>
-                <p className="text-xl font-bold text-success">${totalGrossWins.toFixed(2)}</p>
+            <div className="flex items-center justify-between mb-3 md:mb-4 gap-2">
+              <div className="text-center">
+                <p className="text-[10px] md:text-sm text-muted-foreground">רווחים</p>
+                <p className="text-sm md:text-xl font-bold text-success">${totalGrossWins.toFixed(0)}</p>
               </div>
-              <p className="text-4xl font-bold text-foreground">
+              <p className="text-2xl md:text-4xl font-bold text-foreground">
                 {totalGrossLosses > 0 ? stats.profitFactor.toFixed(2) : "∞"}
               </p>
-              <div>
-                <p className="text-sm text-muted-foreground">סה״כ הפסדים</p>
-                <p className="text-xl font-bold text-destructive">${totalGrossLosses.toFixed(2)}</p>
+              <div className="text-center">
+                <p className="text-[10px] md:text-sm text-muted-foreground">הפסדים</p>
+                <p className="text-sm md:text-xl font-bold text-destructive">${totalGrossLosses.toFixed(0)}</p>
               </div>
             </div>
             <div className="flex h-2 rounded-full overflow-hidden">
@@ -810,7 +814,7 @@ const Statistics = () => {
                 style={{ width: `${totalGrossWins + totalGrossLosses > 0 ? (totalGrossLosses / (totalGrossWins + totalGrossLosses)) * 100 : 50}%` }}
               />
             </div>
-            <p className="text-center text-xs text-muted-foreground mt-2">
+            <p className="text-center text-[10px] md:text-xs text-muted-foreground mt-2">
               {stats.profitFactor >= 2 ? "מצוין! יחס מעל 2" : stats.profitFactor >= 1.5 ? "טוב! יחס מעל 1.5" : stats.profitFactor >= 1 ? "בסדר, יחס חיובי" : "צריך שיפור"}
             </p>
           </Card>
