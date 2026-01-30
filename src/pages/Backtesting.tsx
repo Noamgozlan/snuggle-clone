@@ -76,6 +76,28 @@ const IndicatorLandingPage = () => {
         </div>
       </div>
 
+      {/* Video Section */}
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-4">
+          צפה באינדיקטור בפעולה
+        </h2>
+        <p className="text-center text-muted-foreground mb-8">
+          ראה בעצמך איך Gozlan Forever Model עוזר לך לזהות הזדמנויות מסחר
+        </p>
+        
+        <div className="relative rounded-2xl overflow-hidden border border-border shadow-2xl shadow-primary/10">
+          <div className="aspect-video">
+            <iframe
+              src="https://www.youtube.com/embed/OZNMRReCWkc"
+              title="Gozlan Forever Model Demo"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Features Section */}
       <div className="max-w-5xl mx-auto px-4 py-16">
         <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-4">
