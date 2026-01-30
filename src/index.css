@@ -453,7 +453,6 @@
     direction: rtl;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    overflow-x: hidden;
   }
 
   body {
@@ -463,11 +462,8 @@
       "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Prevent pull-to-refresh on mobile */
-    overscroll-behavior-y: contain;
-    /* Prevent horizontal overflow */
-    overflow-x: hidden;
-    max-width: 100vw;
+    /* Prevent pull-to-refresh but allow normal scrolling */
+    overscroll-behavior-x: none;
   }
 
   /* Safe area padding for notched devices */
