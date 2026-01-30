@@ -4,9 +4,6 @@ import { TradingCalendar } from "@/components/dashboard/TradingCalendar";
 import { TradingScore } from "@/components/dashboard/TradingScore";
 import { ShareStatsDialog } from "@/components/dashboard/ShareStatsDialog";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
-import { WelcomeGreeting } from "@/components/dashboard/WelcomeGreeting";
-import { SmartAlerts } from "@/components/dashboard/SmartAlerts";
-import { ProfitGoalProgress } from "@/components/dashboard/ProfitGoalProgress";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
 import { useTrades } from "@/hooks/useTrades";
@@ -337,18 +334,9 @@ const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="space-y-4 md:space-y-6 max-w-full overflow-x-hidden">
-        {/* Welcome Greeting */}
-        <WelcomeGreeting stats={stats} trades={trades} />
-
-        {/* Smart Alerts */}
-        <SmartAlerts stats={stats} trades={trades} />
-
-        {/* Profit Goal Progress */}
-        <ProfitGoalProgress trades={trades} />
-
-        {/* Header with filters */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between animate-fade-in" style={{ animationDelay: "0.2s" }}>
-          <div>
+        {/* Header */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="mt-8 md:mt-0">
             <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-l from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
               סקירה כללית
             </h1>
@@ -418,7 +406,7 @@ const Dashboard = () => {
         {/* Main Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           {/* Total PnL */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0 animate-fade-in hover:scale-[1.02]" style={{ animationDelay: "0.25s" }}>
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-primary/50" />
             <div className="flex items-start justify-between gap-1">
               <div className="min-w-0 flex-1">
@@ -451,7 +439,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Win Rate */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0 animate-fade-in hover:scale-[1.02]" style={{ animationDelay: "0.3s" }}>
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-warning to-warning/50" />
             <div className="flex items-start justify-between gap-1">
               <div className="min-w-0 flex-1">
@@ -476,7 +464,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Avg RR */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0 animate-fade-in hover:scale-[1.02]" style={{ animationDelay: "0.35s" }}>
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-primary/50" />
             <div className="flex items-start justify-between gap-1">
               <div className="min-w-0 flex-1">
@@ -493,7 +481,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Average PnL */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0 animate-fade-in hover:scale-[1.02]" style={{ animationDelay: "0.4s" }}>
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-success to-success/50" />
             <div className="flex items-start justify-between gap-1">
               <div className="min-w-0 flex-1">
