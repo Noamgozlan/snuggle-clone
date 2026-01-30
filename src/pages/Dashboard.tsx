@@ -333,16 +333,16 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-4 md:space-y-6">
+      <div className="space-y-4 md:space-y-6 max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="mt-8 md:mt-0">
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-l from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+            <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-l from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
               סקירה כללית
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm md:text-base">ניתוח הביצועים שלך במבט אחד</p>
+            <p className="text-muted-foreground mt-1 text-xs md:text-base">ניתוח הביצועים שלך במבט אחד</p>
           </div>
-          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 md:gap-3 flex-wrap overflow-x-auto pb-2 -mb-2">
             <DateRangeFilter 
               dateRange={dateRange} 
               onDateRangeChange={setDateRange} 
@@ -404,18 +404,18 @@ const Dashboard = () => {
         </div>
 
         {/* Main Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           {/* Total PnL */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-3 md:p-5 group hover:border-primary/30 transition-all">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-primary/50" />
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs md:text-sm text-muted-foreground mb-1">
-                  {displayMode === "percentage" ? "תשואה על התיק" : displayMode === "balance" ? "מצב התיק" : "סה״כ רווח/הפסד"}
+            <div className="flex items-start justify-between gap-1">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 truncate">
+                  {displayMode === "percentage" ? "תשואה" : displayMode === "balance" ? "מצב תיק" : "רווח/הפסד"}
                 </p>
-                <p className={`text-xl md:text-3xl font-bold ${displayMode === "balance" ? (balanceWithPnl >= portfolioBalance ? 'text-success' : 'text-destructive') : (totalDisplay >= 0 ? 'text-success' : 'text-destructive')}`}>
+                <p className={`text-lg md:text-3xl font-bold truncate ${displayMode === "balance" ? (balanceWithPnl >= portfolioBalance ? 'text-success' : 'text-destructive') : (totalDisplay >= 0 ? 'text-success' : 'text-destructive')}`}>
                   {displayMode === "balance" 
-                    ? `$${balanceWithPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    ? `$${balanceWithPnl.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
                     : `${totalDisplay >= 0 ? '+' : ''}${displayMode === "money" 
                       ? `$${totalDisplay.toFixed(2)}` 
                       : displayMode === "points" 
@@ -428,40 +428,34 @@ const Dashboard = () => {
                     : `${stats.totalTrades} עסקאות`}
                 </p>
               </div>
-              <div className={`p-3 rounded-xl ${totalDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+              <div className={`p-2 md:p-3 rounded-xl shrink-0 ${totalDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
                 {totalDisplay >= 0 ? (
-                  <TrendingUp className="h-6 w-6 text-success" />
+                  <TrendingUp className="h-4 w-4 md:h-6 md:w-6 text-success" />
                 ) : (
-                  <TrendingDown className="h-6 w-6 text-destructive" />
+                  <TrendingDown className="h-4 w-4 md:h-6 md:w-6 text-destructive" />
                 )}
               </div>
             </div>
           </Card>
 
           {/* Win Rate */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-3 md:p-5 group hover:border-primary/30 transition-all">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-warning to-warning/50" />
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs md:text-sm text-muted-foreground mb-1">אחוז הצלחה</p>
-                <p className="text-xl md:text-3xl font-bold text-foreground">{stats.winRate.toFixed(1)}%</p>
-                <div className="flex items-center gap-1 md:gap-2 mt-1 flex-wrap">
-                  <span className="text-xs text-success">{stats.winningTrades} רווח</span>
-                  <span className="text-xs text-muted-foreground">|</span>
-                  <span className="text-xs text-destructive">{stats.losingTrades} הפסד</span>
-                  {stats.breakevenTrades > 0 && (
-                    <>
-                      <span className="text-xs text-muted-foreground">|</span>
-                      <span className="text-xs text-warning">{stats.breakevenTrades} ברייק איבן</span>
-                    </>
-                  )}
+            <div className="flex items-start justify-between gap-1">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">אחוז הצלחה</p>
+                <p className="text-lg md:text-3xl font-bold text-foreground">{stats.winRate.toFixed(1)}%</p>
+                <div className="flex items-center gap-1 mt-0.5 md:mt-1 flex-wrap">
+                  <span className="text-[10px] md:text-xs text-success">{stats.winningTrades} רווח</span>
+                  <span className="text-[10px] md:text-xs text-muted-foreground">|</span>
+                  <span className="text-[10px] md:text-xs text-destructive">{stats.losingTrades} הפסד</span>
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-warning/10">
-                <Target className="h-6 w-6 text-warning" />
+              <div className="p-2 md:p-3 rounded-xl bg-warning/10 shrink-0">
+                <Target className="h-4 w-4 md:h-6 md:w-6 text-warning" />
               </div>
             </div>
-            <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
+            <div className="mt-2 md:mt-3 h-1.5 md:h-2 bg-secondary rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-l from-success to-success/70 transition-all"
                 style={{ width: `${stats.winRate}%` }}
@@ -470,51 +464,51 @@ const Dashboard = () => {
           </Card>
 
           {/* Avg RR */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-3 md:p-5 group hover:border-primary/30 transition-all">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-primary/50" />
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs md:text-sm text-muted-foreground mb-1">Avg RR</p>
-                <p className="text-xl md:text-3xl font-bold text-foreground">{stats.avgRR.toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
+            <div className="flex items-start justify-between gap-1">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Avg RR</p>
+                <p className="text-lg md:text-3xl font-bold text-foreground">{stats.avgRR.toFixed(2)}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
                   {stats.avgRR >= 2 ? '🔥 מצוין' : stats.avgRR >= 1 ? '✓ טוב' : '⚠️ לשפר'}
                 </p>
               </div>
-              <div className="p-3 rounded-xl bg-primary/10">
-                <Zap className="h-6 w-6 text-primary" />
+              <div className="p-2 md:p-3 rounded-xl bg-primary/10 shrink-0">
+                <Zap className="h-4 w-4 md:h-6 md:w-6 text-primary" />
               </div>
             </div>
           </Card>
 
           {/* Average PnL */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-3 md:p-5 group hover:border-primary/30 transition-all">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-success to-success/50" />
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs md:text-sm text-muted-foreground mb-1">ממוצע לעסקה</p>
-                <p className={`text-xl md:text-3xl font-bold ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
+            <div className="flex items-start justify-between gap-1">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">ממוצע לעסקה</p>
+                <p className={`text-lg md:text-3xl font-bold truncate ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {displayMode === "money" || displayMode === "balance"
-                    ? `$${stats.avgPnl.toFixed(2)}` 
+                    ? `$${stats.avgPnl.toFixed(0)}` 
                     : displayMode === "points"
                       ? stats.avgPoints.toFixed(1)
-                      : `${avgDisplay.toFixed(2)}%`}
+                      : `${avgDisplay.toFixed(1)}%`}
                 </p>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="text-xs text-success">↑ {displayMode === "points" ? `${stats.maxWinPoints.toFixed(0)} נק׳` : `$${stats.maxWin.toFixed(0)}`}</span>
-                  <span className="text-xs text-destructive">↓ {displayMode === "points" ? `${Math.abs(stats.maxLossPoints).toFixed(0)} נק׳` : `$${Math.abs(stats.maxLoss).toFixed(0)}`}</span>
+                <div className="flex items-center gap-1 mt-0.5 md:mt-1">
+                  <span className="text-[10px] md:text-xs text-success">↑ ${stats.maxWin.toFixed(0)}</span>
+                  <span className="text-[10px] md:text-xs text-destructive">↓ ${Math.abs(stats.maxLoss).toFixed(0)}</span>
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-success/10">
-                <Activity className="h-6 w-6 text-success" />
+              <div className="p-2 md:p-3 rounded-xl bg-success/10 shrink-0">
+                <Activity className="h-4 w-4 md:h-6 md:w-6 text-success" />
               </div>
             </div>
           </Card>
         </div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6">
           {/* Calendar */}
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-7 space-y-3 md:space-y-4">
             <TradingCalendar trades={trades} displayMode={displayMode} portfolioBalance={portfolioBalance} />
 
             {/* Streaks & Records */}

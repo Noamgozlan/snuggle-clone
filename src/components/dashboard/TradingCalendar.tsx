@@ -212,26 +212,26 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
 
   return (
     <>
-      <Card className="bg-card border-border p-4 hover-glow">
+      <Card className="bg-card border-border p-3 md:p-4 hover-glow overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={goToPreviousMonth}
-            className="hover:scale-110 transition-transform"
+            className="hover:scale-110 transition-transform h-8 w-8"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <div className="text-center">
-            <h3 className="font-bold text-lg">
+          <div className="text-center min-w-0">
+            <h3 className="font-bold text-base md:text-lg">
               {hebrewMonths[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs md:text-sm text-muted-foreground truncate">
               חודשי: {formatMonthlyStats()}, {monthlyStats.tradingDays} יום
             </p>
           </div>
-          <Button variant="ghost" size="icon" onClick={goToNextMonth} className="hover:scale-110 transition-transform">
+          <Button variant="ghost" size="icon" onClick={goToNextMonth} className="hover:scale-110 transition-transform h-8 w-8">
             <ChevronLeft className="h-4 w-4" />
           </Button>
         </div>
@@ -239,7 +239,7 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
         {/* Calendar Grid with Weekly Sidebar */}
         <div className="flex gap-2">
           {/* Weekly Sidebar - Hidden on mobile */}
-          <div className="hidden md:flex flex-col w-20">
+          <div className="hidden lg:flex flex-col w-20">
             <div className="h-8 flex items-center justify-center text-xs text-muted-foreground border-b border-border">
               שבועי
             </div>
@@ -264,22 +264,22 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
           </div>
 
           {/* Main Calendar */}
-          <div className="flex-1" dir="rtl">
+          <div className="flex-1 overflow-x-hidden" dir="rtl">
             {/* Days Header */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-0.5 md:gap-1">
               {hebrewDays.map((day) => (
                 <div
                   key={day}
-                  className="h-8 flex items-center justify-center text-[10px] md:text-xs text-muted-foreground border-b border-border"
+                  className="h-6 md:h-8 flex items-center justify-center text-[9px] md:text-xs text-muted-foreground border-b border-border"
                 >
-                  <span className="hidden md:inline">{day}</span>
                   <span className="md:hidden">{day.slice(0, 2)}</span>
+                  <span className="hidden md:inline">{day}</span>
                 </div>
               ))}
             </div>
 
             {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-0.5 md:gap-1">
               {calendarDays.map((day, index) => {
                 const dateStr = format(day, "yyyy-MM-dd");
                 const dayData = tradesByDate[dateStr];
@@ -294,7 +294,7 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
                   <div
                     key={dateStr}
                     onClick={() => handleDayClick(dateStr)}
-                    className={`min-h-[56px] md:min-h-[72px] rounded p-1 flex flex-col items-center justify-center transition-all duration-200 hover:scale-[1.02] ${
+                    className={`min-h-[48px] md:min-h-[72px] rounded p-0.5 md:p-1 flex flex-col items-center justify-center transition-all duration-200 hover:scale-[1.02] ${
                       hasData
                         ? `cursor-pointer ${pnl >= 0
                           ? "bg-success/20 border border-success/40 hover:bg-success/30"
@@ -303,17 +303,17 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
                     } ${isCurrentDay ? "ring-2 ring-primary" : ""} ${!isCurrentMonth ? "opacity-30 bg-secondary/10" : ""}`}
                   >
                     <span
-                      className={`text-xs md:text-sm ${isCurrentDay ? "font-bold text-primary" : hasData ? (pnl >= 0 ? "text-success" : "text-destructive") : isCurrentMonth ? "text-foreground" : "text-muted-foreground"}`}
+                      className={`text-[10px] md:text-sm ${isCurrentDay ? "font-bold text-primary" : hasData ? (pnl >= 0 ? "text-success" : "text-destructive") : isCurrentMonth ? "text-foreground" : "text-muted-foreground"}`}
                     >
                       {format(day, "d")}
                     </span>
                     {hasData && (
                       <>
-                        <span className={`text-[10px] md:text-sm font-bold ${pnl >= 0 ? "text-success" : "text-destructive"}`}>
+                        <span className={`text-[9px] md:text-sm font-bold leading-tight ${pnl >= 0 ? "text-success" : "text-destructive"}`}>
                           {formatValue(pnl, points)}
                         </span>
-                        <span className={`text-[8px] md:text-[10px] ${pnl >= 0 ? "text-success/70" : "text-destructive/70"}`}>
-                          {tradeCount} עס׳
+                        <span className={`text-[7px] md:text-[10px] leading-tight ${pnl >= 0 ? "text-success/70" : "text-destructive/70"}`}>
+                          {tradeCount}
                         </span>
                       </>
                     )}

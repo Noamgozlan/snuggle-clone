@@ -22,7 +22,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   }, [isMobileMenuOpen]);
 
   return (
-    <div className="min-h-svh bg-background">
+    <div className="min-h-svh bg-background overflow-x-hidden">
       {/* Mobile menu button - fixed position with safe area */}
       <Button
         variant="ghost"
@@ -55,10 +55,10 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       </div>
 
       {/* Main content */}
-      <div className="md:mr-64">
+      <div className="md:mr-64 overflow-x-hidden">
         <DashboardHeader title={title} />
         <main 
-          className="px-3 py-4 md:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          className="px-3 py-4 md:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))] overflow-x-hidden max-w-full"
           style={{ paddingTop: "calc(1rem + env(safe-area-inset-top))" }}
         >
           {children}
