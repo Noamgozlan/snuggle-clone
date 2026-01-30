@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Minus, Star, Upload, Loader2, X, CalendarIcon, Layers } from "lucide-react";
+import { Plus, Minus, Star, Upload, Loader2, X, CalendarIcon, Layers, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const { portfolios } = usePortfolio();
   const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
   const [isBreakeven, setIsBreakeven] = useState(false);
+  const [improvingEntryReason, setImprovingEntryReason] = useState(false);
+  const [improvingConclusions, setImprovingConclusions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [tradeDate, setTradeDate] = useState<Date>(new Date());
 
@@ -115,6 +117,57 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setSelectedConfirmations((prev) =>
       prev.includes(confName) ? prev.filter((c) => c !== confName) : [...prev, confName],
     );
+  };
+
+  const improveTextWithAI = async (type: "entry_reason" | "conclusions") => {
+    const text = type === "entry_reason" ? formData.entryReason : formData.conclusions;
+    
+    if (!text || text.trim().length === 0) {
+      toast({
+        title: "לא הוזן טקסט",
+        description: "יש להזין טקסט לפני שניתן לשפר אותו",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (type === "entry_reason") {
+      setImprovingEntryReason(true);
+    } else {
+      setImprovingConclusions(true);
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke("improve-trade-text", {
+        body: { text, type },
+      });
+
+      if (error) throw error;
+
+      if (data?.improved_text) {
+        if (type === "entry_reason") {
+          setFormData((prev) => ({ ...prev, entryReason: data.improved_text }));
+        } else {
+          setFormData((prev) => ({ ...prev, conclusions: data.improved_text }));
+        }
+        toast({
+          title: "הטקסט שופר בהצלחה!",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error improving text:", error);
+      toast({
+        title: "שגיאה בשיפור הטקסט",
+        description: error?.message || "נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    } finally {
+      if (type === "entry_reason") {
+        setImprovingEntryReason(false);
+      } else {
+        setImprovingConclusions(false);
+      }
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -756,9 +809,26 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           </div>
 
           {/* Notes - Split into Entry Reason and Conclusions */}
-          <div className="grid grid-cols-2 gap-4 animate-fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">סיבת כניסה לעסקה</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-muted-foreground text-sm">סיבת כניסה לעסקה</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={improvingEntryReason || !formData.entryReason.trim()}
+                  onClick={() => improveTextWithAI("entry_reason")}
+                  className="h-7 gap-1 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                >
+                  {improvingEntryReason ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  שפר עם AI
+                </Button>
+              </div>
               <div className="border border-border rounded-lg overflow-hidden">
                 <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b border-border">
                   <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">
@@ -786,7 +856,24 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             </div>
 
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-sm">מסקנות לאחר העסקה</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-muted-foreground text-sm">מסקנות לאחר העסקה</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={improvingConclusions || !formData.conclusions.trim()}
+                  onClick={() => improveTextWithAI("conclusions")}
+                  className="h-7 gap-1 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                >
+                  {improvingConclusions ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  שפר עם AI
+                </Button>
+              </div>
               <div className="border border-border rounded-lg overflow-hidden">
                 <div className="flex items-center gap-1 p-2 bg-secondary/30 border-b border-border">
                   <button type="button" className="p-1 hover:bg-secondary rounded transition-colors">

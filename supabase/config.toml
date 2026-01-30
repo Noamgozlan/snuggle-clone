@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.search-gifs]
 verify_jwt = false
+
+[functions.improve-trade-text]
+verify_jwt = false
