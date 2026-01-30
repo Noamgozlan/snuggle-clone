@@ -342,7 +342,7 @@ const Dashboard = () => {
             </h1>
             <p className="text-muted-foreground mt-1 text-xs md:text-base">ניתוח הביצועים שלך במבט אחד</p>
           </div>
-          <div className="flex items-center gap-1.5 md:gap-3 flex-wrap overflow-x-auto pb-2 -mb-2">
+          <div className="flex items-center gap-1.5 md:gap-3 flex-wrap max-w-full">
             <DateRangeFilter 
               dateRange={dateRange} 
               onDateRangeChange={setDateRange} 
@@ -874,30 +874,31 @@ const Dashboard = () => {
         </div>
 
         {/* Monthly Breakdown */}
-        <Card className="bg-card/50 border-border/50 p-5">
-          <div className="flex items-center gap-4 mb-5">
-            <div className="flex bg-secondary/50 rounded-lg p-1">
+        <Card className="bg-card/50 border-border/50 p-3 md:p-5 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4 md:mb-5">
+            <div className="flex bg-secondary/50 rounded-lg p-1 overflow-x-auto max-w-full">
               {[
-                { key: "pnl", label: "💰 רווח/הפסד" },
-                { key: "trades", label: "📈 עסקאות" },
-                { key: "winrate", label: "🎯 הצלחה" },
-                { key: "points", label: "📊 נקודות" },
+                { key: "pnl", label: "💰", labelFull: "💰 רווח/הפסד" },
+                { key: "trades", label: "📈", labelFull: "📈 עסקאות" },
+                { key: "winrate", label: "🎯", labelFull: "🎯 הצלחה" },
+                { key: "points", label: "📊", labelFull: "📊 נקודות" },
               ].map((item) => (
                 <Button
                   key={item.key}
                   variant="ghost"
                   size="sm"
-                  className={`transition-all ${monthlyViewMode === item.key ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
+                  className={`transition-all text-xs md:text-sm whitespace-nowrap ${monthlyViewMode === item.key ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
                   onClick={() => setMonthlyViewMode(item.key as MonthlyViewMode)}
                 >
-                  {item.label}
+                  <span className="md:hidden">{item.label}</span>
+                  <span className="hidden md:inline">{item.labelFull}</span>
                 </Button>
               ))}
             </div>
-            <span className="text-muted-foreground mr-auto font-medium">2025</span>
+            <span className="text-muted-foreground mr-auto font-medium text-sm">2025</span>
           </div>
           
-          <div className="grid grid-cols-12 gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2 md:gap-3">
             {monthlyBreakdown.map((month, index) => {
               let displayValue: string;
               let isPositive = true;
@@ -924,21 +925,21 @@ const Dashboard = () => {
               return (
                 <div
                   key={index}
-                  className={`text-center p-4 rounded-xl cursor-pointer transition-all hover:scale-105 ${
+                  className={`text-center p-2 md:p-4 rounded-xl cursor-pointer transition-all hover:scale-105 ${
                     month.highlight 
                       ? "bg-gradient-to-b from-primary/20 to-primary/5 border border-primary/30 shadow-lg shadow-primary/10" 
                       : "bg-secondary/30 hover:bg-secondary/50 border border-transparent"
                   }`}
                 >
-                  <p className={`text-lg font-bold ${
+                  <p className={`text-sm md:text-lg font-bold truncate ${
                     month.highlight 
                       ? (isPositive ? "text-success" : "text-destructive")
                       : "text-foreground"
                   }`}>
                     {displayValue}
                   </p>
-                  <p className="text-xs text-muted-foreground">{month.trades} עס׳</p>
-                  <p className="text-xs text-muted-foreground mt-1 font-medium">{month.month}</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground">{month.trades} עס׳</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1 font-medium">{month.month}</p>
                 </div>
               );
             })}

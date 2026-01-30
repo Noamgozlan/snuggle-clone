@@ -453,6 +453,7 @@
     direction: rtl;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    overflow-x: hidden;
   }
 
   body {
@@ -464,6 +465,9 @@
     -moz-osx-font-smoothing: grayscale;
     /* Prevent pull-to-refresh on mobile */
     overscroll-behavior-y: contain;
+    /* Prevent horizontal overflow */
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
   /* Safe area padding for notched devices */
