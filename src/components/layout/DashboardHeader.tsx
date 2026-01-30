@@ -49,8 +49,9 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
           <div className="w-10 md:hidden" />
           
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="sm:hidden">
+            <div className="sm:hidden flex items-center gap-2">
               <PortfolioSelector />
+              <ConsistencyCalculator />
             </div>
             {!isInstalled && (
               <Button
