@@ -252,26 +252,40 @@ const Dashboard = () => {
     });
   }, [trades]);
 
-  // Calculate trade time performance (by hour of entry)
+  // Calculate trade time performance (by hour of entry) - aggregated by hour
   const tradeTimePerformance = useMemo(() => {
-    return trades
+    const hourlyData: { [hour: number]: { totalPnl: number; count: number; wins: number; losses: number } } = {};
+    
+    trades
       .filter(t => t.entry_date && t.pnl !== null)
-      .map(trade => {
+      .forEach(trade => {
         const entryDate = new Date(trade.entry_date!);
         const hour = entryDate.getHours();
-        const minutes = entryDate.getMinutes();
-        const timeDecimal = hour + minutes / 60;
         const pnl = trade.pnl || 0;
-        const isWin = pnl > 0;
-        const isLoss = pnl < 0;
-        return {
-          time: timeDecimal,
-          timeLabel: format(entryDate, "HH:mm"),
-          pnl,
-          symbol: trade.symbol,
-          type: isWin ? "win" : isLoss ? "loss" : "breakeven",
-        };
+        
+        if (!hourlyData[hour]) {
+          hourlyData[hour] = { totalPnl: 0, count: 0, wins: 0, losses: 0 };
+        }
+        hourlyData[hour].totalPnl += pnl;
+        hourlyData[hour].count += 1;
+        if (pnl > 0) hourlyData[hour].wins += 1;
+        if (pnl < 0) hourlyData[hour].losses += 1;
       });
+    
+    // Create array from 6:00 to 23:00 with all hours (fill gaps with 0)
+    return Array.from({ length: 18 }, (_, i) => {
+      const hour = i + 6;
+      const data = hourlyData[hour] || { totalPnl: 0, count: 0, wins: 0, losses: 0 };
+      return {
+        hour,
+        hourLabel: `${hour}:00`,
+        pnl: data.totalPnl,
+        count: data.count,
+        wins: data.wins,
+        losses: data.losses,
+        winRate: data.count > 0 ? Math.round((data.wins / data.count) * 100) : 0,
+      };
+    });
   }, [trades]);
 
   // Calculate trade duration performance
@@ -741,18 +755,21 @@ const Dashboard = () => {
             ) : (
               <div className="h-48 md:h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
+                  <AreaChart data={tradeTimePerformance} margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
+                    <defs>
+                      <linearGradient id="colorPnlTime" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
                     <XAxis 
-                      dataKey="time" 
-                      type="number"
-                      domain={[6, 23]}
-                      tickFormatter={(value) => `${Math.floor(value)}:00`}
+                      dataKey="hourLabel" 
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                      interval={2}
                     />
                     <YAxis 
-                      dataKey="pnl"
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
@@ -764,10 +781,12 @@ const Dashboard = () => {
                           const data = payload[0].payload;
                           return (
                             <div className="bg-card border border-border rounded-lg p-2 shadow-lg">
-                              <p className="font-medium">{data.symbol}</p>
-                              <p className="text-sm text-muted-foreground">שעה: {data.timeLabel}</p>
+                              <p className="font-medium">שעה: {data.hourLabel}</p>
                               <p className={`font-bold ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
                                 ${data.pnl.toFixed(2)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {data.count} עסקאות | {data.winRate}% הצלחה
                               </p>
                             </div>
                           );
@@ -775,24 +794,14 @@ const Dashboard = () => {
                         return null;
                       }}
                     />
-                    <Scatter 
-                      data={tradeTimePerformance} 
-                      fill="hsl(var(--primary))"
-                    >
-                      {tradeTimePerformance.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`}
-                          fill={
-                            entry.type === "win" 
-                              ? "hsl(var(--success))" 
-                              : entry.type === "loss" 
-                                ? "hsl(var(--destructive))" 
-                                : "hsl(var(--primary))"
-                          }
-                        />
-                      ))}
-                    </Scatter>
-                  </ScatterChart>
+                    <Area 
+                      type="monotone"
+                      dataKey="pnl" 
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fill="url(#colorPnlTime)"
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             )}
