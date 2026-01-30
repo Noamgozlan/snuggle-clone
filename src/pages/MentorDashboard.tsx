@@ -1,46 +1,41 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TabsContent } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMentorRelationships, StudentWithProfile } from "@/hooks/useMentorRelationships";
 import { useMentorFeedback } from "@/hooks/useMentorFeedback";
+import { StudentListPanel } from "@/components/mentor/StudentListPanel";
+import { StudentHeader } from "@/components/mentor/StudentHeader";
+import { StudentTabs } from "@/components/mentor/StudentTabs";
+import { TradesTab } from "@/components/mentor/TradesTab";
+import { ChatTab } from "@/components/mentor/ChatTab";
 import { 
   GraduationCap, 
   Users, 
-  TrendingUp, 
   MessageSquare,
   BarChart3,
   Send,
   Trash2,
   ChevronRight,
-  ChevronLeft,
-  Check,
-  X,
-  Clock,
-  Image,
-  Wallet,
   Target,
-  CheckCircle2,
-  AlertCircle,
-  Briefcase,
+  Wallet,
+  Reply,
   ArrowUpRight,
   ArrowDownRight,
-  Reply,
-  Eye,
-  MessageCircle,
-  Loader2
+  CheckCircle2,
+  AlertCircle,
+  Image as ImageIcon
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TradeConfirmation {
   id: string;
@@ -108,6 +103,7 @@ interface ChatMessage {
 }
 
 const MentorDashboard = () => {
+  const isMobile = useIsMobile();
   const { myStudents, pendingRequests, loading: studentsLoading, removeStudent, respondToRequest } = useMentorRelationships();
   const [selectedStudent, setSelectedStudent] = useState<StudentWithProfile | null>(null);
   const [studentTrades, setStudentTrades] = useState<StudentTrade[]>([]);
@@ -117,14 +113,13 @@ const MentorDashboard = () => {
   const [loadingTrades, setLoadingTrades] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [newFeedback, setNewFeedback] = useState("");
-  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const [selectedTradeForFeedback, setSelectedTradeForFeedback] = useState<string | null>(null);
   const [selectedTradeForView, setSelectedTradeForView] = useState<StudentTrade | null>(null);
   const [feedbackReplies, setFeedbackReplies] = useState<Record<string, FeedbackReply[]>>({});
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [newChatMessage, setNewChatMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [chatTradeDetail, setChatTradeDetail] = useState<StudentTrade | null>(null);
-  const [loadingChatTradeDetail, setLoadingChatTradeDetail] = useState(false);
+  const [activeTab, setActiveTab] = useState("trades");
 
   const { 
     tradeFeedback, 
@@ -177,7 +172,6 @@ const MentorDashboard = () => {
         .order('created_at', { ascending: true });
 
       if (data) {
-        // Fetch trade data for messages with trade_id
         const tradeIds = data.filter(m => m.trade_id).map(m => m.trade_id);
         let tradesMap: Record<string, StudentTrade> = {};
         
@@ -203,7 +197,6 @@ const MentorDashboard = () => {
 
     fetchChatMessages();
 
-    // Subscribe to realtime updates
     const channel = supabase
       .channel(`mentor-chat-${selectedStudent?.id}`)
       .on(
@@ -217,7 +210,6 @@ const MentorDashboard = () => {
         async (payload) => {
           const newMsg = payload.new as ChatMessage;
           
-          // Fetch trade if exists
           if (newMsg.trade_id) {
             const { data: tradeData } = await supabase
               .from('trades')
@@ -251,7 +243,6 @@ const MentorDashboard = () => {
 
       setLoadingTrades(true);
       try {
-        // Fetch portfolios first for mapping
         const { data: portfoliosData, error: portfoliosError } = await supabase
           .from('portfolios')
           .select('*')
@@ -263,7 +254,6 @@ const MentorDashboard = () => {
 
         const portfolioMap = new Map(portfoliosData?.map(p => [p.id, p.name]) || []);
 
-        // Fetch trades
         const { data: tradesData, error: tradesError } = await supabase
           .from('trades')
           .select('*')
@@ -272,7 +262,6 @@ const MentorDashboard = () => {
 
         if (tradesError) throw tradesError;
 
-        // Fetch trade confirmations for all trades
         let tradeConfirmationsMap = new Map<string, TradeConfirmation[]>();
         if (tradesData && tradesData.length > 0) {
           const tradeIds = tradesData.map(t => t.id);
@@ -299,7 +288,6 @@ const MentorDashboard = () => {
 
         setStudentTrades(tradesWithDetails);
 
-        // Fetch strategies with confirmations
         const { data: strategiesData, error: strategiesError } = await supabase
           .from('strategies')
           .select('*')
@@ -327,7 +315,6 @@ const MentorDashboard = () => {
           setStudentStrategies([]);
         }
 
-        // Calculate stats
         if (tradesData && tradesData.length > 0) {
           const closedTrades = tradesData.filter(t => t.is_closed && t.pnl !== null);
           const wins = closedTrades.filter(t => (t.pnl || 0) > 0);
@@ -374,20 +361,20 @@ const MentorDashboard = () => {
 
     const result = await addTradeFeedback(
       selectedStudent.student_id,
-      selectedTradeId,
+      selectedTradeForFeedback,
       newFeedback.trim()
     );
     if (result.success) {
       toast.success("המשוב נוסף בהצלחה");
       setNewFeedback("");
-      setSelectedTradeId(null);
+      setSelectedTradeForFeedback(null);
     } else {
       toast.error("שגיאה בהוספת המשוב");
     }
   };
 
-  const handleSendChatMessage = async () => {
-    if (!selectedStudent || !newChatMessage.trim()) return;
+  const handleSendChatMessage = useCallback(async (content: string) => {
+    if (!selectedStudent) return;
 
     setSendingMessage(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -403,35 +390,14 @@ const MentorDashboard = () => {
       .insert({
         relationship_id: selectedStudent.id,
         sender_id: user.id,
-        content: newChatMessage.trim()
+        content: content
       });
 
-    if (!error) {
-      setNewChatMessage("");
-    } else {
+    if (error) {
       toast.error("שגיאה בשליחת ההודעה");
     }
     setSendingMessage(false);
-  };
-
-  const handleOpenChatTradeDetail = async (trade: StudentTrade) => {
-    setLoadingChatTradeDetail(true);
-    setChatTradeDetail(trade);
-    
-    // Fetch confirmations for this trade if not already loaded
-    if (!trade.confirmations || trade.confirmations.length === 0) {
-      const { data: confirmationsData } = await supabase
-        .from('trade_confirmations')
-        .select('*')
-        .eq('trade_id', trade.id);
-      
-      if (confirmationsData) {
-        setChatTradeDetail(prev => prev ? { ...prev, confirmations: confirmationsData } : null);
-      }
-    }
-    
-    setLoadingChatTradeDetail(false);
-  };
+  }, [selectedStudent]);
 
   const handleRemoveStudent = async (relationshipId: string) => {
     const result = await removeStudent(relationshipId);
@@ -445,32 +411,9 @@ const MentorDashboard = () => {
     }
   };
 
-  const handleRespondToRequest = async (relationshipId: string, accept: boolean) => {
-    const result = await respondToRequest(relationshipId, accept);
-    if (result.success) {
-      toast.success(accept ? "התלמיד אושר בהצלחה!" : "הבקשה נדחתה");
-    } else {
-      toast.error("שגיאה בטיפול בבקשה");
-    }
-  };
-
-  const getDisplayName = (profile?: { first_name: string | null; last_name: string | null; username: string | null; email: string | null }) => {
-    if (profile?.first_name && profile?.last_name) {
-      return `${profile.first_name} ${profile.last_name}`;
-    }
-    if (profile?.username) {
-      return profile.username;
-    }
-    return profile?.email || "משתמש";
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const handleGiveFeedback = (tradeId: string) => {
+    setSelectedTradeForFeedback(tradeId);
+    setActiveTab("feedback");
   };
 
   if (studentsLoading) {
@@ -485,443 +428,104 @@ const MentorDashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
-            <GraduationCap className="h-8 w-8 text-primary" />
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="p-2.5 md:p-3 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+            <GraduationCap className="h-6 w-6 md:h-8 md:w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">לוח מנטור</h1>
-            <p className="text-muted-foreground text-sm">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">לוח מנטור</h1>
+            <p className="text-muted-foreground text-xs md:text-sm">
               {myStudents.length} תלמידים פעילים • {pendingRequests.length} בקשות ממתינות
             </p>
           </div>
         </div>
 
-        {/* Pending Requests */}
-        {pendingRequests.length > 0 && (
-          <Card className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-amber-500/20">
-                <Clock className="h-5 w-5 text-amber-500" />
-              </div>
-              <h3 className="font-semibold text-foreground">
-                בקשות ממתינות ({pendingRequests.length})
-              </h3>
-            </div>
-            <div className="space-y-3">
-              {pendingRequests.map((request) => {
-                const displayName = getDisplayName(request.student_profile);
-                return (
-                  <div
-                    key={request.id}
-                    className="flex items-center justify-between p-4 bg-card/50 backdrop-blur rounded-xl border border-border"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-12 w-12 border-2 border-amber-500/30">
-                        <AvatarImage src={request.student_profile?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-amber-500/20 text-amber-600 font-semibold">
-                          {getInitials(displayName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold text-foreground">{displayName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(request.created_at), 'dd/MM/yyyy', { locale: he })}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleRespondToRequest(request.id, true)}
-                        className="bg-success hover:bg-success/90"
-                      >
-                        <Check className="h-4 w-4 ml-1" />
-                        אשר
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleRespondToRequest(request.id, false)}
-                        className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
-                      >
-                        <X className="h-4 w-4 ml-1" />
-                        דחה
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-        )}
-
         {myStudents.length === 0 && pendingRequests.length === 0 ? (
-          <Card className="bg-card border-border p-12 text-center">
+          <Card className="bg-card border-border p-8 md:p-12 text-center">
             <div className="p-4 rounded-full bg-muted w-fit mx-auto mb-4">
-              <Users className="h-12 w-12 text-muted-foreground" />
+              <Users className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
+            <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">
               אין לך תלמידים עדיין
             </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
+            <p className="text-muted-foreground text-sm max-w-md mx-auto">
               תלמידים יכולים להוסיף אותך כמנטור דרך עמוד ההגדרות שלהם באמצעות שם המשתמש שלך
             </p>
           </Card>
-        ) : myStudents.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Students List */}
-            <div className="lg:col-span-3">
-              <Card className="bg-card border-border overflow-hidden">
-                <div className="p-4 border-b border-border bg-muted/30">
-                  <h3 className="font-semibold text-foreground flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    התלמידים שלי
-                  </h3>
-                </div>
-                <ScrollArea className="h-[600px]">
-                  <div className="p-2 space-y-1">
-                    {myStudents.map((student) => {
-                      const displayName = getDisplayName(student.student_profile);
-                      const isSelected = selectedStudent?.id === student.id;
-                      
-                      return (
-                        <button
-                          key={student.id}
-                          onClick={() => setSelectedStudent(student)}
-                          className={`w-full p-3 rounded-xl text-right transition-all ${
-                            isSelected
-                              ? "bg-primary/10 border-2 border-primary shadow-sm"
-                              : "hover:bg-muted border-2 border-transparent"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Avatar className={`h-11 w-11 ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}>
-                              <AvatarImage src={student.student_profile?.avatar_url || undefined} />
-                              <AvatarFallback className={`font-semibold ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-primary/20 text-primary'}`}>
-                                {getInitials(displayName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className={`font-medium truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}>
-                                {displayName}
-                              </p>
-                              <p className="text-xs text-muted-foreground truncate">
-                                הצטרף {format(new Date(student.created_at), 'dd/MM', { locale: he })}
-                              </p>
-                            </div>
-                            <ChevronLeft className={`h-4 w-4 transition-transform ${isSelected ? 'text-primary -translate-x-1' : 'text-muted-foreground'}`} />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              </Card>
+        ) : (
+          <div className={`grid gap-4 md:gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-12'}`}>
+            {/* Students List Panel */}
+            <div className={isMobile ? '' : 'lg:col-span-3'}>
+              <StudentListPanel
+                students={myStudents}
+                pendingRequests={pendingRequests}
+                selectedStudent={selectedStudent}
+                onSelectStudent={setSelectedStudent}
+                onRespondToRequest={respondToRequest}
+              />
             </div>
 
             {/* Student Details */}
-            <div className="lg:col-span-9">
+            <div className={isMobile ? '' : 'lg:col-span-9'}>
               {selectedStudent ? (
-                <div className="space-y-5">
-                  {/* Student Header */}
-                  <Card className="bg-card border-border overflow-hidden">
-                    <div className="h-20 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent" />
-                    <div className="px-6 pb-6 -mt-10">
-                      <div className="flex items-end justify-between">
-                        <div className="flex items-end gap-4">
-                          <Avatar className="h-20 w-20 border-4 border-card shadow-lg">
-                            <AvatarImage src={selectedStudent.student_profile?.avatar_url || undefined} />
-                            <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
-                              {getInitials(getDisplayName(selectedStudent.student_profile))}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="mb-1">
-                            <h2 className="text-xl font-bold text-foreground">
-                              {getDisplayName(selectedStudent.student_profile)}
-                            </h2>
-                            <p className="text-sm text-muted-foreground">
-                              תלמיד מ-{format(new Date(selectedStudent.created_at), 'MMMM yyyy', { locale: he })}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveStudent(selectedStudent.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-                        >
-                          <Trash2 className="h-4 w-4 ml-1" />
-                          הסר
-                        </Button>
-                      </div>
+                <div className="space-y-4 md:space-y-5">
+                  <StudentHeader
+                    student={selectedStudent}
+                    stats={studentStats}
+                    onRemoveStudent={handleRemoveStudent}
+                  />
 
-                      {/* Stats */}
-                      {studentStats && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-                          <div className="bg-muted/50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-bold text-foreground">{studentStats.totalTrades}</p>
-                            <p className="text-xs text-muted-foreground mt-1">סה"כ עסקאות</p>
-                          </div>
-                          <div className="bg-muted/50 rounded-xl p-4 text-center">
-                            <p className={`text-2xl font-bold ${studentStats.winRate >= 50 ? 'text-success' : 'text-destructive'}`}>
-                              {studentStats.winRate.toFixed(0)}%
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">אחוז הצלחה</p>
-                          </div>
-                          <div className="bg-muted/50 rounded-xl p-4 text-center">
-                            <p className={`text-2xl font-bold ${studentStats.totalPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                              ${studentStats.totalPnl.toFixed(0)}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">סה"כ רווח</p>
-                          </div>
-                          <div className="bg-muted/50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-bold text-foreground">{studentStats.avgRR.toFixed(1)}R</p>
-                            <p className="text-xs text-muted-foreground mt-1">ממוצע RR</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
+                  <StudentTabs value={activeTab} onValueChange={setActiveTab}>
+                    <TradesTab
+                      trades={studentTrades}
+                      loading={loadingTrades}
+                      onViewTrade={setSelectedTradeForView}
+                      onGiveFeedback={handleGiveFeedback}
+                    />
 
-                  {/* Tabs */}
-                  <Tabs defaultValue="trades" dir="rtl">
-                    <TabsList className="grid w-full grid-cols-6 h-12">
-                      <TabsTrigger value="trades" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                        <TrendingUp className="h-4 w-4" />
-                        <span className="hidden sm:inline">עסקאות</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="chat" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                        <MessageCircle className="h-4 w-4" />
-                        <span className="hidden sm:inline">צ'אט</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="strategies" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                        <Target className="h-4 w-4" />
-                        <span className="hidden sm:inline">אסטרטגיות</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="portfolios" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                        <Wallet className="h-4 w-4" />
-                        <span className="hidden sm:inline">תיקים</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="feedback" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                        <MessageSquare className="h-4 w-4" />
-                        <span className="hidden sm:inline">משוב</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="notes" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                        <BarChart3 className="h-4 w-4" />
-                        <span className="hidden sm:inline">הערות</span>
-                      </TabsTrigger>
-                    </TabsList>
-
-                    {/* Trades Tab */}
-                    <TabsContent value="trades" className="mt-4">
-                      <Card className="bg-card border-border">
-                        {loadingTrades ? (
-                          <div className="flex items-center justify-center h-48">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                          </div>
-                        ) : studentTrades.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <AlertCircle className="h-12 w-12 text-muted-foreground mb-3" />
-                            <p className="text-muted-foreground">אין עסקאות עדיין</p>
-                          </div>
-                        ) : (
-                          <ScrollArea className="h-[500px]">
-                            <div className="p-4 space-y-3">
-                              {studentTrades.map((trade) => (
-                                <div
-                                  key={trade.id}
-                                  className={`rounded-xl border-2 transition-all overflow-hidden ${
-                                    selectedTradeId === trade.id
-                                      ? "border-primary bg-primary/5"
-                                      : "border-border bg-muted/30 hover:border-primary/50"
-                                  }`}
-                                >
-                                  {/* Trade Header */}
-                                  <div 
-                                    className="p-4 cursor-pointer"
-                                    onClick={() => setSelectedTradeId(selectedTradeId === trade.id ? null : trade.id)}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${trade.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
-                                          {trade.trade_type === 'long' 
-                                            ? <ArrowUpRight className="h-5 w-5 text-success" />
-                                            : <ArrowDownRight className="h-5 w-5 text-destructive" />
-                                          }
-                                        </div>
-                                        <div>
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-bold text-foreground text-lg">{trade.symbol}</span>
-                                            <Badge variant={trade.is_closed ? 'outline' : 'secondary'} className="text-xs">
-                                              {trade.is_closed ? 'סגורה' : 'פתוחה'}
-                                            </Badge>
-                                          </div>
-                                          <div className="flex items-center gap-2 mt-1">
-                                            {trade.portfolio_name && (
-                                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                <Briefcase className="h-3 w-3" />
-                                                {trade.portfolio_name}
-                                              </span>
-                                            )}
-                                            {trade.strategy && (
-                                              <span className="text-xs text-primary flex items-center gap-1">
-                                                <Target className="h-3 w-3" />
-                                                {trade.strategy}
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="text-left">
-                                        {trade.pnl !== null && (
-                                          <p className={`text-xl font-bold ${trade.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                            {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)}
-                                          </p>
-                                        )}
-                                        <p className="text-xs text-muted-foreground">
-                                          {format(new Date(trade.entry_date || trade.created_at), 'dd/MM/yyyy', { locale: he })}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Trade Details */}
-                                  <div className="px-4 pb-4 pt-0">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                      <div className="bg-background/60 p-3 rounded-lg">
-                                        <p className="text-xs text-muted-foreground mb-1">כניסה</p>
-                                        <p className="font-semibold text-foreground">${trade.entry_price}</p>
-                                      </div>
-                                      {trade.exit_price && (
-                                        <div className="bg-background/60 p-3 rounded-lg">
-                                          <p className="text-xs text-muted-foreground mb-1">יציאה</p>
-                                          <p className="font-semibold text-foreground">${trade.exit_price}</p>
-                                        </div>
-                                      )}
-                                      <div className="bg-background/60 p-3 rounded-lg">
-                                        <p className="text-xs text-muted-foreground mb-1">כמות</p>
-                                        <p className="font-semibold text-foreground">{trade.quantity}</p>
-                                      </div>
-                                      {trade.rr !== null && (
-                                        <div className="bg-background/60 p-3 rounded-lg">
-                                          <p className="text-xs text-muted-foreground mb-1">R:R</p>
-                                          <p className={`font-semibold ${trade.rr >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                            {trade.rr.toFixed(2)}R
-                                          </p>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Trade Confirmations */}
-                                    {trade.confirmations && trade.confirmations.length > 0 && (
-                                      <div className="mt-3 p-3 bg-success/10 rounded-lg border border-success/20">
-                                        <p className="text-xs font-medium text-success mb-2 flex items-center gap-1">
-                                          <CheckCircle2 className="h-3 w-3" />
-                                          אישורים שסומנו ({trade.confirmations.length})
-                                        </p>
-                                        <div className="flex flex-wrap gap-1">
-                                          {trade.confirmations.map((conf) => (
-                                            <Badge key={conf.id} variant="outline" className="text-xs bg-success/10 border-success/30 text-success">
-                                              <Check className="h-3 w-3 ml-1" />
-                                              {conf.confirmation_name}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {/* Screenshot */}
-                                    {trade.screenshot_url && (
-                                      <div className="mt-3">
-                                        <button
-                                          onClick={() => setSelectedTradeForView(trade)}
-                                          className="relative group w-full"
-                                        >
-                                          <img
-                                            src={trade.screenshot_url}
-                                            alt="Trade Screenshot"
-                                            className="rounded-lg max-h-40 w-full object-cover"
-                                          />
-                                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                            <Eye className="h-8 w-8 text-white" />
-                                          </div>
-                                        </button>
-                                      </div>
-                                    )}
-
-                                    {trade.notes && (
-                                      <div className="mt-3 p-3 bg-muted rounded-lg">
-                                        <p className="text-xs text-muted-foreground mb-1">הערות התלמיד:</p>
-                                        <p className="text-sm text-foreground">{trade.notes}</p>
-                                      </div>
-                                    )}
-
-                                    {/* Feedback input */}
-                                    {selectedTradeId === trade.id && (
-                                      <div className="mt-4 pt-4 border-t border-border">
-                                        <p className="text-sm font-medium text-foreground mb-2">הוסף משוב על העסקה</p>
-                                        <div className="flex gap-2">
-                                          <Textarea
-                                            value={newFeedback}
-                                            onChange={(e) => setNewFeedback(e.target.value)}
-                                            placeholder="כתוב משוב על העסקה הזו..."
-                                            className="flex-1 min-h-[80px]"
-                                          />
-                                          <Button onClick={handleAddFeedback} disabled={!newFeedback.trim()} className="self-end">
-                                            <Send className="h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </ScrollArea>
-                        )}
-                      </Card>
-                    </TabsContent>
+                    <ChatTab
+                      student={selectedStudent}
+                      messages={chatMessages}
+                      onSendMessage={handleSendChatMessage}
+                      onOpenTradeDetail={setChatTradeDetail}
+                      sending={sendingMessage}
+                    />
 
                     {/* Strategies Tab */}
                     <TabsContent value="strategies" className="mt-4">
-                      <Card className="bg-card border-border p-4">
+                      <Card className="bg-card border-border p-3 md:p-4">
                         {studentStrategies.length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-12 text-center">
                             <Target className="h-12 w-12 text-muted-foreground mb-3" />
                             <p className="text-muted-foreground">אין אסטרטגיות עדיין</p>
                           </div>
                         ) : (
-                          <div className="space-y-4">
+                          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                             {studentStrategies.map((strategy) => (
                               <div
                                 key={strategy.id}
-                                className="p-5 rounded-xl bg-muted/50 border border-border"
+                                className="p-4 bg-muted/30 rounded-xl border border-border"
                               >
-                                <div className="flex items-center gap-3 mb-3">
-                                  <div className="p-2 rounded-lg bg-primary/20">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center gap-2">
                                     <Target className="h-5 w-5 text-primary" />
+                                    <h4 className="font-semibold text-foreground">{strategy.name}</h4>
                                   </div>
-                                  <h4 className="font-bold text-foreground text-lg">{strategy.name}</h4>
+                                  <Badge variant="outline">{strategy.confirmations.length} אישורים</Badge>
                                 </div>
                                 {strategy.description && (
-                                  <p className="text-sm text-muted-foreground mb-4">{strategy.description}</p>
+                                  <p className="text-sm text-muted-foreground mb-3">{strategy.description}</p>
                                 )}
                                 {strategy.confirmations.length > 0 && (
-                                  <div className="space-y-2">
-                                    <p className="text-sm font-medium text-foreground">
-                                      אישורים ({strategy.confirmations.length}):
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                      {strategy.confirmations.map((confirmation) => (
-                                        <Badge key={confirmation.id} variant="secondary" className="flex items-center gap-1">
-                                          <CheckCircle2 className="h-3 w-3 text-primary" />
-                                          {confirmation.name}
-                                        </Badge>
-                                      ))}
-                                    </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {strategy.confirmations.map((conf) => (
+                                      <Badge key={conf.id} variant="secondary" className="text-xs">
+                                        <CheckCircle2 className="h-3 w-3 ml-1" />
+                                        {conf.name}
+                                      </Badge>
+                                    ))}
                                   </div>
                                 )}
                               </div>
@@ -933,53 +537,43 @@ const MentorDashboard = () => {
 
                     {/* Portfolios Tab */}
                     <TabsContent value="portfolios" className="mt-4">
-                      <Card className="bg-card border-border p-4">
+                      <Card className="bg-card border-border p-3 md:p-4">
                         {studentPortfolios.length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-12 text-center">
                             <Wallet className="h-12 w-12 text-muted-foreground mb-3" />
                             <p className="text-muted-foreground">אין תיקים עדיין</p>
                           </div>
                         ) : (
-                          <div className="grid gap-4 md:grid-cols-2">
+                          <div className="grid gap-3 md:grid-cols-2 max-h-[60vh] overflow-y-auto">
                             {studentPortfolios.map((portfolio) => {
-                              // Calculate current balance from trades
                               const portfolioTrades = studentTrades.filter(t => t.portfolio_id === portfolio.id);
                               const totalPnl = portfolioTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
-                              const currentBalance = portfolio.balance + totalPnl;
                               const progressToGoal = portfolio.profit_goal 
                                 ? Math.min(100, (totalPnl / portfolio.profit_goal) * 100) 
                                 : 0;
-                              const drawdownUsed = portfolio.drawdown 
-                                ? Math.min(100, Math.abs(Math.min(0, totalPnl)) / portfolio.drawdown * 100)
+                              const drawdownUsed = portfolio.drawdown && totalPnl < 0 
+                                ? Math.min(100, (Math.abs(totalPnl) / portfolio.drawdown) * 100)
                                 : 0;
 
                               return (
                                 <div
                                   key={portfolio.id}
-                                  className="p-5 rounded-xl bg-muted/50 border border-border"
+                                  className="p-4 bg-muted/30 rounded-xl border border-border"
                                 >
-                                  <div className="flex items-center justify-between mb-4">
-                                    <h4 className="font-bold text-foreground flex items-center gap-2 text-lg">
-                                      <div className="p-2 rounded-lg bg-primary/20">
-                                        <Wallet className="h-4 w-4 text-primary" />
-                                      </div>
-                                      {portfolio.name}
-                                    </h4>
-                                    <Badge variant={totalPnl >= 0 ? "default" : "destructive"}>
-                                      {totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(0)}$
-                                    </Badge>
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                      <Wallet className="h-5 w-5 text-primary" />
+                                      <h4 className="font-semibold text-foreground">{portfolio.name}</h4>
+                                    </div>
+                                    <p className={`font-bold ${totalPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                      {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(0)}
+                                    </p>
                                   </div>
                                   
                                   <div className="space-y-3">
                                     <div className="flex justify-between text-sm">
-                                      <span className="text-muted-foreground">יתרה נוכחית:</span>
-                                      <span className={`font-bold ${currentBalance >= portfolio.balance ? 'text-success' : 'text-destructive'}`}>
-                                        ${currentBalance.toLocaleString()}
-                                      </span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                      <span className="text-muted-foreground">יתרה התחלתית:</span>
-                                      <span className="text-foreground">${portfolio.balance.toLocaleString()}</span>
+                                      <span className="text-muted-foreground">יתרה:</span>
+                                      <span className="font-medium text-foreground">${portfolio.balance.toLocaleString()}</span>
                                     </div>
                                     
                                     {portfolio.profit_goal && (
@@ -994,7 +588,7 @@ const MentorDashboard = () => {
                                             style={{ width: `${Math.max(0, progressToGoal)}%` }}
                                           />
                                         </div>
-                                        <p className="text-xs text-muted-foreground text-left">{progressToGoal.toFixed(0)}% מהיעד</p>
+                                        <p className="text-xs text-muted-foreground text-left">{progressToGoal.toFixed(0)}% הושג</p>
                                       </div>
                                     )}
                                     
@@ -1030,13 +624,13 @@ const MentorDashboard = () => {
 
                     {/* Feedback Tab */}
                     <TabsContent value="feedback" className="mt-4">
-                      <Card className="bg-card border-border p-4">
+                      <Card className="bg-card border-border p-3 md:p-4">
                         <div className="space-y-4">
-                          <div className="flex gap-2">
+                          <div className="flex flex-col md:flex-row gap-2">
                             <Textarea
                               value={newFeedback}
                               onChange={(e) => setNewFeedback(e.target.value)}
-                              placeholder="כתוב משוב כללי על המסחר..."
+                              placeholder={selectedTradeForFeedback ? "כתוב משוב על העסקה שנבחרה..." : "כתוב משוב כללי על המסחר..."}
                               className="flex-1 min-h-[80px]"
                             />
                             <Button onClick={handleAddFeedback} disabled={!newFeedback.trim()} className="self-end">
@@ -1045,74 +639,71 @@ const MentorDashboard = () => {
                             </Button>
                           </div>
 
-                          <ScrollArea className="h-[400px]">
-                            <div className="space-y-3 pr-4">
-                              {tradeFeedback.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                  <MessageSquare className="h-12 w-12 text-muted-foreground mb-3" />
-                                  <p className="text-muted-foreground">אין משובים עדיין</p>
-                                </div>
-                              ) : (
-                                tradeFeedback.map((feedback) => (
-                                  <div
-                                    key={feedback.id}
-                                    className="p-4 bg-muted/50 rounded-xl border border-border"
-                                  >
-                                    <div className="flex items-start justify-between">
-                                      <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-2">
-                                          <Badge variant="outline" className="text-xs">
-                                            מנטור
-                                          </Badge>
-                                          <span className="text-xs text-muted-foreground">
-                                            {format(new Date(feedback.created_at), 'dd/MM/yyyy HH:mm', { locale: he })}
-                                          </span>
-                                        </div>
-                                        <p className="text-foreground">{feedback.content}</p>
+                          <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+                            {tradeFeedback.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <MessageSquare className="h-12 w-12 text-muted-foreground mb-3" />
+                                <p className="text-muted-foreground">אין משובים עדיין</p>
+                              </div>
+                            ) : (
+                              tradeFeedback.map((feedback) => (
+                                <div
+                                  key={feedback.id}
+                                  className="p-4 bg-muted/50 rounded-xl border border-border"
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                        <Badge variant="outline" className="text-xs">
+                                          מנטור
+                                        </Badge>
+                                        <span className="text-xs text-muted-foreground">
+                                          {format(new Date(feedback.created_at), 'dd/MM/yyyy HH:mm', { locale: he })}
+                                        </span>
                                       </div>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => deleteFeedback(feedback.id)}
-                                        className="text-muted-foreground hover:text-destructive"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
+                                      <p className="text-foreground text-sm">{feedback.content}</p>
                                     </div>
-                                    
-                                    {/* Student Replies */}
-                                    {feedbackReplies[feedback.id] && feedbackReplies[feedback.id].length > 0 && (
-                                      <div className="mt-3 mr-4 space-y-2 border-r-2 border-primary/30 pr-3">
-                                        {feedbackReplies[feedback.id].map((reply) => (
-                                          <div key={reply.id} className="bg-background/60 p-3 rounded-lg">
-                                            <div className="flex items-center gap-2 mb-1">
-                                              <Reply className="h-3 w-3 text-primary" />
-                                              <Badge variant="secondary" className="text-xs">
-                                                תלמיד
-                                              </Badge>
-                                              <span className="text-xs text-muted-foreground">
-                                                {format(new Date(reply.created_at), 'dd/MM HH:mm', { locale: he })}
-                                              </span>
-                                            </div>
-                                            <p className="text-sm text-foreground">{reply.content}</p>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => deleteFeedback(feedback.id)}
+                                      className="text-muted-foreground hover:text-destructive shrink-0"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
                                   </div>
-                                ))
-                              )}
-                            </div>
-                          </ScrollArea>
+                                  
+                                  {feedbackReplies[feedback.id] && feedbackReplies[feedback.id].length > 0 && (
+                                    <div className="mt-3 mr-4 space-y-2 border-r-2 border-primary/30 pr-3">
+                                      {feedbackReplies[feedback.id].map((reply) => (
+                                        <div key={reply.id} className="bg-background/60 p-3 rounded-lg">
+                                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                            <Reply className="h-3 w-3 text-primary" />
+                                            <Badge variant="secondary" className="text-xs">
+                                              תלמיד
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                              {format(new Date(reply.created_at), 'dd/MM HH:mm', { locale: he })}
+                                            </span>
+                                          </div>
+                                          <p className="text-sm text-foreground">{reply.content}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
                       </Card>
                     </TabsContent>
 
                     {/* Notes Tab */}
                     <TabsContent value="notes" className="mt-4">
-                      <Card className="bg-card border-border p-4">
+                      <Card className="bg-card border-border p-3 md:p-4">
                         <div className="space-y-4">
-                          <div className="flex gap-2">
+                          <div className="flex flex-col md:flex-row gap-2">
                             <Textarea
                               value={newNote}
                               onChange={(e) => setNewNote(e.target.value)}
@@ -1125,317 +716,159 @@ const MentorDashboard = () => {
                             </Button>
                           </div>
 
-                          <ScrollArea className="h-[400px]">
-                            <div className="space-y-3 pr-4">
-                              {mentorNotes.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-center">
-                                  <BarChart3 className="h-12 w-12 text-muted-foreground mb-3" />
-                                  <p className="text-muted-foreground">אין הערות עדיין</p>
-                                </div>
-                              ) : (
-                                mentorNotes.map((note) => (
-                                  <div
-                                    key={note.id}
-                                    className="p-4 bg-muted/50 rounded-xl border border-border"
-                                  >
-                                    <div className="flex items-start justify-between">
-                                      <div className="flex-1">
-                                        <p className="text-foreground">{note.content}</p>
-                                        <p className="text-xs text-muted-foreground mt-2">
-                                          {format(new Date(note.created_at), 'dd/MM/yyyy HH:mm', { locale: he })}
-                                        </p>
-                                      </div>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => deleteNote(note.id)}
-                                        className="text-muted-foreground hover:text-destructive"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </ScrollArea>
-                        </div>
-                      </Card>
-                    </TabsContent>
-
-                    {/* Chat Tab */}
-                    <TabsContent value="chat" className="mt-4">
-                      <Card className="bg-card border-border h-[500px] flex flex-col">
-                        <div className="p-4 border-b border-border bg-muted/30">
-                          <h3 className="font-semibold flex items-center gap-2">
-                            <MessageCircle className="h-4 w-4 text-primary" />
-                            צ'אט עם {getDisplayName(selectedStudent.student_profile)}
-                          </h3>
-                        </div>
-                        
-                        <ScrollArea className="flex-1 p-4">
-                          <div className="space-y-4">
-                            {chatMessages.length === 0 ? (
-                              <div className="text-center text-muted-foreground py-8">
-                                <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                                <p>אין הודעות עדיין. התחל את השיחה!</p>
+                          <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+                            {mentorNotes.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <BarChart3 className="h-12 w-12 text-muted-foreground mb-3" />
+                                <p className="text-muted-foreground">אין הערות עדיין</p>
                               </div>
                             ) : (
-                              chatMessages.map((message) => {
-                                const isMe = message.sender_id !== selectedStudent.student_id;
-                                return (
-                                  <div
-                                    key={message.id}
-                                    className={`flex ${isMe ? 'justify-start' : 'justify-end'}`}
-                                  >
-                                    <div
-                                      className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                                        isMe
-                                          ? 'bg-primary text-primary-foreground rounded-br-sm'
-                                          : 'bg-muted rounded-bl-sm'
-                                      }`}
-                                    >
-                                      {message.trade && (
-                                        <div 
-                                          className={`mb-2 ${isMe ? 'bg-primary-foreground/10' : 'bg-background/50'} rounded-lg p-2 cursor-pointer hover:opacity-80 transition-opacity`}
-                                          onClick={() => handleOpenChatTradeDetail(message.trade!)}
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <div className={`p-1.5 rounded ${message.trade.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
-                                              {message.trade.trade_type === 'long' 
-                                                ? <ArrowUpRight className="h-4 w-4 text-success" />
-                                                : <ArrowDownRight className="h-4 w-4 text-destructive" />
-                                              }
-                                            </div>
-                                            <div className="flex-1">
-                                              <p className={`font-medium text-sm ${isMe ? 'text-primary-foreground' : 'text-foreground'}`}>
-                                                {message.trade.symbol}
-                                              </p>
-                                              <p className={`text-[10px] ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                                                {message.trade.entry_date && format(new Date(message.trade.entry_date), 'dd/MM/yyyy', { locale: he })}
-                                              </p>
-                                            </div>
-                                            {message.trade.pnl !== null && (
-                                              <Badge variant={message.trade.pnl >= 0 ? "default" : "destructive"} className="text-xs">
-                                                {message.trade.pnl >= 0 ? '+' : ''}${message.trade.pnl.toFixed(2)}
-                                              </Badge>
-                                            )}
-                                            <Eye className={`h-4 w-4 ${isMe ? 'text-primary-foreground/50' : 'text-muted-foreground'}`} />
-                                          </div>
-                                        </div>
-                                      )}
-                                      {message.content && (
-                                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                                      )}
-                                      <p
-                                        className={`text-[10px] mt-1 ${
-                                          isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                                        }`}
-                                      >
-                                        {format(new Date(message.created_at), 'HH:mm', { locale: he })}
+                              mentorNotes.map((note) => (
+                                <div
+                                  key={note.id}
+                                  className="p-4 bg-muted/50 rounded-xl border border-border"
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <p className="text-foreground text-sm">{note.content}</p>
+                                      <p className="text-xs text-muted-foreground mt-2">
+                                        {format(new Date(note.created_at), 'dd/MM/yyyy HH:mm', { locale: he })}
                                       </p>
                                     </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => deleteNote(note.id)}
+                                      className="text-muted-foreground hover:text-destructive shrink-0"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
                                   </div>
-                                );
-                              })
+                                </div>
+                              ))
                             )}
-                          </div>
-                        </ScrollArea>
-
-                        <div className="p-4 border-t border-border bg-background">
-                          <div className="flex gap-2">
-                            <Input
-                              value={newChatMessage}
-                              onChange={(e) => setNewChatMessage(e.target.value)}
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleSendChatMessage();
-                                }
-                              }}
-                              placeholder="כתוב הודעה..."
-                              className="flex-1"
-                              disabled={sendingMessage}
-                            />
-                            <Button
-                              onClick={handleSendChatMessage}
-                              disabled={!newChatMessage.trim() || sendingMessage}
-                              size="icon"
-                            >
-                              {sendingMessage ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Send className="h-4 w-4" />
-                              )}
-                            </Button>
                           </div>
                         </div>
                       </Card>
                     </TabsContent>
-                  </Tabs>
+                  </StudentTabs>
                 </div>
               ) : (
-                <Card className="bg-card border-border h-[600px] flex items-center justify-center">
-                  <div className="text-center">
+                <Card className="bg-card border-border h-[300px] md:h-[400px] flex items-center justify-center">
+                  <div className="text-center px-4">
                     <div className="p-4 rounded-full bg-muted w-fit mx-auto mb-4">
-                      <ChevronRight className="h-10 w-10 text-muted-foreground" />
+                      <ChevronRight className="h-8 w-8 md:h-10 md:w-10 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                    <h3 className="text-base md:text-lg font-semibold text-foreground mb-2">
                       בחר תלמיד
                     </h3>
                     <p className="text-muted-foreground text-sm max-w-xs">
-                      לחץ על תלמיד מהרשימה כדי לצפות בעסקאות, אסטרטגיות ופרטים נוספים
+                      {isMobile ? "לחץ על רשימת התלמידים למעלה" : "לחץ על תלמיד מהרשימה כדי לצפות בפרטים"}
                     </p>
                   </div>
                 </Card>
               )}
             </div>
           </div>
-        ) : null}
+        )}
       </div>
 
       {/* Trade Screenshot Dialog */}
       <Dialog open={!!selectedTradeForView} onOpenChange={() => setSelectedTradeForView(null)}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${selectedTradeForView?.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
-                {selectedTradeForView?.trade_type === 'long' 
-                  ? <ArrowUpRight className="h-5 w-5 text-success" />
-                  : <ArrowDownRight className="h-5 w-5 text-destructive" />
-                }
-              </div>
-              <span>{selectedTradeForView?.symbol}</span>
-              {selectedTradeForView && selectedTradeForView.pnl !== null && (
-                <Badge variant={selectedTradeForView.pnl >= 0 ? "default" : "destructive"}>
-                  {selectedTradeForView.pnl >= 0 ? '+' : ''}${selectedTradeForView.pnl.toFixed(2)}
-                </Badge>
+              {selectedTradeForView && (
+                <>
+                  <div className={`p-2 rounded-lg ${selectedTradeForView.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
+                    {selectedTradeForView.trade_type === 'long' 
+                      ? <ArrowUpRight className="h-5 w-5 text-success" />
+                      : <ArrowDownRight className="h-5 w-5 text-destructive" />
+                    }
+                  </div>
+                  <span>{selectedTradeForView.symbol}</span>
+                  {selectedTradeForView.pnl !== null && (
+                    <Badge variant={selectedTradeForView.pnl >= 0 ? "default" : "destructive"}>
+                      {selectedTradeForView.pnl >= 0 ? '+' : ''}${selectedTradeForView.pnl.toFixed(2)}
+                    </Badge>
+                  )}
+                </>
               )}
             </DialogTitle>
           </DialogHeader>
           {selectedTradeForView?.screenshot_url && (
-            <img
-              src={selectedTradeForView.screenshot_url}
-              alt="Trade Screenshot"
-              className="w-full rounded-lg"
-            />
+            <div className="mt-4">
+              <img 
+                src={selectedTradeForView.screenshot_url} 
+                alt="Trade Screenshot" 
+                className="w-full rounded-lg"
+              />
+            </div>
           )}
         </DialogContent>
       </Dialog>
 
       {/* Chat Trade Detail Dialog */}
       <Dialog open={!!chatTradeDetail} onOpenChange={() => setChatTradeDetail(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${chatTradeDetail?.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
-                {chatTradeDetail?.trade_type === 'long' 
-                  ? <ArrowUpRight className="h-5 w-5 text-success" />
-                  : <ArrowDownRight className="h-5 w-5 text-destructive" />
-                }
-              </div>
-              <span className="text-xl font-bold">{chatTradeDetail?.symbol}</span>
-              <Badge variant={chatTradeDetail?.trade_type === 'long' ? 'default' : 'destructive'}>
-                {chatTradeDetail?.trade_type === 'long' ? 'לונג' : 'שורט'}
-              </Badge>
-              {chatTradeDetail && chatTradeDetail.pnl !== null && (
-                <Badge variant={chatTradeDetail.pnl >= 0 ? "default" : "destructive"} className="text-base px-3">
-                  {chatTradeDetail.pnl >= 0 ? '+' : ''}${chatTradeDetail.pnl.toFixed(2)}
-                </Badge>
+              {chatTradeDetail && (
+                <>
+                  <div className={`p-2 rounded-lg ${chatTradeDetail.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
+                    {chatTradeDetail.trade_type === 'long' 
+                      ? <ArrowUpRight className="h-5 w-5 text-success" />
+                      : <ArrowDownRight className="h-5 w-5 text-destructive" />
+                    }
+                  </div>
+                  <span>{chatTradeDetail.symbol}</span>
+                </>
               )}
             </DialogTitle>
           </DialogHeader>
-
-          {loadingChatTradeDetail ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : chatTradeDetail && (
-            <div className="space-y-6 mt-4">
-              {/* Trade Screenshot */}
-              {chatTradeDetail.screenshot_url && (
-                <div className="rounded-xl overflow-hidden border border-border">
-                  <img
-                    src={chatTradeDetail.screenshot_url}
-                    alt="Trade Screenshot"
-                    className="w-full h-auto"
-                  />
+          {chatTradeDetail && (
+            <div className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted/50 p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground">כניסה</p>
+                  <p className="font-semibold">${chatTradeDetail.entry_price}</p>
                 </div>
-              )}
-
-              {/* Trade Details Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="bg-muted/50 rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-1">תאריך</p>
-                  <p className="font-semibold text-foreground">
-                    {chatTradeDetail.entry_date 
-                      ? format(new Date(chatTradeDetail.entry_date), 'dd/MM/yyyy', { locale: he })
-                      : '-'
-                    }
-                  </p>
-                </div>
-                
-                <div className="bg-muted/50 rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-1">כמות</p>
-                  <p className="font-semibold text-foreground">{chatTradeDetail.quantity}</p>
-                </div>
-                
-                {chatTradeDetail.rr !== null && (
-                  <div className="bg-muted/50 rounded-xl p-4">
-                    <p className="text-xs text-muted-foreground mb-1">RR</p>
-                    <p className="font-semibold text-foreground">{chatTradeDetail.rr.toFixed(2)}</p>
+                {chatTradeDetail.exit_price && (
+                  <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground">יציאה</p>
+                    <p className="font-semibold">${chatTradeDetail.exit_price}</p>
                   </div>
                 )}
-                
-                {chatTradeDetail.strategy && (
-                  <div className="bg-muted/50 rounded-xl p-4">
-                    <p className="text-xs text-muted-foreground mb-1">אסטרטגיה</p>
-                    <p className="font-semibold text-foreground">{chatTradeDetail.strategy}</p>
+                {chatTradeDetail.pnl !== null && (
+                  <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground">רווח/הפסד</p>
+                    <p className={`font-semibold ${chatTradeDetail.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                      {chatTradeDetail.pnl >= 0 ? '+' : ''}${chatTradeDetail.pnl.toFixed(2)}
+                    </p>
                   </div>
                 )}
-                
-                {chatTradeDetail.entry_price > 0 && (
-                  <div className="bg-muted/50 rounded-xl p-4">
-                    <p className="text-xs text-muted-foreground mb-1">מחיר כניסה</p>
-                    <p className="font-semibold text-foreground">${chatTradeDetail.entry_price}</p>
-                  </div>
-                )}
-                
-                {chatTradeDetail.exit_price !== null && (
-                  <div className="bg-muted/50 rounded-xl p-4">
-                    <p className="text-xs text-muted-foreground mb-1">מחיר יציאה</p>
-                    <p className="font-semibold text-foreground">${chatTradeDetail.exit_price}</p>
+                {chatTradeDetail.rr && (
+                  <div className="bg-muted/50 p-3 rounded-lg">
+                    <p className="text-xs text-muted-foreground">R:R</p>
+                    <p className="font-semibold">{chatTradeDetail.rr.toFixed(1)}R</p>
                   </div>
                 )}
               </div>
 
-              {/* Confirmations */}
-              {chatTradeDetail.confirmations && chatTradeDetail.confirmations.length > 0 && (
-                <div className="bg-muted/30 rounded-xl p-4">
-                  <p className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    אישורים ({chatTradeDetail.confirmations.length})
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {chatTradeDetail.confirmations.map((conf) => (
-                      <Badge 
-                        key={conf.id} 
-                        variant="outline"
-                        className="bg-primary/10 border-primary/30 text-primary"
-                      >
-                        <Check className="h-3 w-3 ml-1" />
-                        {conf.confirmation_name}
-                      </Badge>
-                    ))}
-                  </div>
+              {chatTradeDetail.notes && (
+                <div className="bg-muted/50 p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">הערות</p>
+                  <p className="text-sm">{chatTradeDetail.notes}</p>
                 </div>
               )}
 
-              {/* Notes */}
-              {chatTradeDetail.notes && (
-                <div className="bg-muted/30 rounded-xl p-4">
-                  <p className="text-sm font-medium text-foreground mb-2">הערות</p>
-                  <p className="text-muted-foreground whitespace-pre-wrap">{chatTradeDetail.notes}</p>
+              {chatTradeDetail.screenshot_url && (
+                <div>
+                  <img 
+                    src={chatTradeDetail.screenshot_url} 
+                    alt="Trade Screenshot" 
+                    className="w-full rounded-lg"
+                  />
                 </div>
               )}
             </div>
