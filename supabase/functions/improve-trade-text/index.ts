@@ -5,6 +5,45 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function normalizeAiText(raw: unknown): string {
+  // Accept common response shapes and always return plain text.
+  const asString = (() => {
+    if (typeof raw === "string") return raw;
+    if (raw && typeof raw === "object") {
+      // Some gateways return an array of content parts.
+      // e.g. [{ type: 'text', text: '...' }]
+      const anyRaw = raw as any;
+      if (Array.isArray(anyRaw)) {
+        return anyRaw
+          .map((p) => (typeof p === "string" ? p : (p?.text ?? "")))
+          .filter(Boolean)
+          .join("\n");
+      }
+      if (typeof anyRaw.text === "string") return anyRaw.text;
+    }
+    return "";
+  })();
+
+  let text = asString.trim();
+
+  // Strip common Markdown formatting that Gemini often returns.
+  // 1) fenced code blocks
+  text = text.replace(/```[\s\S]*?```/g, "");
+  // 2) bold/italic markers
+  text = text.replace(/\*\*(.*?)\*\*/g, "$1");
+  text = text.replace(/__(.*?)__/g, "$1");
+  text = text.replace(/\*(.*?)\*/g, "$1");
+  text = text.replace(/_(.*?)_/g, "$1");
+  // 3) bullet markers: '* ' or '- ' at line start
+  text = text.replace(/^\s*[\*\-]\s+/gm, "• ");
+  // 4) extra cleanup: remove leftover standalone **
+  text = text.replace(/\*\*/g, "");
+
+  // Normalize whitespace
+  text = text.replace(/\n{3,}/g, "\n\n").trim();
+  return text;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -33,6 +72,11 @@ serve(async (req) => {
 - מאורגן בצורה טובה יותר
 - עם דגש על הסיגנלים הטכניים והפונדמנטליים
 
+הנחיות פורמט (חשוב מאוד):
+- החזר טקסט נקי בלבד (Plain text)
+- בלי Markdown בכלל (בלי **, בלי *, בלי כותרות, בלי רשימות עם כוכביות)
+- אם אתה משתמש ברשימה, השתמש בתווי "•" בתחילת שורה (ולא ב-*).
+
 החזר רק את הטקסט המשופר בעברית, ללא הסברים נוספים.`
       : `אתה עוזר לסוחרים לשפר את תיעוד המסקנות שלהם לאחר עסקאות.
 המטרה שלך היא לקחת את הטקסט של הסוחר ולשפר אותו כך שיהיה:
@@ -40,6 +84,11 @@ serve(async (req) => {
 - מפורט יותר עם לקחים ספציפיים
 - מאורגן בצורה טובה יותר
 - עם דגש על מה למדתי ומה אעשה אחרת בפעם הבאה
+
+הנחיות פורמט (חשוב מאוד):
+- החזר טקסט נקי בלבד (Plain text)
+- בלי Markdown בכלל (בלי **, בלי *, בלי כותרות, בלי רשימות עם כוכביות)
+- אם אתה משתמש ברשימה, השתמש בתווי "•" בתחילת שורה (ולא ב-*).
 
 החזר רק את הטקסט המשופר בעברית, ללא הסברים נוספים.`;
 
@@ -77,7 +126,8 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const improvedText = data.choices?.[0]?.message?.content || text;
+    const rawImproved = data?.choices?.[0]?.message?.content;
+    const improvedText = normalizeAiText(rawImproved) || text;
 
     return new Response(
       JSON.stringify({ improved_text: improvedText }),
