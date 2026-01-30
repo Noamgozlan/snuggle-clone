@@ -2,6 +2,7 @@ import { Bell, Sun, Moon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { PortfolioSelector } from "@/components/portfolio/PortfolioSelector";
+import { ConsistencyCalculator } from "@/components/portfolio/ConsistencyCalculator";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import {
   AlertDialog,
@@ -68,8 +69,9 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
           {title && <h1 className="text-base md:text-xl font-semibold text-foreground hidden md:block">{title}</h1>}
 
           <div className="flex items-center gap-2 md:gap-3">
-            <div className="hidden sm:block">
+            <div className="hidden sm:flex items-center gap-2">
               <PortfolioSelector />
+              <ConsistencyCalculator />
             </div>
             <Button 
               variant="ghost" 
