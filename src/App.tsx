@@ -10,6 +10,7 @@ import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { PortfolioProvider } from "@/contexts/PortfolioContext";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
+import { AccessibilityWidget } from "@/components/accessibility/AccessibilityWidget";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -43,6 +44,7 @@ const App = () => (
           <PortfolioProvider>
           <OnboardingProvider>
             <OnboardingTour />
+            <AccessibilityWidget />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
