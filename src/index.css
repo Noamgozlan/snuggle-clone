@@ -732,3 +732,42 @@
     overscroll-behavior: contain;
   }
 }
+
+/* Accessibility Styles */
+.high-contrast {
+  filter: contrast(1.4);
+}
+
+.highlight-links a {
+  outline: 3px solid hsl(var(--primary)) !important;
+  outline-offset: 2px;
+  background-color: hsl(var(--primary) / 0.1) !important;
+}
+
+.big-cursor,
+.big-cursor * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='black' stroke='white' stroke-width='1'%3E%3Cpath d='M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'/%3E%3C/svg%3E") 0 0, auto !important;
+}
+
+.readable-font,
+.readable-font * {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+html {
+  --accessibility-line-height: 100%;
+  --accessibility-letter-spacing: 0px;
+}
+
+body {
+  line-height: calc(1.5 * var(--accessibility-line-height) / 100) !important;
+  letter-spacing: var(--accessibility-letter-spacing) !important;
+}
+
+body p,
+body li,
+body span,
+body div {
+  line-height: inherit !important;
+  letter-spacing: inherit !important;
+}
