@@ -40,10 +40,13 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
   return (
     <>
       <header
-        className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40"
+        className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-30"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        <div className="flex items-center justify-between h-12 md:h-16 px-3 md:px-6">
+        <div className="flex items-center justify-between h-14 md:h-16 px-3 md:px-6">
+          {/* Left side - empty space for mobile menu button */}
+          <div className="w-10 md:hidden" />
+          
           <div className="flex items-center gap-2 md:gap-4">
             <div className="sm:hidden">
               <PortfolioSelector />
@@ -52,7 +55,7 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 min-h-[36px] px-2 md:px-3"
+                className="gap-2 min-h-[40px] px-3 text-xs"
                 onClick={handleInstallClick}
                 aria-label="התקן אפליקציה"
               >
@@ -64,24 +67,29 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
 
           {title && <h1 className="text-base md:text-xl font-semibold text-foreground hidden md:block">{title}</h1>}
 
-          <div className="flex items-center gap-1 md:gap-3 mr-auto md:mr-0">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="hidden sm:block">
               <PortfolioSelector />
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10" aria-label="התראות">
-              <Bell className="h-4 w-4 md:h-5 md:w-5" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 rounded-full" 
+              aria-label="התראות"
+            >
+              <Bell className="h-5 w-5" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 md:h-10 md:w-10"
+              className="h-10 w-10 rounded-full"
               onClick={toggleTheme}
               aria-label="החלף מצב תצוגה"
             >
               {theme === "dark" ? (
-                <Sun className="h-4 w-4 md:h-5 md:w-5" />
+                <Sun className="h-5 w-5" />
               ) : (
-                <Moon className="h-4 w-4 md:h-5 md:w-5" />
+                <Moon className="h-5 w-5" />
               )}
             </Button>
           </div>
