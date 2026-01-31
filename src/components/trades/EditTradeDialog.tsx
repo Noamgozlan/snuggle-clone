@@ -53,9 +53,12 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
     conclusions: "",
   });
 
-  // Load trade data when trade changes
+  // Track if we've initialized for this trade to prevent resetting on re-renders
+  const [initializedForTradeId, setInitializedForTradeId] = useState<string | null>(null);
+
+  // Load trade data when dialog opens with a new trade
   useEffect(() => {
-    if (trade && open) {
+    if (trade && open && initializedForTradeId !== trade.id) {
       const pnl = trade.pnl || 0;
       const fullNotes = trade.notes || "";
       const [reason, ...rest] = fullNotes.split("\n\n[CONCLUSIONS]\n");
@@ -119,8 +122,15 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
         }
       };
       fetchScreenshots();
+      
+      setInitializedForTradeId(trade.id);
     }
-  }, [trade, open]);
+    
+    // Reset tracking when dialog closes
+    if (!open) {
+      setInitializedForTradeId(null);
+    }
+  }, [trade, open, initializedForTradeId]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
