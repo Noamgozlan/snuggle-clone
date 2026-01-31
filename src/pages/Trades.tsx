@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { calculateAverageTradeDuration } from "@/lib/formatDuration";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProgressRing } from "@/components/dashboard/ProgressRing";
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
@@ -279,29 +280,8 @@ const Trades = () => {
     return true;
   });
 
-  // Calculate average trade duration
-  const calculateAvgDuration = () => {
-    const tradesWithDuration = filteredTrades.filter(
-      (t) => t.entry_date && t.exit_date
-    );
-    if (tradesWithDuration.length === 0) return null;
-
-    const totalMs = tradesWithDuration.reduce((sum, t) => {
-      const entry = new Date(t.entry_date!);
-      const exit = new Date(t.exit_date!);
-      return sum + (exit.getTime() - entry.getTime());
-    }, 0);
-
-    const avgMs = totalMs / tradesWithDuration.length;
-    const totalSeconds = Math.floor(avgMs / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    return { hours, minutes, seconds };
-  };
-
-  const avgDuration = calculateAvgDuration();
+  // Calculate average trade duration using utility function
+  const avgDuration = calculateAverageTradeDuration(filteredTrades);
 
   const handleTradeClick = (trade: Trade) => {
     setSelectedTrade(trade);
@@ -493,10 +473,8 @@ const Trades = () => {
 
           <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
             <p className="text-sm text-muted-foreground mb-2">זמן ממוצע לעסקה</p>
-            <p className="text-2xl font-bold text-foreground animate-scale-in">
-              {avgDuration
-                ? `${avgDuration.hours}ש׳ ${avgDuration.minutes}ד׳ ${avgDuration.seconds}ש׳׳`
-                : "—"}
+            <p className="text-2xl font-bold text-foreground animate-scale-in" dir="ltr">
+              {avgDuration ?? "—"}
             </p>
           </Card>
         </div>
