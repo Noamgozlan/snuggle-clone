@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Minus, Star, Upload, Loader2, X, Layers, Sparkles } from "lucide-react";
+import { Plus, Minus, Star, Upload, Loader2, X, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,8 +35,6 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   const { portfolios } = usePortfolio();
   const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
   const [session, setSession] = useState<string>("");
-  const [improvingEntryReason, setImprovingEntryReason] = useState(false);
-  const [improvingConclusions, setImprovingConclusions] = useState(false);
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
@@ -123,57 +121,6 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       fetchScreenshots();
     }
   }, [trade, open]);
-
-  const improveTextWithAI = async (type: "entry_reason" | "conclusions") => {
-    const text = type === "entry_reason" ? formData.entryReason : formData.conclusions;
-    
-    if (!text || text.trim().length === 0) {
-      toast({
-        title: "לא הוזן טקסט",
-        description: "יש להזין טקסט לפני שניתן לשפר אותו",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (type === "entry_reason") {
-      setImprovingEntryReason(true);
-    } else {
-      setImprovingConclusions(true);
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke("improve-trade-text", {
-        body: { text, type },
-      });
-
-      if (error) throw error;
-
-      if (data?.improved_text) {
-        if (type === "entry_reason") {
-          setFormData((prev) => ({ ...prev, entryReason: data.improved_text }));
-        } else {
-          setFormData((prev) => ({ ...prev, conclusions: data.improved_text }));
-        }
-        toast({
-          title: "הטקסט שופר בהצלחה!",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error improving text:", error);
-      toast({
-        title: "שגיאה בשיפור הטקסט",
-        description: error?.message || "נסה שוב מאוחר יותר",
-        variant: "destructive",
-      });
-    } finally {
-      if (type === "entry_reason") {
-        setImprovingEntryReason(false);
-      } else {
-        setImprovingConclusions(false);
-      }
-    }
-  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -671,20 +618,6 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
                   <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
                     קטן
                   </button>
-                  <div className="flex-1" />
-                  <button
-                    type="button"
-                    onClick={() => improveTextWithAI("entry_reason")}
-                    disabled={improvingEntryReason || !formData.entryReason.trim()}
-                    className="flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {improvingEntryReason ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-3 w-3" />
-                    )}
-                    <span>שפר עם AI</span>
-                  </button>
                 </div>
                 <Textarea
                   placeholder="למה נכנסת לעסקה? מה היו הסיגנלים?"
@@ -712,20 +645,6 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
                   </button>
                   <button type="button" className="p-1 hover:bg-secondary rounded transition-colors text-sm">
                     קטן
-                  </button>
-                  <div className="flex-1" />
-                  <button
-                    type="button"
-                    onClick={() => improveTextWithAI("conclusions")}
-                    disabled={improvingConclusions || !formData.conclusions.trim()}
-                    className="flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {improvingConclusions ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-3 w-3" />
-                    )}
-                    <span>שפר עם AI</span>
                   </button>
                 </div>
                 <Textarea
