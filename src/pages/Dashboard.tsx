@@ -252,40 +252,41 @@ const Dashboard = () => {
     });
   }, [trades]);
 
-  // Calculate trade time performance (by hour of entry) - aggregated by hour
-  const tradeTimePerformance = useMemo(() => {
-    const hourlyData: { [hour: number]: { totalPnl: number; count: number; wins: number; losses: number } } = {};
+  // Calculate performance by day of week
+  const dayOfWeekPerformance = useMemo(() => {
+    const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    const dayData: { [day: number]: { totalPnl: number; count: number; wins: number; losses: number } } = {};
     
     trades
       .filter(t => t.entry_date && t.pnl !== null)
       .forEach(trade => {
         const entryDate = new Date(trade.entry_date!);
-        const hour = entryDate.getHours();
+        const day = getDay(entryDate);
         const pnl = trade.pnl || 0;
         
-        if (!hourlyData[hour]) {
-          hourlyData[hour] = { totalPnl: 0, count: 0, wins: 0, losses: 0 };
+        if (!dayData[day]) {
+          dayData[day] = { totalPnl: 0, count: 0, wins: 0, losses: 0 };
         }
-        hourlyData[hour].totalPnl += pnl;
-        hourlyData[hour].count += 1;
-        if (pnl > 0) hourlyData[hour].wins += 1;
-        if (pnl < 0) hourlyData[hour].losses += 1;
+        dayData[day].totalPnl += pnl;
+        dayData[day].count += 1;
+        if (pnl > 0) dayData[day].wins += 1;
+        if (pnl < 0) dayData[day].losses += 1;
       });
     
-    // Create array from 6:00 to 23:00 with all hours (fill gaps with 0)
-    return Array.from({ length: 18 }, (_, i) => {
-      const hour = i + 6;
-      const data = hourlyData[hour] || { totalPnl: 0, count: 0, wins: 0, losses: 0 };
+    // Create array for all days (0=Sunday to 6=Saturday)
+    return Array.from({ length: 7 }, (_, i) => {
+      const data = dayData[i] || { totalPnl: 0, count: 0, wins: 0, losses: 0 };
       return {
-        hour,
-        hourLabel: `${hour}:00`,
+        day: i,
+        dayName: dayNames[i],
         pnl: data.totalPnl,
         count: data.count,
         wins: data.wins,
         losses: data.losses,
         winRate: data.count > 0 ? Math.round((data.wins / data.count) * 100) : 0,
+        avgPnl: data.count > 0 ? data.totalPnl / data.count : 0,
       };
-    });
+    }).filter(d => d.count > 0); // Only show days with trades
   }, [trades]);
 
   // Calculate cumulative PNL over time
@@ -723,33 +724,26 @@ const Dashboard = () => {
 
         {/* Trade Time & Duration Performance Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-          {/* Trade Time Performance */}
+          {/* Day of Week Performance */}
           <Card className="bg-card/50 border-border/50 p-3 md:p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm md:text-base">
-                🕐 ביצועים לפי שעת כניסה
+                📅 ביצועים לפי יום בשבוע
               </h3>
             </div>
-            {tradeTimePerformance.length === 0 ? (
+            {dayOfWeekPerformance.length === 0 ? (
               <div className="h-48 md:h-64 flex items-center justify-center">
                 <p className="text-muted-foreground text-sm">אין מספיק נתונים</p>
               </div>
             ) : (
               <div className="h-48 md:h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={tradeTimePerformance} margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
-                    <defs>
-                      <linearGradient id="colorPnlTime" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
+                  <BarChart data={dayOfWeekPerformance} margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
                     <XAxis 
-                      dataKey="hourLabel" 
+                      dataKey="dayName" 
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      interval={2}
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                     />
                     <YAxis 
                       axisLine={false}
@@ -762,13 +756,16 @@ const Dashboard = () => {
                         if (active && payload && payload.length > 0) {
                           const data = payload[0].payload;
                           return (
-                            <div className="bg-card border border-border rounded-lg p-2 shadow-lg">
-                              <p className="font-medium">שעה: {data.hourLabel}</p>
+                            <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                              <p className="font-bold text-base mb-1">יום {data.dayName}</p>
                               <p className={`font-bold ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                ${data.pnl.toFixed(2)}
+                                סה"כ: ${data.pnl.toFixed(2)}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                {data.count} עסקאות | {data.winRate}% הצלחה
+                              <p className="text-sm text-muted-foreground">
+                                {data.count} עסקאות
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {data.winRate}% הצלחה | ממוצע: ${data.avgPnl.toFixed(2)}
                               </p>
                             </div>
                           );
@@ -776,14 +773,19 @@ const Dashboard = () => {
                         return null;
                       }}
                     />
-                    <Area 
-                      type="monotone"
+                    <Bar 
                       dataKey="pnl" 
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      fill="url(#colorPnlTime)"
-                    />
-                  </AreaChart>
+                      radius={[4, 4, 0, 0]}
+                      fill="hsl(var(--primary))"
+                    >
+                      {dayOfWeekPerformance.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`}
+                          fill={entry.pnl >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
