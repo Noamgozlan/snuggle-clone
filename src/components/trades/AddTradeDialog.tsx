@@ -253,14 +253,15 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       const tradeDateStr = `${year}-${month}-${day}`;
       const entryDate = `${tradeDateStr}T12:00:00`; // Use noon to avoid timezone edge cases
 
-      // Calculate exit date based on duration
+      // Calculate exit date based on duration - start from entry time and add duration
       let exitDate = null;
       if (formData.durationHours || formData.durationMinutes || formData.durationSeconds) {
         const hours = parseInt(formData.durationHours) || 0;
         const minutes = parseInt(formData.durationMinutes) || 0;
         const seconds = parseInt(formData.durationSeconds) || 0;
 
-        const entryDateTime = new Date(`${tradeDateStr}T00:00:00`);
+        // Start from entry date (T12:00:00) and add duration
+        const entryDateTime = new Date(`${tradeDateStr}T12:00:00`);
         entryDateTime.setHours(entryDateTime.getHours() + hours);
         entryDateTime.setMinutes(entryDateTime.getMinutes() + minutes);
         entryDateTime.setSeconds(entryDateTime.getSeconds() + seconds);
