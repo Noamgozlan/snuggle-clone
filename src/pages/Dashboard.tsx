@@ -288,42 +288,24 @@ const Dashboard = () => {
     });
   }, [trades]);
 
-  // Calculate trade duration performance
-  const tradeDurationPerformance = useMemo(() => {
-    return trades
-      .filter(t => t.entry_date && t.exit_date && t.pnl !== null)
-      .map(trade => {
-        const entryDate = new Date(trade.entry_date!);
-        const exitDate = new Date(trade.exit_date!);
-        const durationSeconds = differenceInSeconds(exitDate, entryDate);
-        const durationMinutes = differenceInMinutes(exitDate, entryDate);
-        const pnl = trade.pnl || 0;
-        const isWin = pnl > 0;
-        const isLoss = pnl < 0;
-        
-        // Format duration label
-        let durationLabel: string;
-        if (durationSeconds < 60) {
-          durationLabel = `${durationSeconds}s`;
-        } else if (durationMinutes < 60) {
-          const secs = durationSeconds % 60;
-          durationLabel = `${durationMinutes}m:${secs.toString().padStart(2, '0')}s`;
-        } else {
-          const hours = Math.floor(durationMinutes / 60);
-          const mins = durationMinutes % 60;
-          durationLabel = `${hours}h:${mins.toString().padStart(2, '0')}m`;
-        }
-        
-        return {
-          duration: durationSeconds,
-          durationMinutes,
-          durationLabel,
-          pnl,
-          symbol: trade.symbol,
-          type: isWin ? "win" : isLoss ? "loss" : "breakeven",
-        };
-      })
-      .sort((a, b) => a.duration - b.duration);
+  // Calculate cumulative PNL over time
+  const cumulativePnlData = useMemo(() => {
+    const sortedTrades = trades
+      .filter(t => t.entry_date && t.pnl !== null)
+      .sort((a, b) => new Date(a.entry_date!).getTime() - new Date(b.entry_date!).getTime());
+    
+    let cumulative = 0;
+    return sortedTrades.map((trade, index) => {
+      cumulative += trade.pnl || 0;
+      return {
+        index: index + 1,
+        date: format(new Date(trade.entry_date!), "dd/MM", { locale: he }),
+        fullDate: format(new Date(trade.entry_date!), "dd/MM/yyyy", { locale: he }),
+        pnl: trade.pnl || 0,
+        cumulative,
+        symbol: trade.symbol,
+      };
+    });
   }, [trades]);
 
   // Calculate percentage of portfolio (portfolioBalance already defined above)
@@ -807,35 +789,35 @@ const Dashboard = () => {
             )}
           </Card>
 
-          {/* Trade Duration Performance */}
+          {/* Cumulative PNL Chart */}
           <Card className="bg-card/50 border-border/50 p-3 md:p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm md:text-base">
-                ⏱️ ביצועים לפי משך עסקה
+                📈 עקומת רווח/הפסד
               </h3>
             </div>
-            {tradeDurationPerformance.length === 0 ? (
+            {cumulativePnlData.length === 0 ? (
               <div className="h-48 md:h-64 flex items-center justify-center">
-                <p className="text-muted-foreground text-sm">אין מספיק נתונים (נדרש תאריך כניסה ויציאה)</p>
+                <p className="text-muted-foreground text-sm">אין מספיק נתונים</p>
               </div>
             ) : (
               <div className="h-48 md:h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
+                  <AreaChart data={cumulativePnlData} margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
+                    <defs>
+                      <linearGradient id="colorCumulativePnl" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
                     <XAxis 
-                      dataKey="durationMinutes" 
-                      type="number"
+                      dataKey="date" 
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      tickFormatter={(value) => {
-                        if (value < 1) return `${Math.round(value * 60)}s`;
-                        if (value < 60) return `${Math.round(value)}m`;
-                        return `${Math.round(value / 60)}h`;
-                      }}
+                      interval="preserveStartEnd"
                     />
                     <YAxis 
-                      dataKey="pnl"
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
@@ -848,9 +830,12 @@ const Dashboard = () => {
                           return (
                             <div className="bg-card border border-border rounded-lg p-2 shadow-lg">
                               <p className="font-medium">{data.symbol}</p>
-                              <p className="text-sm text-muted-foreground">משך: {data.durationLabel}</p>
-                              <p className={`font-bold ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                ${data.pnl.toFixed(2)}
+                              <p className="text-xs text-muted-foreground">{data.fullDate}</p>
+                              <p className={`text-sm ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                עסקה: ${data.pnl.toFixed(2)}
+                              </p>
+                              <p className={`font-bold ${data.cumulative >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                סה"כ: ${data.cumulative.toFixed(2)}
                               </p>
                             </div>
                           );
@@ -858,24 +843,14 @@ const Dashboard = () => {
                         return null;
                       }}
                     />
-                    <Scatter 
-                      data={tradeDurationPerformance} 
-                      fill="hsl(var(--primary))"
-                    >
-                      {tradeDurationPerformance.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`}
-                          fill={
-                            entry.type === "win" 
-                              ? "hsl(var(--success))" 
-                              : entry.type === "loss" 
-                                ? "hsl(var(--destructive))" 
-                                : "hsl(var(--primary))"
-                          }
-                        />
-                      ))}
-                    </Scatter>
-                  </ScatterChart>
+                    <Area 
+                      type="monotone"
+                      dataKey="cumulative" 
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fill="url(#colorCumulativePnl)"
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             )}
