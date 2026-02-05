@@ -12,7 +12,11 @@ import {
   Image,
   CheckCircle2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MessageSquare,
+  Calendar,
+  DollarSign,
+  Layers
 } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -57,8 +61,11 @@ export const TradesTab = ({ trades, loading, onViewTrade, onGiveFeedback }: Trad
     return (
       <TabsContent value="trades" className="mt-4">
         <Card className="bg-card border-border">
-          <div className="flex items-center justify-center h-48">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+            </div>
+            <p className="text-muted-foreground text-sm">טוען עסקאות...</p>
           </div>
         </Card>
       </TabsContent>
@@ -69,9 +76,14 @@ export const TradesTab = ({ trades, loading, onViewTrade, onGiveFeedback }: Trad
     return (
       <TabsContent value="trades" className="mt-4">
         <Card className="bg-card border-border">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <AlertCircle className="h-12 w-12 text-muted-foreground mb-3" />
-            <p className="text-muted-foreground">אין עסקאות עדיין</p>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="p-4 rounded-2xl bg-muted/50 mb-4">
+              <Layers className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h3 className="font-semibold text-foreground mb-1">אין עסקאות עדיין</h3>
+            <p className="text-muted-foreground text-sm max-w-xs">
+              כשהתלמיד יתחיל לבצע עסקאות, הן יופיעו כאן
+            </p>
           </div>
         </Card>
       </TabsContent>
@@ -80,111 +92,161 @@ export const TradesTab = ({ trades, loading, onViewTrade, onGiveFeedback }: Trad
 
   return (
     <TabsContent value="trades" className="mt-4">
-      <Card className="bg-card border-border p-2 md:p-4">
-        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+      <Card className="bg-card border-border overflow-hidden">
+        <div className="p-3 md:p-4 border-b border-border bg-muted/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-foreground text-sm">היסטוריית עסקאות</span>
+            </div>
+            <Badge variant="secondary" className="font-semibold">
+              {trades.length} עסקאות
+            </Badge>
+          </div>
+        </div>
+        
+        <div className="divide-y divide-border max-h-[60vh] overflow-y-auto">
           {trades.map((trade) => {
             const isExpanded = expandedTradeId === trade.id;
+            const isWin = trade.pnl !== null && trade.pnl > 0;
+            const isLoss = trade.pnl !== null && trade.pnl < 0;
             
             return (
               <div
                 key={trade.id}
-                className={`rounded-xl border-2 transition-all overflow-hidden ${
-                  isExpanded
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-muted/30 hover:border-primary/50"
+                className={`transition-all duration-300 ${
+                  isExpanded ? "bg-muted/30" : "hover:bg-muted/20"
                 }`}
               >
                 {/* Trade Header - Always visible */}
                 <button 
-                  className="w-full p-3 md:p-4 text-right"
+                  className="w-full p-4 text-right"
                   onClick={() => setExpandedTradeId(isExpanded ? null : trade.id)}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                      <div className={`p-1.5 md:p-2 rounded-lg shrink-0 ${trade.trade_type === 'long' ? 'bg-success/20' : 'bg-destructive/20'}`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`p-2.5 rounded-xl shrink-0 ${
+                        trade.trade_type === 'long' 
+                          ? 'bg-gradient-to-br from-success/30 to-success/10' 
+                          : 'bg-gradient-to-br from-destructive/30 to-destructive/10'
+                      }`}>
                         {trade.trade_type === 'long' 
-                          ? <ArrowUpRight className="h-4 w-4 md:h-5 md:w-5 text-success" />
-                          : <ArrowDownRight className="h-4 w-4 md:h-5 md:w-5 text-destructive" />
+                          ? <ArrowUpRight className="h-5 w-5 text-success" />
+                          : <ArrowDownRight className="h-5 w-5 text-destructive" />
                         }
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-foreground text-base md:text-lg">{trade.symbol}</span>
-                          <Badge variant={trade.is_closed ? 'outline' : 'secondary'} className="text-[10px] md:text-xs">
+                          <span className="font-bold text-foreground text-lg">{trade.symbol}</span>
+                          <Badge 
+                            variant={trade.is_closed ? 'outline' : 'secondary'} 
+                            className={`text-xs ${trade.is_closed ? '' : 'bg-amber-500/20 text-amber-600 border-amber-500/30'}`}
+                          >
                             {trade.is_closed ? 'סגורה' : 'פתוחה'}
                           </Badge>
                         </div>
-                        <p className="text-[10px] md:text-xs text-muted-foreground">
-                          {format(new Date(trade.entry_date || trade.created_at), 'dd/MM/yyyy', { locale: he })}
-                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Calendar className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(trade.entry_date || trade.created_at), 'dd/MM/yyyy HH:mm', { locale: he })}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    
+                    <div className="flex items-center gap-3 shrink-0">
                       {trade.pnl !== null && (
-                        <p className={`text-lg md:text-xl font-bold ${trade.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                        <div className={`px-3 py-1.5 rounded-xl font-bold text-lg ${
+                          isWin 
+                            ? 'bg-success/20 text-success' 
+                            : isLoss 
+                              ? 'bg-destructive/20 text-destructive' 
+                              : 'bg-muted text-muted-foreground'
+                        }`}>
                           {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(0)}
-                        </p>
+                        </div>
                       )}
-                      {isExpanded ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                      )}
+                      <div className={`p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-primary/10' : 'bg-muted/50'}`}>
+                        {isExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-primary" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </button>
 
                 {/* Trade Details - Expandable */}
                 {isExpanded && (
-                  <div className="px-3 md:px-4 pb-3 md:pb-4 pt-0 border-t border-border/50 space-y-3">
-                    {/* Quick Info */}
-                    <div className="flex flex-wrap gap-2 pt-3">
+                  <div className="px-4 pb-4 space-y-4 animate-fade-in">
+                    {/* Tags Row */}
+                    <div className="flex flex-wrap gap-2">
                       {trade.portfolio_name && (
-                        <Badge variant="outline" className="text-xs">
-                          <Briefcase className="h-3 w-3 ml-1" />
+                        <Badge variant="outline" className="text-xs bg-background/50">
+                          <Briefcase className="h-3 w-3 ml-1 text-amber-500" />
                           {trade.portfolio_name}
                         </Badge>
                       )}
                       {trade.strategy && (
-                        <Badge variant="secondary" className="text-xs">
-                          <Target className="h-3 w-3 ml-1" />
+                        <Badge variant="outline" className="text-xs bg-background/50">
+                          <Target className="h-3 w-3 ml-1 text-purple-500" />
                           {trade.strategy}
+                        </Badge>
+                      )}
+                      {trade.rr && (
+                        <Badge variant="outline" className="text-xs bg-background/50">
+                          R:R {trade.rr.toFixed(1)}
                         </Badge>
                       )}
                     </div>
 
                     {/* Trade Data Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                      <div className="bg-background/60 p-2 md:p-3 rounded-lg">
-                        <p className="text-[10px] md:text-xs text-muted-foreground mb-1">כניסה</p>
-                        <p className="font-semibold text-foreground text-sm">${trade.entry_price}</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <div className="bg-background rounded-xl p-3 border border-border/50">
+                        <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+                          <DollarSign className="h-3 w-3" />
+                          <span className="text-xs">כניסה</span>
+                        </div>
+                        <p className="font-bold text-foreground">${trade.entry_price}</p>
                       </div>
                       {trade.exit_price && (
-                        <div className="bg-background/60 p-2 md:p-3 rounded-lg">
-                          <p className="text-[10px] md:text-xs text-muted-foreground mb-1">יציאה</p>
-                          <p className="font-semibold text-foreground text-sm">${trade.exit_price}</p>
+                        <div className="bg-background rounded-xl p-3 border border-border/50">
+                          <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+                            <DollarSign className="h-3 w-3" />
+                            <span className="text-xs">יציאה</span>
+                          </div>
+                          <p className="font-bold text-foreground">${trade.exit_price}</p>
                         </div>
                       )}
-                      <div className="bg-background/60 p-2 md:p-3 rounded-lg">
-                        <p className="text-[10px] md:text-xs text-muted-foreground mb-1">כמות</p>
-                        <p className="font-semibold text-foreground text-sm">{trade.quantity}</p>
+                      <div className="bg-background rounded-xl p-3 border border-border/50">
+                        <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+                          <Layers className="h-3 w-3" />
+                          <span className="text-xs">כמות</span>
+                        </div>
+                        <p className="font-bold text-foreground">{trade.quantity}</p>
                       </div>
                       {trade.rr && (
-                        <div className="bg-background/60 p-2 md:p-3 rounded-lg">
-                          <p className="text-[10px] md:text-xs text-muted-foreground mb-1">R:R</p>
-                          <p className="font-semibold text-foreground text-sm">{trade.rr.toFixed(1)}R</p>
+                        <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-3 border border-primary/20">
+                          <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+                            <Target className="h-3 w-3" />
+                            <span className="text-xs">יחס R:R</span>
+                          </div>
+                          <p className="font-bold text-primary">{trade.rr.toFixed(2)}R</p>
                         </div>
                       )}
                     </div>
 
                     {/* Confirmations */}
                     {trade.confirmations && trade.confirmations.length > 0 && (
-                      <div className="bg-background/60 p-3 rounded-lg">
-                        <p className="text-xs text-muted-foreground mb-2">אישורים:</p>
+                      <div className="bg-success/5 rounded-xl p-3 border border-success/20">
+                        <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                          אישורים לעסקה
+                        </p>
                         <div className="flex flex-wrap gap-1.5">
                           {trade.confirmations.map((conf) => (
-                            <Badge key={conf.id} variant="outline" className="text-xs bg-success/10 text-success border-success/30">
-                              <CheckCircle2 className="h-3 w-3 ml-1" />
+                            <Badge key={conf.id} className="bg-success/20 text-success border-success/30 text-xs">
                               {conf.confirmation_name}
                             </Badge>
                           ))}
@@ -194,31 +256,31 @@ export const TradesTab = ({ trades, loading, onViewTrade, onGiveFeedback }: Trad
 
                     {/* Notes */}
                     {trade.notes && (
-                      <div className="bg-background/60 p-3 rounded-lg">
-                        <p className="text-xs text-muted-foreground mb-1">הערות:</p>
-                        <p className="text-sm text-foreground whitespace-pre-wrap">{trade.notes}</p>
+                      <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
+                        <p className="text-xs text-muted-foreground mb-1.5">הערות:</p>
+                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{trade.notes}</p>
                       </div>
                     )}
 
                     {/* Actions */}
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex gap-2 pt-1">
                       {trade.screenshot_url && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => onViewTrade(trade)}
-                          className="flex-1"
+                          className="flex-1 gap-2"
                         >
-                          <Image className="h-4 w-4 ml-1" />
-                          צפה בתמונה
+                          <Image className="h-4 w-4" />
+                          צפה בגרף
                         </Button>
                       )}
                       <Button
                         size="sm"
                         onClick={() => onGiveFeedback(trade.id)}
-                        className="flex-1"
+                        className="flex-1 gap-2 bg-gradient-to-r from-primary to-primary/90"
                       >
-                        <TrendingUp className="h-4 w-4 ml-1" />
+                        <MessageSquare className="h-4 w-4" />
                         תן משוב
                       </Button>
                     </div>
