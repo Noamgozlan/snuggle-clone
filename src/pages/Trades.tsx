@@ -57,6 +57,7 @@ interface TradeScreenshot {
   trade_id: string;
   screenshot_url: string;
   position: number;
+  timeframe?: string;
 }
 
 const Trades = () => {
@@ -108,7 +109,7 @@ const Trades = () => {
       // Fetch screenshots
       const { data: ssData, error: ssError } = await supabase
         .from("trade_screenshots")
-        .select("id, trade_id, screenshot_url, position")
+        .select("id, trade_id, screenshot_url, position, timeframe")
         .order("position", { ascending: true });
 
       if (!ssError && ssData) {
