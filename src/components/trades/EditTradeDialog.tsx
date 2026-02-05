@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Minus, Star, Upload, Loader2, X, Layers } from "lucide-react";
+import { Plus, Minus, Star, Upload, Loader2, X, Layers, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,7 +30,18 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   const [pnlSign, setPnlSign] = useState<"positive" | "negative">("positive");
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [screenshots, setScreenshots] = useState<{ url: string; preview: string }[]>([]);
+  const [screenshots, setScreenshots] = useState<{ url: string; preview: string; timeframe: string }[]>([]);
+  const [selectedTimeframe, setSelectedTimeframe] = useState("15m");
+  
+  const TIMEFRAME_OPTIONS = [
+    { value: "1m", label: "1 דקה" },
+    { value: "5m", label: "5 דקות" },
+    { value: "15m", label: "15 דקות" },
+    { value: "30m", label: "30 דקות" },
+    { value: "1h", label: "שעה" },
+    { value: "4h", label: "4 שעות" },
+    { value: "1d", label: "יום" },
+  ];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { portfolios } = usePortfolio();
   const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
@@ -104,7 +115,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       
       // Load existing screenshots
       if (trade.screenshot_url) {
-        setScreenshots([{ url: trade.screenshot_url, preview: trade.screenshot_url }]);
+        setScreenshots([{ url: trade.screenshot_url, preview: trade.screenshot_url, timeframe: "15m" }]);
       } else {
         setScreenshots([]);
       }
@@ -113,12 +124,16 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       const fetchScreenshots = async () => {
         const { data, error } = await supabase
           .from("trade_screenshots")
-          .select("screenshot_url, position")
+          .select("screenshot_url, position, timeframe")
           .eq("trade_id", trade.id)
           .order("position", { ascending: true });
           
         if (!error && data && data.length > 0) {
-          setScreenshots(data.map(ss => ({ url: ss.screenshot_url, preview: ss.screenshot_url })));
+          setScreenshots(data.map(ss => ({ 
+            url: ss.screenshot_url, 
+            preview: ss.screenshot_url,
+            timeframe: ss.timeframe || "15m"
+          })));
         }
       };
       fetchScreenshots();
@@ -160,7 +175,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           data: { publicUrl },
         } = supabase.storage.from("trade-screenshots").getPublicUrl(fileName);
 
-        setScreenshots(prev => [...prev, { url: publicUrl, preview }]);
+        setScreenshots(prev => [...prev, { url: publicUrl, preview, timeframe: selectedTimeframe }]);
       }
       
       toast({
@@ -262,6 +277,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           trade_id: trade.id,
           screenshot_url: ss.url,
           position: index,
+          timeframe: ss.timeframe,
         }));
         await supabase.from("trade_screenshots").insert(screenshotsToInsert);
       }
@@ -668,7 +684,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label className="text-muted-foreground text-sm">צילומי מסך</Label>
             <input 
               ref={fileInputRef} 
@@ -680,18 +696,45 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
             />
             
             {screenshots.length > 0 && (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {screenshots.map((ss, index) => (
-                  <div key={index} className="relative border border-border rounded-lg overflow-hidden aspect-video">
+                  <div key={index} className="relative border border-border rounded-lg overflow-hidden aspect-video group">
                     <img
                       src={ss.preview}
                       alt={`צילום מסך ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
+                    {/* Timeframe badge */}
+                    <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-background/90 backdrop-blur-sm rounded text-xs font-medium border border-border flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-primary" />
+                      {TIMEFRAME_OPTIONS.find(t => t.value === ss.timeframe)?.label || ss.timeframe}
+                    </div>
+                    {/* Change timeframe dropdown */}
+                    <div className="absolute top-1 left-1">
+                      <Select 
+                        value={ss.timeframe} 
+                        onValueChange={(value) => {
+                          setScreenshots(prev => prev.map((s, i) => 
+                            i === index ? { ...s, timeframe: value } : s
+                          ));
+                        }}
+                      >
+                        <SelectTrigger className="h-6 w-16 text-[10px] bg-background/90 backdrop-blur-sm border-border">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIMEFRAME_OPTIONS.map(tf => (
+                            <SelectItem key={tf.value} value={tf.value} className="text-xs">
+                              {tf.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeScreenshot(index)}
-                      className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:scale-110 transition-transform"
+                      className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:scale-110 transition-transform opacity-0 group-hover:opacity-100"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -699,6 +742,26 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
                 ))}
               </div>
             )}
+            
+            {/* Timeframe selector for new uploads */}
+            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-sm text-muted-foreground">טיימפריים לתמונה הבאה:</span>
+              </div>
+              <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+                <SelectTrigger className="w-32 h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMEFRAME_OPTIONS.map(tf => (
+                    <SelectItem key={tf.value} value={tf.value}>
+                      {tf.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             
             <div
               onClick={() => fileInputRef.current?.click()}
