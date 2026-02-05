@@ -430,29 +430,45 @@ const MentorDashboard = () => {
     <DashboardLayout>
       <div className="space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3 md:gap-4">
-          <div className="p-2.5 md:p-3 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
-            <GraduationCap className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">לוח מנטור</h1>
-            <p className="text-muted-foreground text-xs md:text-sm">
-              {myStudents.length} תלמידים פעילים • {pendingRequests.length} בקשות ממתינות
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 md:p-4 rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-lg shadow-primary/25">
+              <GraduationCap className="h-7 w-7 md:h-8 md:w-8 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">לוח מנטור</h1>
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                  <span className="text-sm text-muted-foreground">{myStudents.length} תלמידים</span>
+                </div>
+                {pendingRequests.length > 0 && (
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10">
+                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="text-sm text-amber-600 font-medium">{pendingRequests.length} ממתינות</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
         {myStudents.length === 0 && pendingRequests.length === 0 ? (
-          <Card className="bg-card border-border p-8 md:p-12 text-center">
-            <div className="p-4 rounded-full bg-muted w-fit mx-auto mb-4">
-              <Users className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
+          <Card className="bg-gradient-to-br from-card to-muted/30 border-border overflow-hidden">
+            <div className="p-8 md:p-16 text-center relative">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 to-transparent" />
+              <div className="relative">
+                <div className="p-5 rounded-3xl bg-gradient-to-br from-muted to-muted/50 w-fit mx-auto mb-6 shadow-inner">
+                  <Users className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-foreground mb-3">
+                  אין לך תלמידים עדיין
+                </h3>
+                <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto leading-relaxed">
+                  תלמידים יכולים להוסיף אותך כמנטור דרך עמוד ההגדרות שלהם באמצעות שם המשתמש שלך
+                </p>
+              </div>
             </div>
-            <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">
-              אין לך תלמידים עדיין
-            </h3>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              תלמידים יכולים להוסיף אותך כמנטור דרך עמוד ההגדרות שלהם באמצעות שם המשתמש שלך
-            </p>
           </Card>
         ) : (
           <div className={`grid gap-4 md:gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-12'}`}>
