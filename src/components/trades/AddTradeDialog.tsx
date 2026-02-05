@@ -35,7 +35,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const [pnlSign, setPnlSign] = useState<"positive" | "negative">("positive");
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [screenshots, setScreenshots] = useState<{ url: string; preview: string }[]>([]);
+  const [screenshots, setScreenshots] = useState<{ url: string; preview: string; timeframe: string }[]>([]);
+  const [selectedTimeframe, setSelectedTimeframe] = useState("15m");
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
   const [selectedConfirmations, setSelectedConfirmations] = useState<string[]>([]);
   const [riskType, setRiskType] = useState<"dollars" | "percent">("dollars");
@@ -199,7 +200,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           data: { publicUrl },
         } = supabase.storage.from("trade-screenshots").getPublicUrl(fileName);
 
-        setScreenshots((prev) => [...prev, { url: publicUrl, preview }]);
+        setScreenshots((prev) => [...prev, { url: publicUrl, preview, timeframe: selectedTimeframe }]);
       }
 
       toast({
@@ -317,6 +318,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             trade_id: tradeData.id,
             screenshot_url: ss.url,
             position: index,
+            timeframe: ss.timeframe,
           }));
 
           const { error: ssError } = await supabase.from("trade_screenshots").insert(screenshotsToInsert);
@@ -765,7 +767,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           )}
 
           {/* Screenshot Upload */}
-          <div className="space-y-2 animate-fade-in">
+          <div className="space-y-3 animate-fade-in">
             <Label className="text-muted-foreground text-sm">צילומי מסך של העסקה</Label>
             <input
               ref={fileInputRef}
@@ -776,15 +778,40 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
               className="hidden"
             />
 
+            {/* Timeframe selector */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-sm text-muted-foreground">בחר טיימפריים לתמונה הבאה:</span>
+              <div className="flex gap-1 flex-wrap">
+                {["1m", "5m", "15m", "30m", "1h", "4h", "1d"].map((tf) => (
+                  <Button
+                    key={tf}
+                    type="button"
+                    variant={selectedTimeframe === tf ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedTimeframe(tf)}
+                    className={cn(
+                      "h-7 px-2 text-xs transition-all",
+                      selectedTimeframe === tf && "scale-105"
+                    )}
+                  >
+                    {tf}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {screenshots.length > 0 && (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-3">
                 {screenshots.map((ss, index) => (
-                  <div key={index} className="relative border border-border rounded-lg overflow-hidden aspect-video">
+                  <div key={index} className="relative border border-border rounded-lg overflow-hidden aspect-video group">
                     <img src={ss.preview} alt={`צילום מסך ${index + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-1 left-1 px-2 py-0.5 bg-primary/90 text-primary-foreground text-xs rounded font-medium">
+                      {ss.timeframe}
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeScreenshot(index)}
-                      className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:scale-110 transition-transform"
+                      className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:scale-110 transition-transform opacity-0 group-hover:opacity-100"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -803,7 +830,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                 <>
                   <Upload className="h-8 w-8 mb-2 group-hover:scale-110 transition-transform" />
                   <p className="text-sm">{screenshots.length > 0 ? "הוסף עוד תמונות" : "לחץ להעלאת צילומי מסך"}</p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">ניתן לבחור מספר תמונות</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">
+                    {selectedTimeframe && `יועלה עם טיימפריים: ${selectedTimeframe}`}
+                  </p>
                 </>
               )}
             </div>

@@ -773,6 +773,7 @@ export type Database = {
           id: string
           position: number
           screenshot_url: string
+          timeframe: string | null
           trade_id: string
         }
         Insert: {
@@ -780,6 +781,7 @@ export type Database = {
           id?: string
           position?: number
           screenshot_url: string
+          timeframe?: string | null
           trade_id: string
         }
         Update: {
@@ -787,6 +789,7 @@ export type Database = {
           id?: string
           position?: number
           screenshot_url?: string
+          timeframe?: string | null
           trade_id?: string
         }
         Relationships: [
