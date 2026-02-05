@@ -7,7 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Star, TrendingUp, TrendingDown, Calendar, Target, 
   Edit, CheckCircle2, ChevronLeft, ChevronRight, Image as ImageIcon,
-  ZoomIn, ZoomOut, RotateCw, Maximize2, X, Minus, Plus, Move
+  ZoomIn, ZoomOut, RotateCw, Maximize2, X, Minus, Plus, Move, Clock,
+  Download, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Trade } from "@/hooks/useTrades";
@@ -106,7 +107,17 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
       ? [{ id: 'legacy', screenshot_url: trade.screenshot_url, position: 0, timeframe: '15m' }]
       : [];
 
-  // Get unique timeframes
+  // Get unique timeframes with proper labels
+  const TIMEFRAME_LABELS: Record<string, string> = {
+    "1m": "1 דקה",
+    "5m": "5 דקות",
+    "15m": "15 דקות",
+    "30m": "30 דקות",
+    "1h": "שעה",
+    "4h": "4 שעות",
+    "1d": "יום",
+  };
+  
   const availableTimeframes = [...new Set(allScreenshots.map(s => s.timeframe || '15m'))];
   
   // Filter screenshots by selected timeframe
@@ -321,39 +332,63 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
           <div className="flex-1 flex flex-col bg-background/50">
             {hasScreenshots ? (
               <>
-                {/* Timeframe Selector */}
-                {hasMultipleTimeframes && (
-                  <div className="p-3 border-b border-border bg-card/50 flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground">טיימפריים:</span>
-                    <div className="flex gap-1 flex-wrap">
-                      <Button
-                        variant={selectedTimeframe === null ? "default" : "outline"}
-                        size="sm"
+                {/* Enhanced Timeframe Selector */}
+                <div className="p-4 border-b border-border bg-gradient-to-b from-card to-card/80">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span className="text-sm font-medium">טיימפריים</span>
+                    </div>
+                    <div className="flex gap-1.5 flex-wrap flex-1">
+                      <button
                         onClick={() => handleTimeframeChange(null)}
-                        className="h-7 px-3 text-xs"
+                        className={cn(
+                          "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                          selectedTimeframe === null 
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-105" 
+                            : "bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground"
+                        )}
                       >
-                        הכל ({allScreenshots.length})
-                      </Button>
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-3.5 w-3.5" />
+                          <span>הכל</span>
+                          <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-background/50">
+                            {allScreenshots.length}
+                          </Badge>
+                        </div>
+                      </button>
                       {availableTimeframes.map((tf) => {
                         const count = allScreenshots.filter(s => (s.timeframe || '15m') === tf).length;
+                        const isSelected = selectedTimeframe === tf;
                         return (
-                          <Button
+                          <button
                             key={tf}
-                            variant={selectedTimeframe === tf ? "default" : "outline"}
-                            size="sm"
                             onClick={() => handleTimeframeChange(tf)}
                             className={cn(
-                              "h-7 px-3 text-xs transition-all",
-                              selectedTimeframe === tf && "scale-105"
+                              "px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                              isSelected 
+                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-105" 
+                                : "bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground"
                             )}
                           >
-                            {tf} ({count})
-                          </Button>
+                            <div className="flex items-center gap-2">
+                              <span>{TIMEFRAME_LABELS[tf] || tf}</span>
+                              <Badge 
+                                variant="secondary" 
+                                className={cn(
+                                  "h-5 px-1.5 text-[10px]",
+                                  isSelected ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background/50"
+                                )}
+                              >
+                                {count}
+                              </Badge>
+                            </div>
+                          </button>
                         );
                       })}
                     </div>
                   </div>
-                )}
+                </div>
 
                 {/* Image Viewer */}
                 <div 
@@ -385,8 +420,12 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
                   
                   {/* Current timeframe badge */}
                   {filteredScreenshots[currentImageIndex]?.timeframe && (
-                    <div className="absolute top-4 left-4 px-3 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg shadow-lg animate-fade-in">
-                      {filteredScreenshots[currentImageIndex].timeframe}
+                    <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-2 bg-card/95 backdrop-blur-md text-foreground text-sm font-medium rounded-xl shadow-xl border border-border animate-fade-in">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span>{TIMEFRAME_LABELS[filteredScreenshots[currentImageIndex].timeframe!] || filteredScreenshots[currentImageIndex].timeframe}</span>
+                      <span className="text-muted-foreground text-xs">
+                        ({currentImageIndex + 1}/{filteredScreenshots.length})
+                      </span>
                     </div>
                   )}
                   
@@ -409,20 +448,20 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
                   )}
                 </div>
 
-                {/* Zoom Controls Bar */}
-                <div className="p-4 border-t border-border bg-card/80 backdrop-blur-sm">
+                {/* Enhanced Zoom Controls Bar */}
+                <div className="p-4 border-t border-border bg-gradient-to-t from-card to-card/80 backdrop-blur-sm">
                   <div className="flex items-center justify-between gap-6">
-                    {/* Thumbnails */}
+                    {/* Thumbnails with timeframe labels */}
                     {filteredScreenshots.length > 1 && (
-                      <div className="flex gap-2 overflow-x-auto pb-1">
+                      <div className="flex gap-2 overflow-x-auto pb-1 max-w-[40%]">
                         {filteredScreenshots.map((ss, index) => (
                           <button
                             key={ss.id}
                             onClick={() => { setCurrentImageIndex(index); resetZoom(); }}
                             className={cn(
-                              "flex-shrink-0 w-14 h-10 rounded-lg overflow-hidden border-2 transition-all hover:scale-105 relative",
+                              "flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all hover:scale-105 relative group",
                               currentImageIndex === index 
-                                ? "border-primary ring-2 ring-primary/30" 
+                                ? "border-primary ring-2 ring-primary/30 shadow-lg shadow-primary/20" 
                                 : "border-border hover:border-primary/50"
                             )}
                           >
@@ -431,10 +470,19 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
                               alt={`Thumbnail ${index + 1}`}
                               className="w-full h-full object-cover"
                             />
-                            {ss.timeframe && (
-                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center py-0.5">
-                                {ss.timeframe}
-                              </div>
+                            {/* Hover overlay with timeframe */}
+                            <div className={cn(
+                              "absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-center pb-1 transition-opacity",
+                              currentImageIndex === index ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            )}>
+                              <span className="text-white text-[10px] font-medium flex items-center gap-1">
+                                <Clock className="h-2.5 w-2.5" />
+                                {TIMEFRAME_LABELS[ss.timeframe || '15m'] || ss.timeframe || '15m'}
+                              </span>
+                            </div>
+                            {/* Selected indicator */}
+                            {currentImageIndex === index && (
+                              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary animate-pulse" />
                             )}
                           </button>
                         ))}
@@ -480,7 +528,7 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-1">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -499,6 +547,23 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
                       >
                         <Maximize2 className="h-4 w-4" />
                       </Button>
+                      {filteredScreenshots[currentImageIndex] && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = filteredScreenshots[currentImageIndex].screenshot_url;
+                            link.download = `trade-${trade.symbol}-${filteredScreenshots[currentImageIndex].timeframe || '15m'}.png`;
+                            link.target = '_blank';
+                            link.click();
+                          }}
+                          className="h-8 w-8"
+                          title="הורד"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
 
