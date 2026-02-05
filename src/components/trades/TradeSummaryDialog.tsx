@@ -17,6 +17,7 @@ interface TradeScreenshot {
   id: string;
   screenshot_url: string;
   position: number;
+  timeframe?: string;
 }
 
 interface TradeSummaryDialogProps {
@@ -30,6 +31,7 @@ interface TradeSummaryDialogProps {
 
 export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirmations = [], screenshots = [] }: TradeSummaryDialogProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -89,6 +91,7 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
   useEffect(() => {
     if (!open) {
       setCurrentImageIndex(0);
+      setSelectedTimeframe(null);
       resetZoom();
     }
   }, [open, resetZoom]);
@@ -100,19 +103,34 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
   const allScreenshots = screenshots.length > 0 
     ? screenshots.sort((a, b) => a.position - b.position)
     : trade.screenshot_url 
-      ? [{ id: 'legacy', screenshot_url: trade.screenshot_url, position: 0 }]
+      ? [{ id: 'legacy', screenshot_url: trade.screenshot_url, position: 0, timeframe: '15m' }]
       : [];
 
-  const hasMultipleImages = allScreenshots.length > 1;
-  const hasScreenshots = allScreenshots.length > 0;
+  // Get unique timeframes
+  const availableTimeframes = [...new Set(allScreenshots.map(s => s.timeframe || '15m'))];
+  
+  // Filter screenshots by selected timeframe
+  const filteredScreenshots = selectedTimeframe 
+    ? allScreenshots.filter(s => (s.timeframe || '15m') === selectedTimeframe)
+    : allScreenshots;
+
+  const hasMultipleImages = filteredScreenshots.length > 1;
+  const hasScreenshots = filteredScreenshots.length > 0;
+  const hasMultipleTimeframes = availableTimeframes.length > 1;
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % allScreenshots.length);
+    setCurrentImageIndex((prev) => (prev + 1) % filteredScreenshots.length);
     resetZoom();
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + allScreenshots.length) % allScreenshots.length);
+    setCurrentImageIndex((prev) => (prev - 1 + filteredScreenshots.length) % filteredScreenshots.length);
+    resetZoom();
+  };
+
+  const handleTimeframeChange = (tf: string | null) => {
+    setSelectedTimeframe(tf);
+    setCurrentImageIndex(0);
     resetZoom();
   };
 
@@ -303,6 +321,40 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
           <div className="flex-1 flex flex-col bg-background/50">
             {hasScreenshots ? (
               <>
+                {/* Timeframe Selector */}
+                {hasMultipleTimeframes && (
+                  <div className="p-3 border-b border-border bg-card/50 flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground">טיימפריים:</span>
+                    <div className="flex gap-1 flex-wrap">
+                      <Button
+                        variant={selectedTimeframe === null ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleTimeframeChange(null)}
+                        className="h-7 px-3 text-xs"
+                      >
+                        הכל ({allScreenshots.length})
+                      </Button>
+                      {availableTimeframes.map((tf) => {
+                        const count = allScreenshots.filter(s => (s.timeframe || '15m') === tf).length;
+                        return (
+                          <Button
+                            key={tf}
+                            variant={selectedTimeframe === tf ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleTimeframeChange(tf)}
+                            className={cn(
+                              "h-7 px-3 text-xs transition-all",
+                              selectedTimeframe === tf && "scale-105"
+                            )}
+                          >
+                            {tf} ({count})
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Image Viewer */}
                 <div 
                   ref={imageContainerRef}
@@ -318,16 +370,25 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
                   onWheel={handleWheel}
                   onDoubleClick={handleDoubleClick}
                 >
-                  <img
-                    src={allScreenshots[currentImageIndex].screenshot_url}
-                    alt={`Trade screenshot ${currentImageIndex + 1}`}
-                    className="max-w-full max-h-full object-contain select-none pointer-events-none animate-fade-in"
-                    style={{
-                      transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
-                      transition: isDragging ? "none" : "transform 0.2s ease-out",
-                    }}
-                    draggable={false}
-                  />
+                  {filteredScreenshots[currentImageIndex] && (
+                    <img
+                      src={filteredScreenshots[currentImageIndex].screenshot_url}
+                      alt={`Trade screenshot ${currentImageIndex + 1}`}
+                      className="max-w-full max-h-full object-contain select-none pointer-events-none animate-fade-in"
+                      style={{
+                        transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
+                        transition: isDragging ? "none" : "transform 0.2s ease-out",
+                      }}
+                      draggable={false}
+                    />
+                  )}
+                  
+                  {/* Current timeframe badge */}
+                  {filteredScreenshots[currentImageIndex]?.timeframe && (
+                    <div className="absolute top-4 left-4 px-3 py-1.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg shadow-lg animate-fade-in">
+                      {filteredScreenshots[currentImageIndex].timeframe}
+                    </div>
+                  )}
                   
                   {/* Navigation arrows for multiple images */}
                   {hasMultipleImages && (
@@ -352,14 +413,14 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
                 <div className="p-4 border-t border-border bg-card/80 backdrop-blur-sm">
                   <div className="flex items-center justify-between gap-6">
                     {/* Thumbnails */}
-                    {hasMultipleImages && (
+                    {filteredScreenshots.length > 1 && (
                       <div className="flex gap-2 overflow-x-auto pb-1">
-                        {allScreenshots.map((ss, index) => (
+                        {filteredScreenshots.map((ss, index) => (
                           <button
                             key={ss.id}
                             onClick={() => { setCurrentImageIndex(index); resetZoom(); }}
                             className={cn(
-                              "flex-shrink-0 w-14 h-10 rounded-lg overflow-hidden border-2 transition-all hover:scale-105",
+                              "flex-shrink-0 w-14 h-10 rounded-lg overflow-hidden border-2 transition-all hover:scale-105 relative",
                               currentImageIndex === index 
                                 ? "border-primary ring-2 ring-primary/30" 
                                 : "border-border hover:border-primary/50"
@@ -370,6 +431,11 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
                               alt={`Thumbnail ${index + 1}`}
                               className="w-full h-full object-cover"
                             />
+                            {ss.timeframe && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center py-0.5">
+                                {ss.timeframe}
+                              </div>
+                            )}
                           </button>
                         ))}
                       </div>
