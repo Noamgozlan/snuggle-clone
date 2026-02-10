@@ -7,6 +7,7 @@ import { ShareStatsDialog } from "@/components/dashboard/ShareStatsDialog";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { GoalsTracker } from "@/components/dashboard/GoalsTracker";
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview";
+import { PerformanceGauges } from "@/components/dashboard/PerformanceGauges";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
 import { useTrades } from "@/hooks/useTrades";
@@ -258,6 +259,22 @@ const Dashboard = () => {
     }).filter(d => d.count > 0);
   }, [trades]);
 
+  // Day win/loss stats for gauges
+  const dayStats = useMemo(() => {
+    const dayPnl: Record<string, number> = {};
+    trades.filter(t => t.entry_date && t.pnl !== null).forEach(trade => {
+      const dateKey = format(new Date(trade.entry_date!), "yyyy-MM-dd");
+      dayPnl[dateKey] = (dayPnl[dateKey] || 0) + (trade.pnl || 0);
+    });
+    const days = Object.values(dayPnl);
+    return {
+      winningDays: days.filter(p => p > 0).length,
+      losingDays: days.filter(p => p < 0).length,
+      breakevenDays: days.filter(p => p === 0).length,
+      dayWinPercent: days.length > 0 ? (days.filter(p => p > 0).length / days.length) * 100 : 0,
+    };
+  }, [trades]);
+
   const percentageDisplay = portfolioBalance > 0 ? (stats.totalPnl / portfolioBalance) * 100 : 0;
   const balanceWithPnl = portfolioBalance + stats.totalPnl;
 
@@ -441,6 +458,21 @@ const Dashboard = () => {
             </div>
           </Card>
         </div>
+
+        {/* Performance Gauges */}
+        <PerformanceGauges
+          winRate={stats.winRate}
+          profitFactor={stats.profitFactor}
+          dayWinPercent={dayStats.dayWinPercent}
+          winningTrades={stats.winningTrades}
+          losingTrades={stats.losingTrades}
+          breakevenTrades={stats.breakevenTrades}
+          winningDays={dayStats.winningDays}
+          losingDays={dayStats.losingDays}
+          breakevenDays={dayStats.breakevenDays}
+          avgWin={stats.avgWin}
+          avgLoss={stats.avgLoss}
+        />
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
