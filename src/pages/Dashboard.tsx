@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { getMentalStateInfo, MENTAL_STATES } from "@/components/trades/TradeTagsSection";
 import { TradingCalendar } from "@/components/dashboard/TradingCalendar";
 import { TradingScore } from "@/components/dashboard/TradingScore";
 import { ShareStatsDialog } from "@/components/dashboard/ShareStatsDialog";
@@ -27,7 +28,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area, Cell, PieChart, Pie } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth, getDay } from "date-fns";
 import { he } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
@@ -255,6 +256,45 @@ const Dashboard = () => {
 
   const percentageDisplay = portfolioBalance > 0 ? (stats.totalPnl / portfolioBalance) * 100 : 0;
   const balanceWithPnl = portfolioBalance + stats.totalPnl;
+
+  // Mental State distribution
+  const mentalStateData = useMemo(() => {
+    const counts: Record<string, { count: number; totalPnl: number; wins: number }> = {};
+    trades.forEach(t => {
+      const ms = (t as any).mental_state;
+      if (!ms) return;
+      if (!counts[ms]) counts[ms] = { count: 0, totalPnl: 0, wins: 0 };
+      counts[ms].count++;
+      counts[ms].totalPnl += t.pnl || 0;
+      if ((t.pnl || 0) > 0) counts[ms].wins++;
+    });
+    const colors = ['hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)', 'hsl(0, 84%, 60%)', 'hsl(217, 91%, 60%)', 'hsl(346, 77%, 40%)', 'hsl(174, 72%, 56%)', 'hsl(24, 95%, 53%)', 'hsl(48, 96%, 53%)', 'hsl(239, 84%, 67%)', 'hsl(271, 81%, 56%)'];
+    return Object.entries(counts).map(([key, val], i) => {
+      const info = getMentalStateInfo(key);
+      return {
+        name: info?.label || key,
+        value: val.count,
+        pnl: val.totalPnl,
+        winRate: val.count > 0 ? Math.round((val.wins / val.count) * 100) : 0,
+        fill: colors[i % colors.length],
+      };
+    }).sort((a, b) => b.value - a.value);
+  }, [trades]);
+
+  // Top Mistakes
+  const mistakesData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    trades.forEach(t => {
+      const mistakes = (t as any).mistakes as string[] | null;
+      if (!mistakes) return;
+      mistakes.forEach(m => { counts[m] = (counts[m] || 0) + 1; });
+    });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+  }, [trades]);
+
   const totalDisplay = displayMode === "money" ? stats.totalPnl : displayMode === "points" ? stats.totalPoints : displayMode === "percentage" ? percentageDisplay : balanceWithPnl;
   const avgDisplay = displayMode === "money" || displayMode === "balance" ? stats.avgPnl : displayMode === "points" ? stats.avgPoints : portfolioBalance > 0 ? (stats.avgPnl / portfolioBalance) * 100 : 0;
 
@@ -645,6 +685,88 @@ const Dashboard = () => {
             )}
           </Card>
         </div>
+
+        {/* Tags Analytics */}
+        {(mentalStateData.length > 0 || mistakesData.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Mental State Distribution */}
+            {mentalStateData.length > 0 && (
+              <Card className="bg-card border-border p-4 md:p-5">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
+                  🧠 Mental State
+                </h3>
+                <div className="flex items-center gap-4">
+                  <div className="h-44 w-44 flex-shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={mentalStateData}
+                          cx="50%" cy="50%"
+                          innerRadius={35} outerRadius={70}
+                          paddingAngle={3}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {mentalStateData.map((entry, index) => (
+                            <Cell key={index} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (active && payload?.[0]) {
+                              const d = payload[0].payload;
+                              return (
+                                <div className="bg-card border border-border rounded-lg p-2.5 shadow-lg text-xs">
+                                  <p className="font-semibold text-sm">{d.name}</p>
+                                  <p className="text-muted-foreground">{d.value} עסקאות · {d.winRate}% הצלחה</p>
+                                  <p className={d.pnl >= 0 ? 'text-success' : 'text-destructive'}>${d.pnl.toFixed(0)}</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    {mentalStateData.slice(0, 5).map((item, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.fill }} />
+                          <span className="text-foreground">{item.name}</span>
+                        </div>
+                        <span className="text-muted-foreground">{item.winRate}% win</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Top Mistakes */}
+            {mistakesData.length > 0 && (
+              <Card className="bg-card border-border p-4 md:p-5">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
+                  ⚠️ Top Mistakes
+                </h3>
+                <div className="h-48 md:h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={mistakesData} layout="vertical" margin={{ top: 5, right: 5, bottom: 5, left: 80 }}>
+                      <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                      <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={75} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                        formatter={(value: number) => [`${value} פעמים`, '']}
+                      />
+                      <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="hsl(24, 95%, 53%)" opacity={0.75} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Monthly Breakdown */}
         <Card className="bg-card border-border p-4 md:p-5">

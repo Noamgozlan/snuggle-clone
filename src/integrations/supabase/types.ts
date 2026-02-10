@@ -815,6 +815,8 @@ export type Database = {
           external_trade_id: string | null
           id: string
           is_closed: boolean
+          mental_state: string | null
+          mistakes: string[] | null
           notes: string | null
           pnl: number | null
           pnl_points: number | null
@@ -825,6 +827,7 @@ export type Database = {
           rr: number | null
           screenshot_url: string | null
           session: string | null
+          setup_type: string | null
           strategy: string | null
           symbol: string
           trade_type: string
@@ -843,6 +846,8 @@ export type Database = {
           external_trade_id?: string | null
           id?: string
           is_closed?: boolean
+          mental_state?: string | null
+          mistakes?: string[] | null
           notes?: string | null
           pnl?: number | null
           pnl_points?: number | null
@@ -853,6 +858,7 @@ export type Database = {
           rr?: number | null
           screenshot_url?: string | null
           session?: string | null
+          setup_type?: string | null
           strategy?: string | null
           symbol: string
           trade_type: string
@@ -871,6 +877,8 @@ export type Database = {
           external_trade_id?: string | null
           id?: string
           is_closed?: boolean
+          mental_state?: string | null
+          mistakes?: string[] | null
           notes?: string | null
           pnl?: number | null
           pnl_points?: number | null
@@ -881,6 +889,7 @@ export type Database = {
           rr?: number | null
           screenshot_url?: string | null
           session?: string | null
+          setup_type?: string | null
           strategy?: string | null
           symbol?: string
           trade_type?: string

@@ -27,6 +27,9 @@ export interface Trade {
   is_closed: boolean;
   created_at: string;
   updated_at: string;
+  mental_state: string | null;
+  mistakes: string[] | null;
+  setup_type: string | null;
 }
 
 export interface TradeStats {
