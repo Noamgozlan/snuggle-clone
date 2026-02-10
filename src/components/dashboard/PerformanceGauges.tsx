@@ -100,33 +100,34 @@ const SemiCircleGauge = ({ label, value, tooltip, wins, breakeven, losses, isRat
 /** Compact inline semi-circle gauge for stat cards */
 export const MiniGauge = ({ wins, breakeven, losses }: { wins: number; breakeven: number; losses: number }) => {
   const total = wins + breakeven + losses;
-  const winPct = total > 0 ? wins / total : 0;
+  // When only wins (no losses/BE), show full green arc
+  const winPct = total > 0 ? wins / total : 1;
   const bePct = total > 0 ? breakeven / total : 0;
+  const lossPct = total > 0 ? losses / total : 0;
 
-  const r = 20;
-  const sw = 5;
-  const cx = 26;
-  const cy = 24;
-  const half = Math.PI * r;
+  const r = 28;
+  const sw = 7;
+  const cx = 36;
+  const cy = 34;
 
   const winEnd = 180 + winPct * 180;
   const beEnd = winEnd + bePct * 180;
 
   return (
-    <svg viewBox="0 0 52 28" className="w-12 h-7 flex-shrink-0">
-      {/* bg */}
-      <path d={describeArc(cx, cy, r, 180, 360)} fill="none" stroke="hsl(0 84% 60% / 0.35)" strokeWidth={sw} />
-      {/* breakeven */}
-      {bePct > 0 && (
-        <path d={describeArc(cx, cy, r, winEnd, beEnd)} fill="none" stroke="hsl(45 93% 47%)" strokeWidth={sw} />
-      )}
-      {/* wins */}
+    <svg viewBox="0 0 72 40" className="w-[72px] h-[40px] flex-shrink-0">
+      {/* Full background arc (light muted) */}
+      <path d={describeArc(cx, cy, r, 180, 360)} fill="none" stroke="hsl(var(--muted))" strokeWidth={sw} strokeLinecap="round" />
+      {/* Wins - always draw full arc if 100% */}
       {winPct > 0 && (
-        <path d={describeArc(cx, cy, r, 180, winEnd)} fill="none" stroke="hsl(142 71% 45%)" strokeWidth={sw} />
+        <path d={describeArc(cx, cy, r, 180, Math.min(winEnd, 359.99))} fill="none" stroke="hsl(142 71% 45%)" strokeWidth={sw} strokeLinecap="round" />
       )}
-      {/* losses fill remaining */}
-      {(winPct + bePct) < 1 && (
-        <path d={describeArc(cx, cy, r, beEnd, 360)} fill="none" stroke="hsl(0 84% 60%)" strokeWidth={sw} />
+      {/* Breakeven */}
+      {bePct > 0 && (
+        <path d={describeArc(cx, cy, r, winEnd, Math.min(beEnd, 359.99))} fill="none" stroke="hsl(45 93% 47%)" strokeWidth={sw} strokeLinecap="round" />
+      )}
+      {/* Losses */}
+      {lossPct > 0 && (
+        <path d={describeArc(cx, cy, r, beEnd, 359.99)} fill="none" stroke="hsl(0 84% 60%)" strokeWidth={sw} strokeLinecap="round" />
       )}
     </svg>
   );
