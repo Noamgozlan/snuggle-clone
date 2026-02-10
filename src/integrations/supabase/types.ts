@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_quotes: {
+        Row: {
+          author: string | null
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_chat_conversations: {
         Row: {
           created_at: string

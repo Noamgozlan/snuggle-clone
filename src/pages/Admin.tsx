@@ -8,7 +8,7 @@ import {
   Users, TrendingUp, MessageSquare, Calendar, Loader2, 
   Shield, Trash2, Eye, Search, UserPlus, Ban, 
   MoreHorizontal, RefreshCw, Download, AlertTriangle,
-  CheckCircle, XCircle, Crown, UserX
+  CheckCircle, XCircle, Crown, UserX, Quote, Save
 } from "lucide-react";
 import {
   Table,
@@ -22,6 +22,7 @@ import { format, subDays, startOfMonth, subMonths } from "date-fns";
 import { he } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -133,7 +134,11 @@ export default function Admin() {
   const [userForRole, setUserForRole] = useState<UserProfile | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [loadingAction, setLoadingAction] = useState(false);
-
+  const [quoteContent, setQuoteContent] = useState("");
+  const [quoteAuthor, setQuoteAuthor] = useState("");
+  const [quoteActive, setQuoteActive] = useState(false);
+  const [quoteId, setQuoteId] = useState<string | null>(null);
+  const [savingQuote, setSavingQuote] = useState(false);
   const fetchData = async () => {
     if (!user) return;
 
@@ -152,6 +157,21 @@ export default function Admin() {
     }
 
     setIsAdmin(true);
+
+    // Fetch current quote
+    const { data: quoteData } = await supabase
+      .from("admin_quotes" as any)
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (quoteData) {
+      setQuoteContent((quoteData as any).content || "");
+      setQuoteAuthor((quoteData as any).author || "");
+      setQuoteActive((quoteData as any).is_active ?? false);
+      setQuoteId((quoteData as any).id);
+    }
 
     // Fetch statistics
     const weekAgo = subDays(new Date(), 7).toISOString();
@@ -358,6 +378,26 @@ export default function Admin() {
     toast.success("הקובץ הורד בהצלחה");
   };
 
+  const handleSaveQuote = async () => {
+    setSavingQuote(true);
+    if (quoteId) {
+      await supabase.from("admin_quotes" as any).update({
+        content: quoteContent.trim(),
+        author: quoteAuthor.trim() || null,
+        is_active: quoteActive,
+      } as any).eq("id", quoteId);
+    } else {
+      const { data } = await supabase.from("admin_quotes" as any).insert({
+        content: quoteContent.trim(),
+        author: quoteAuthor.trim() || null,
+        is_active: quoteActive,
+      } as any).select().single();
+      if (data) setQuoteId((data as any).id);
+    }
+    setSavingQuote(false);
+    toast.success("הציטוט עודכן בהצלחה");
+  };
+
   const filteredUsers = users.filter(u => {
     const query = searchQuery.toLowerCase();
     return (
@@ -470,6 +510,51 @@ export default function Admin() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Quote Management */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Quote className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">ציטוט יומי</CardTitle>
+            </div>
+            <CardDescription>הגדר ציטוט שיופיע בראש הדשבורד לכל המשתמשים</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-foreground">הפעל ציטוט</label>
+              <input
+                type="checkbox"
+                checked={quoteActive}
+                onChange={(e) => setQuoteActive(e.target.checked)}
+                className="h-4 w-4 accent-primary"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">תוכן הציטוט</label>
+              <Textarea
+                value={quoteContent}
+                onChange={(e) => setQuoteContent(e.target.value)}
+                placeholder="הכנס ציטוט מעורר השראה..."
+                maxLength={500}
+                className="min-h-[80px]"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">מחבר (אופציונלי)</label>
+              <Input
+                value={quoteAuthor}
+                onChange={(e) => setQuoteAuthor(e.target.value)}
+                placeholder='לדוגמה: וורן באפט'
+                maxLength={100}
+              />
+            </div>
+            <Button onClick={handleSaveQuote} disabled={savingQuote} className="gap-2">
+              {savingQuote ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              שמור ציטוט
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Tabs */}
         <Tabs defaultValue="users" className="w-full">

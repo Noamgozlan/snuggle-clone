@@ -4,6 +4,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { PortfolioSelector } from "@/components/portfolio/PortfolioSelector";
 import { ConsistencyCalculator } from "@/components/portfolio/ConsistencyCalculator";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 interface DashboardHeaderProps {
@@ -25,6 +26,23 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
   const { theme, toggleTheme } = useTheme();
   const { isInstalled, promptInstall } = usePWAInstall();
   const [showInstallDialog, setShowInstallDialog] = useState(false);
+  const [quote, setQuote] = useState<{ content: string; author: string | null } | null>(null);
+
+  useEffect(() => {
+    const fetchQuote = async () => {
+      const { data } = await supabase
+        .from("admin_quotes" as any)
+        .select("content, author")
+        .eq("is_active", true)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data && (data as any).content) {
+        setQuote({ content: (data as any).content, author: (data as any).author });
+      }
+    };
+    fetchQuote();
+  }, []);
 
   const handleInstallClick = () => {
     setShowInstallDialog(true);
@@ -67,7 +85,15 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
             )}
           </div>
 
-          {title && <h1 className="text-base md:text-xl font-semibold text-foreground hidden md:block">{title}</h1>}
+          {/* Quote or title */}
+          {quote ? (
+            <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground italic max-w-md truncate">
+              <span>"{quote.content}"</span>
+              {quote.author && <span className="text-xs not-italic">— {quote.author}</span>}
+            </div>
+          ) : (
+            title && <h1 className="text-base md:text-xl font-semibold text-foreground hidden md:block">{title}</h1>
+          )}
 
           <div className="flex items-center gap-2 md:gap-3">
             <div className="hidden sm:flex items-center gap-2">
