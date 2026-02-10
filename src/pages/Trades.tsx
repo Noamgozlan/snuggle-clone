@@ -41,6 +41,8 @@ import {
   Image,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getMentalStateInfo } from "@/components/trades/TradeTagsSection";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -504,7 +506,8 @@ const Trades = () => {
                   <TableHead className="text-right text-muted-foreground">סימול</TableHead>
                   <TableHead className="text-right text-muted-foreground">סוג</TableHead>
                   <TableHead className="text-right text-muted-foreground">אסטרטגיה</TableHead>
-                  <TableHead className="text-right text-muted-foreground">אישורים</TableHead>
+                   <TableHead className="text-right text-muted-foreground">אישורים</TableHead>
+                  <TableHead className="text-right text-muted-foreground">תגיות</TableHead>
                   <TableHead className="text-right text-muted-foreground">RR</TableHead>
                   <TableHead className="text-right text-muted-foreground">רווח/הפסד</TableHead>
                   <TableHead className="text-right text-muted-foreground">דירוג</TableHead>
@@ -582,6 +585,34 @@ const Trades = () => {
                           >
                             <Plus className="h-3 w-3" />
                           </button>
+                        </div>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {(trade as any).mental_state && (() => {
+                            const info = getMentalStateInfo((trade as any).mental_state);
+                            if (!info) return null;
+                            const Icon = info.icon;
+                            return (
+                              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${info.color}`}>
+                                <Icon className="h-3 w-3" />
+                                {info.label}
+                              </span>
+                            );
+                          })()}
+                          {(trade as any).setup_type && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-400 border border-violet-500/30">
+                              {(trade as any).setup_type}
+                            </span>
+                          )}
+                          {((trade as any).mistakes || []).slice(0, 2).map((m: string, i: number) => (
+                            <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-500/10 text-orange-400 border border-orange-500/30">
+                              {m}
+                            </span>
+                          ))}
+                          {((trade as any).mistakes || []).length > 2 && (
+                            <span className="text-[10px] text-muted-foreground">+{((trade as any).mistakes || []).length - 2}</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">{trade.rr ? trade.rr.toFixed(2) : "—"}</TableCell>

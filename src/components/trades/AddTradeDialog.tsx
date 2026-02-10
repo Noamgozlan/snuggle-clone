@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Plus, Minus, Star, Upload, Loader2, X, CalendarIcon, Layers, Sparkles } from "lucide-react";
+import { TradeTagsSection } from "@/components/trades/TradeTagsSection";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   }, [open, activePortfolio]);
 
   const [session, setSession] = useState<string>("");
+  const [mentalState, setMentalState] = useState("");
+  const [tradeMistakes, setTradeMistakes] = useState<string[]>([]);
+  const [setupType, setSetupType] = useState("");
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
@@ -106,6 +110,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setSelectedPortfolioIds(activePortfolio ? [activePortfolio.id] : []);
     setIsBreakeven(false);
     setSession("");
+    setMentalState("");
+    setTradeMistakes([]);
+    setSetupType("");
   };
 
   const handleStrategyChange = (strategyId: string) => {
@@ -306,6 +313,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                 : null,
             is_closed: true,
             screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
+            mental_state: mentalState || null,
+            mistakes: tradeMistakes.length > 0 ? tradeMistakes : null,
+            setup_type: setupType || null,
           } as any)
           .select("id")
           .single();
@@ -741,6 +751,16 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
               </div>
             </div>
           </div>
+
+          {/* Tags Section */}
+          <TradeTagsSection
+            mentalState={mentalState}
+            onMentalStateChange={setMentalState}
+            mistakes={tradeMistakes}
+            onMistakesChange={setTradeMistakes}
+            setupType={setupType}
+            onSetupTypeChange={setSetupType}
+          />
 
           {/* Confirmations */}
           {selectedStrategy && selectedStrategy.confirmations.length > 0 && (

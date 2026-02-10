@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Minus, Star, Upload, Loader2, X, Layers, Clock } from "lucide-react";
+import { TradeTagsSection } from "@/components/trades/TradeTagsSection";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +47,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   const { portfolios } = usePortfolio();
   const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
   const [session, setSession] = useState<string>("");
+  const [mentalState, setMentalState] = useState("");
+  const [tradeMistakes, setTradeMistakes] = useState<string[]>([]);
+  const [setupType, setSetupType] = useState("");
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
@@ -112,6 +116,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       setPnlSign(pnl >= 0 ? "positive" : "negative");
       setSelectedPortfolioIds(trade.portfolio_id ? [trade.portfolio_id] : []);
       setSession((trade as any).session || "");
+      setMentalState((trade as any).mental_state || "");
+      setTradeMistakes((trade as any).mistakes || []);
+      setSetupType((trade as any).setup_type || "");
       
       // Load existing screenshots
       if (trade.screenshot_url) {
@@ -262,6 +269,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           notes: combinedNotes,
           is_closed: true,
           screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
+          mental_state: mentalState || null,
+          mistakes: tradeMistakes.length > 0 ? tradeMistakes : null,
+          setup_type: setupType || null,
         } as any)
         .eq("id", trade.id);
 
@@ -624,6 +634,16 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
               </div>
             </div>
           </div>
+
+          {/* Tags Section */}
+          <TradeTagsSection
+            mentalState={mentalState}
+            onMentalStateChange={setMentalState}
+            mistakes={tradeMistakes}
+            onMistakesChange={setTradeMistakes}
+            setupType={setupType}
+            onSetupTypeChange={setSetupType}
+          />
 
           {/* Notes & Screenshot */}
           <div className="grid grid-cols-2 gap-4 animate-fade-in">

@@ -10,6 +10,7 @@ import {
   ZoomIn, ZoomOut, RotateCw, Maximize2, X, Minus, Plus, Move, Clock,
   Download, Sparkles
 } from "lucide-react";
+import { getMentalStateInfo } from "@/components/trades/TradeTagsSection";
 import { cn } from "@/lib/utils";
 import { Trade } from "@/hooks/useTrades";
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -305,6 +306,36 @@ export const TradeSummaryDialog = ({ trade, open, onOpenChange, onEdit, confirma
                       <Badge key={index} variant="secondary" className="bg-primary/20 text-primary">
                         {confirmation}
                       </Badge>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {/* Tags */}
+              {((trade as any).mental_state || (trade as any).setup_type || ((trade as any).mistakes || []).length > 0) && (
+                <Card className="p-4 bg-secondary/30 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">תגיות</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(trade as any).mental_state && (() => {
+                      const info = getMentalStateInfo((trade as any).mental_state);
+                      if (!info) return null;
+                      const Icon = info.icon;
+                      return (
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border ${info.color}`}>
+                          <Icon className="h-3.5 w-3.5" />
+                          {info.label}
+                        </span>
+                      );
+                    })()}
+                    {(trade as any).setup_type && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-violet-500/10 text-violet-400 border border-violet-500/30">
+                        {(trade as any).setup_type}
+                      </span>
+                    )}
+                    {((trade as any).mistakes || []).map((m: string, i: number) => (
+                      <span key={i} className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/30">
+                        {m}
+                      </span>
                     ))}
                   </div>
                 </Card>
