@@ -97,6 +97,41 @@ const SemiCircleGauge = ({ label, value, tooltip, wins, breakeven, losses, isRat
   );
 };
 
+/** Compact inline semi-circle gauge for stat cards */
+export const MiniGauge = ({ wins, breakeven, losses }: { wins: number; breakeven: number; losses: number }) => {
+  const total = wins + breakeven + losses;
+  const winPct = total > 0 ? wins / total : 0;
+  const bePct = total > 0 ? breakeven / total : 0;
+
+  const r = 20;
+  const sw = 5;
+  const cx = 26;
+  const cy = 24;
+  const half = Math.PI * r;
+
+  const winEnd = 180 + winPct * 180;
+  const beEnd = winEnd + bePct * 180;
+
+  return (
+    <svg viewBox="0 0 52 28" className="w-12 h-7 flex-shrink-0">
+      {/* bg */}
+      <path d={describeArc(cx, cy, r, 180, 360)} fill="none" stroke="hsl(0 84% 60% / 0.35)" strokeWidth={sw} />
+      {/* breakeven */}
+      {bePct > 0 && (
+        <path d={describeArc(cx, cy, r, winEnd, beEnd)} fill="none" stroke="hsl(45 93% 47%)" strokeWidth={sw} />
+      )}
+      {/* wins */}
+      {winPct > 0 && (
+        <path d={describeArc(cx, cy, r, 180, winEnd)} fill="none" stroke="hsl(142 71% 45%)" strokeWidth={sw} />
+      )}
+      {/* losses fill remaining */}
+      {(winPct + bePct) < 1 && (
+        <path d={describeArc(cx, cy, r, beEnd, 360)} fill="none" stroke="hsl(0 84% 60%)" strokeWidth={sw} />
+      )}
+    </svg>
+  );
+};
+
 // Helper: SVG arc path
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
