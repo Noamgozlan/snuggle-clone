@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DailyNoteDialog } from "./DailyNoteDialog";
+import { useDailyNotes } from "@/hooks/useDailyNotes";
 import {
   format,
   startOfMonth,
@@ -63,6 +65,10 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+  const [noteDate, setNoteDate] = useState("");
+  const { getNoteForDate, getDatesWithNotes, upsertNote } = useDailyNotes();
+  const datesWithNotes = getDatesWithNotes();
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -162,7 +168,17 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
     if (dayData && dayData.trades.length > 0) {
       setSelectedDate(dateStr);
       setIsDialogOpen(true);
+    } else {
+      // Open note dialog for days without trades
+      setNoteDate(dateStr);
+      setIsNoteDialogOpen(true);
     }
+  };
+
+  const handleOpenNote = (dateStr: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNoteDate(dateStr);
+    setIsNoteDialogOpen(true);
   };
 
   const selectedDayTrades = selectedDate ? tradesByDate[selectedDate]?.trades || [] : [];
@@ -289,19 +305,23 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
                 const pnl = dayData?.pnl || 0;
                 const points = dayData?.points || 0;
                 const tradeCount = dayData?.count || 0;
+                const hasNote = datesWithNotes.includes(dateStr);
 
                 return (
                   <div
                     key={dateStr}
                     onClick={() => handleDayClick(dateStr)}
-                    className={`min-h-[48px] md:min-h-[72px] rounded p-0.5 md:p-1 flex flex-col items-center justify-center transition-all duration-200 hover:scale-[1.02] ${
+                    className={`relative min-h-[48px] md:min-h-[72px] rounded p-0.5 md:p-1 flex flex-col items-center justify-center transition-all duration-200 hover:scale-[1.02] cursor-pointer ${
                       hasData
-                        ? `cursor-pointer ${pnl >= 0
+                        ? `${pnl >= 0
                           ? "bg-success/20 border border-success/40 hover:bg-success/30"
                           : "bg-destructive/20 border border-destructive/40 hover:bg-destructive/30"}`
-                        : "bg-secondary/30"
+                        : "bg-secondary/30 hover:bg-secondary/50"
                     } ${isCurrentDay ? "ring-2 ring-primary" : ""} ${!isCurrentMonth ? "opacity-30 bg-secondary/10" : ""}`}
                   >
+                    {hasNote && (
+                      <div className="absolute top-0.5 left-0.5 md:top-1 md:left-1 h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-primary" title="יש הערה" />
+                    )}
                     <span
                       className={`text-[10px] md:text-sm ${isCurrentDay ? "font-bold text-primary" : hasData ? (pnl >= 0 ? "text-success" : "text-destructive") : isCurrentMonth ? "text-foreground" : "text-muted-foreground"}`}
                     >
@@ -438,8 +458,25 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
               </div>
             </div>
           )}
+
+          {/* Add note button in dialog */}
+          {selectedDate && (
+            <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => { setNoteDate(selectedDate); setIsNoteDialogOpen(true); }}>
+              <BookOpen className="h-4 w-4" />
+              {getNoteForDate(selectedDate) ? "ערוך הערת יום" : "הוסף הערת יום"}
+            </Button>
+          )}
         </DialogContent>
       </Dialog>
+
+      {/* Daily Note Dialog */}
+      <DailyNoteDialog
+        open={isNoteDialogOpen}
+        onOpenChange={setIsNoteDialogOpen}
+        date={noteDate}
+        existingNote={noteDate ? getNoteForDate(noteDate) : null}
+        onSave={upsertNote}
+      />
     </>
   );
 };

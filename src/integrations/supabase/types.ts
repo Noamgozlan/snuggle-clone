@@ -296,6 +296,42 @@ export type Database = {
           },
         ]
       }
+      daily_notes: {
+        Row: {
+          created_at: string
+          id: string
+          mood_rating: number | null
+          note_date: string
+          portfolio_id: string | null
+          post_market_note: string | null
+          pre_market_note: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mood_rating?: number | null
+          note_date: string
+          portfolio_id?: string | null
+          post_market_note?: string | null
+          pre_market_note?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mood_rating?: number | null
+          note_date?: string
+          portfolio_id?: string | null
+          post_market_note?: string | null
+          pre_market_note?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       feedback_replies: {
         Row: {
           content: string
@@ -715,24 +751,36 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          entry_rules: string | null
+          exit_rules: string | null
           id: string
           name: string
+          risk_per_trade: string | null
+          screenshot_url: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           description?: string | null
+          entry_rules?: string | null
+          exit_rules?: string | null
           id?: string
           name: string
+          risk_per_trade?: string | null
+          screenshot_url?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           description?: string | null
+          entry_rules?: string | null
+          exit_rules?: string | null
           id?: string
           name?: string
+          risk_per_trade?: string | null
+          screenshot_url?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -905,6 +953,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trading_goals: {
+        Row: {
+          created_at: string
+          goal_type: string
+          id: string
+          is_active: boolean
+          metric: string
+          portfolio_id: string | null
+          target_value: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          goal_type: string
+          id?: string
+          is_active?: boolean
+          metric: string
+          portfolio_id?: string | null
+          target_value: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          goal_type?: string
+          id?: string
+          is_active?: boolean
+          metric?: string
+          portfolio_id?: string | null
+          target_value?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       user_channel_presence: {
         Row: {

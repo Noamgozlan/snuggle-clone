@@ -3,7 +3,7 @@ import { calculateAverageTradeDuration } from "@/lib/formatDuration";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrades } from "@/hooks/useTrades";
-import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText, Bot, Globe, Brain, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText, Bot, Globe, Brain, AlertTriangle, Shield, GitCompare } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { MENTAL_STATES, MISTAKES, SETUP_TYPES, getMentalStateInfo } from "@/components/trades/TradeTagsSection";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TradeReports } from "@/components/statistics/TradeReports";
 import AITradingAdvisor from "@/components/statistics/AITradingAdvisor";
+import { RiskManagement } from "@/components/statistics/RiskManagement";
+import { PeriodComparison } from "@/components/statistics/PeriodComparison";
 
 interface TradeConfirmation {
   trade_id: string;
@@ -260,20 +262,30 @@ const Statistics = () => {
   return (
     <DashboardLayout title="סטטיסטיקות מתקדמות">
       <Tabs defaultValue="overview" dir="rtl" className="space-y-4 md:space-y-6 max-w-full overflow-hidden">
-        <TabsList className="grid w-full max-w-lg grid-cols-3 text-xs md:text-sm">
-          <TabsTrigger value="overview" className="flex items-center gap-1 md:gap-2 px-2 md:px-4">
+        <TabsList className="grid w-full max-w-2xl grid-cols-5 text-xs md:text-sm">
+          <TabsTrigger value="overview" className="flex items-center gap-1 md:gap-2 px-1 md:px-4">
             <BarChart2 className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">סקירה כללית</span>
+            <span className="hidden sm:inline">סקירה</span>
             <span className="sm:hidden">סקירה</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-1 md:gap-2 px-2 md:px-4">
+          <TabsTrigger value="reports" className="flex items-center gap-1 md:gap-2 px-1 md:px-4">
             <FileText className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">דוחות מותאמים</span>
+            <span className="hidden sm:inline">דוחות</span>
             <span className="sm:hidden">דוחות</span>
           </TabsTrigger>
-          <TabsTrigger value="ai-advisor" className="flex items-center gap-1 md:gap-2 px-2 md:px-4">
+          <TabsTrigger value="risk" className="flex items-center gap-1 md:gap-2 px-1 md:px-4">
+            <Shield className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">סיכונים</span>
+            <span className="sm:hidden">סיכונים</span>
+          </TabsTrigger>
+          <TabsTrigger value="compare" className="flex items-center gap-1 md:gap-2 px-1 md:px-4">
+            <GitCompare className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">השוואה</span>
+            <span className="sm:hidden">השוואה</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai-advisor" className="flex items-center gap-1 md:gap-2 px-1 md:px-4">
             <Bot className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">יועץ AI</span>
+            <span className="hidden sm:inline">AI</span>
             <span className="sm:hidden">AI</span>
           </TabsTrigger>
         </TabsList>
@@ -988,6 +1000,14 @@ const Statistics = () => {
 
         <TabsContent value="reports">
           <TradeReports trades={trades} strategies={uniqueStrategies} />
+        </TabsContent>
+
+        <TabsContent value="risk">
+          <RiskManagement trades={trades} />
+        </TabsContent>
+
+        <TabsContent value="compare">
+          <PeriodComparison trades={trades} />
         </TabsContent>
 
         <TabsContent value="ai-advisor">
