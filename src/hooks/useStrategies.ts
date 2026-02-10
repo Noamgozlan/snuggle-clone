@@ -14,6 +14,10 @@ export interface Strategy {
   user_id: string;
   name: string;
   description: string | null;
+  entry_rules: string | null;
+  exit_rules: string | null;
+  screenshot_url: string | null;
+  risk_per_trade: string | null;
   confirmations: Confirmation[];
   created_at: string;
   updated_at: string;
@@ -59,13 +63,13 @@ export const useStrategies = () => {
     }
   }, [user]);
 
-  const createStrategy = async (name: string, description: string, confirmationNames: string[]) => {
+  const createStrategy = async (name: string, description: string, confirmationNames: string[], extra?: { entry_rules?: string; exit_rules?: string; risk_per_trade?: string; screenshot_url?: string }) => {
     if (!user) return { success: false };
 
     try {
       const { data: strategy, error: strategyError } = await supabase
         .from('strategies')
-        .insert({ user_id: user.id, name, description })
+        .insert({ user_id: user.id, name, description, ...extra } as any)
         .select()
         .single();
 
@@ -92,13 +96,13 @@ export const useStrategies = () => {
     }
   };
 
-  const updateStrategy = async (id: string, name: string, description: string, confirmationNames: string[]) => {
+  const updateStrategy = async (id: string, name: string, description: string, confirmationNames: string[], extra?: { entry_rules?: string; exit_rules?: string; risk_per_trade?: string; screenshot_url?: string }) => {
     if (!user) return { success: false };
 
     try {
       const { error: updateError } = await supabase
         .from('strategies')
-        .update({ name, description })
+        .update({ name, description, ...extra } as any)
         .eq('id', id);
 
       if (updateError) throw updateError;

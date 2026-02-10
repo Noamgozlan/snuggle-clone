@@ -5,9 +5,12 @@ import { TradingCalendar } from "@/components/dashboard/TradingCalendar";
 import { TradingScore } from "@/components/dashboard/TradingScore";
 import { ShareStatsDialog } from "@/components/dashboard/ShareStatsDialog";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
+import { GoalsTracker } from "@/components/dashboard/GoalsTracker";
+import { WeeklyReview } from "@/components/dashboard/WeeklyReview";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
 import { useTrades } from "@/hooks/useTrades";
+import { useTradingGoals } from "@/hooks/useTradingGoals";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -47,6 +50,7 @@ const Dashboard = () => {
   const { trades: allTrades, stats: allStats, fetchTrades } = useTrades();
   const { user } = useAuth();
   const { activePortfolio } = usePortfolio();
+  const { goals, createGoal, deleteGoal } = useTradingGoals();
 
   // Filter trades by date range
   const trades = useMemo(() => {
@@ -830,6 +834,12 @@ const Dashboard = () => {
           </div>
         </Card>
       </div>
+
+      {/* Goals Tracker */}
+      <GoalsTracker goals={goals} trades={trades} onCreateGoal={createGoal} onDeleteGoal={deleteGoal} />
+
+      {/* Weekly Review */}
+      <WeeklyReview trades={trades} />
 
       <AddTradeDialog open={isAddTradeOpen} onOpenChange={setIsAddTradeOpen} onTradeAdded={fetchTrades} />
       <ShareStatsDialog open={isShareOpen} onOpenChange={setIsShareOpen} stats={stats} displayMode={displayMode === "percentage" || displayMode === "balance" ? "money" : displayMode} />
