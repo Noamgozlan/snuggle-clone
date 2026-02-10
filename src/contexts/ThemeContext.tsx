@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 
 type Theme = "dark" | "light";
 type ColorScheme = "emerald" | "blue" | "purple" | "orange" | "rose" | "cyan";
-type VisualStyle = "classic" | "minimal" | "neon" | "glass";
+type VisualStyle = "classic" | "macos" | "minimal" | "neon";
 
 interface ThemeContextType {
   theme: Theme;
@@ -24,9 +24,9 @@ export const colorSchemeOptions: { value: ColorScheme; label: string; primary: s
 
 export const visualStyleOptions: { value: VisualStyle; label: string; description: string; icon: string }[] = [
   { value: "classic", label: "קלאסי", description: "המראה הסטנדרטי והמוכר", icon: "layout" },
-  { value: "minimal", label: "מינימליסטי", description: "נקי, אסתטי וללא הסחות", icon: "minus-square" },
+  { value: "macos", label: "macOS", description: "נקי ומלוטש בסגנון אפל", icon: "monitor" },
+  { value: "minimal", label: "מינימליסטי", description: "פשוט, נקי וללא הסחות", icon: "minus-square" },
   { value: "neon", label: "זוהר", description: "דינמי עם אפקטי glow", icon: "zap" },
-  { value: "glass", label: "זכוכית", description: "מודרני עם אפקט שקיפות", icon: "square" },
 ];
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -44,6 +44,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   const [visualStyle, setVisualStyleState] = useState<VisualStyle>(() => {
     const saved = localStorage.getItem("visualStyle");
+    // Migrate old "glass" value to "macos"
+    if (saved === "glass") return "macos";
     return (saved as VisualStyle) || "classic";
   });
 
