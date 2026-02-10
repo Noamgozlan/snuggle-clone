@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { MENTAL_STATES, MISTAKES, SETUP_TYPES, getMentalStateInfo } from "@/components/trades/TradeTagsSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,7 +20,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   X,
-  FileText
+  FileText,
+  Brain,
+  AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -40,6 +43,9 @@ interface Trade {
   screenshot_url: string | null;
   notes: string | null;
   rr: number | null;
+  mental_state: string | null;
+  mistakes: string[] | null;
+  setup_type: string | null;
 }
 
 interface TradeReportsProps {
@@ -72,6 +78,9 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
   const [selectedSymbol, setSelectedSymbol] = useState('all');
   const [quantityRange, setQuantityRange] = useState([1, 100]);
   const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
+  const [selectedMentalState, setSelectedMentalState] = useState('all');
+  const [selectedSetupType, setSelectedSetupType] = useState('all');
+  const [selectedMistake, setSelectedMistake] = useState('all');
 
   // Get unique symbols
   const symbols = useMemo(() => {
@@ -108,9 +117,18 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
       // Quantity filter
       if (trade.quantity < quantityRange[0] || trade.quantity > quantityRange[1]) return false;
 
+      // Mental state filter
+      if (selectedMentalState !== 'all' && trade.mental_state !== selectedMentalState) return false;
+
+      // Setup type filter
+      if (selectedSetupType !== 'all' && trade.setup_type !== selectedSetupType) return false;
+
+      // Mistake filter
+      if (selectedMistake !== 'all' && (!trade.mistakes || !trade.mistakes.includes(selectedMistake))) return false;
+
       return true;
     });
-  }, [trades, selectedDay, startHour, endHour, selectedStrategy, selectedSymbol, quantityRange]);
+  }, [trades, selectedDay, startHour, endHour, selectedStrategy, selectedSymbol, quantityRange, selectedMentalState, selectedSetupType, selectedMistake]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -200,6 +218,9 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
     setSelectedStrategy('all');
     setSelectedSymbol('all');
     setQuantityRange([1, maxQuantity]);
+    setSelectedMentalState('all');
+    setSelectedSetupType('all');
+    setSelectedMistake('all');
   };
 
   // Get trades with screenshots
@@ -332,6 +353,63 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
                 </Select>
               </div>
 
+              {/* Mental State */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-muted-foreground" />
+                  מצב מנטלי
+                </label>
+                <Select value={selectedMentalState} onValueChange={setSelectedMentalState}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">כל המצבים</SelectItem>
+                    {MENTAL_STATES.map(s => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Setup Type */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  סוג Setup
+                </label>
+                <Select value={selectedSetupType} onValueChange={setSelectedSetupType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">כל הסוגים</SelectItem>
+                    {SETUP_TYPES.map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Mistakes */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                  טעות
+                </label>
+                <Select value={selectedMistake} onValueChange={setSelectedMistake}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">כל הטעויות</SelectItem>
+                    {MISTAKES.map(m => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Quantity */}
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-medium flex items-center gap-2">
@@ -376,6 +454,24 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
           <Badge variant="secondary" className="gap-1">
             סימול: {selectedSymbol}
             <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedSymbol('all')} />
+          </Badge>
+        )}
+        {selectedMentalState !== 'all' && (
+          <Badge variant="secondary" className="gap-1">
+            מצב מנטלי: {getMentalStateInfo(selectedMentalState)?.label || selectedMentalState}
+            <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedMentalState('all')} />
+          </Badge>
+        )}
+        {selectedSetupType !== 'all' && (
+          <Badge variant="secondary" className="gap-1">
+            Setup: {selectedSetupType}
+            <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedSetupType('all')} />
+          </Badge>
+        )}
+        {selectedMistake !== 'all' && (
+          <Badge variant="secondary" className="gap-1">
+            טעות: {selectedMistake}
+            <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedMistake('all')} />
           </Badge>
         )}
       </div>
@@ -574,10 +670,19 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
                       }
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{trade.symbol}</span>
                         {trade.strategy && (
                           <Badge variant="outline" className="text-xs">{trade.strategy}</Badge>
+                        )}
+                        {trade.mental_state && (() => {
+                          const info = getMentalStateInfo(trade.mental_state);
+                          if (!info) return null;
+                          const Icon = info.icon;
+                          return <Badge variant="outline" className={`text-xs gap-1 ${info.color}`}><Icon className="h-3 w-3" />{info.label}</Badge>;
+                        })()}
+                        {trade.setup_type && (
+                          <Badge variant="outline" className="text-xs text-violet-400 border-violet-500/30">{trade.setup_type}</Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">

@@ -3,8 +3,10 @@ import { calculateAverageTradeDuration } from "@/lib/formatDuration";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrades } from "@/hooks/useTrades";
-import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText, Bot, Globe } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText, Bot, Globe, Brain, AlertTriangle } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
+import { MENTAL_STATES, MISTAKES, SETUP_TYPES, getMentalStateInfo } from "@/components/trades/TradeTagsSection";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TradeReports } from "@/components/statistics/TradeReports";
@@ -467,6 +469,185 @@ const Statistics = () => {
             )}
           </Card>
         )}
+
+        {/* Mental State Analysis */}
+        {(() => {
+          const mentalStateData = trades.reduce((acc, trade) => {
+            const state = trade.mental_state;
+            if (state) {
+              if (!acc[state]) acc[state] = { trades: 0, wins: 0, pnl: 0 };
+              acc[state].trades++;
+              if ((trade.pnl || 0) > 0) acc[state].wins++;
+              acc[state].pnl += trade.pnl || 0;
+            }
+            return acc;
+          }, {} as Record<string, { trades: number; wins: number; pnl: number }>);
+          
+          const sortedStates = Object.entries(mentalStateData).sort((a, b) => b[1].trades - a[1].trades);
+          
+          if (sortedStates.length === 0) return null;
+          
+          return (
+            <Card className="bg-card border-border p-6">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Brain className="h-5 w-5 text-primary" />
+                ניתוח לפי מצב מנטלי
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                איך המצב הרגשי שלך משפיע על הביצועים?
+              </p>
+              <div className="grid gap-3">
+                {sortedStates.map(([state, data]) => {
+                  const info = getMentalStateInfo(state);
+                  const winRate = data.trades > 0 ? (data.wins / data.trades) * 100 : 0;
+                  const Icon = info?.icon || Brain;
+                  return (
+                    <div key={state} className={`p-4 rounded-lg border ${data.pnl >= 0 ? 'border-success/30 bg-success/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Icon className={`h-5 w-5 ${info?.color.split(' ')[0] || 'text-muted-foreground'}`} />
+                          <span className="font-medium text-foreground">{info?.label || state}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="text-muted-foreground">{data.trades} עסקאות</span>
+                          <span className={`font-bold ${winRate >= 50 ? 'text-success' : 'text-destructive'}`}>
+                            {winRate.toFixed(0)}% הצלחה
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div className={`h-full transition-all ${winRate >= 50 ? 'bg-success' : 'bg-destructive'}`} style={{ width: `${winRate}%` }} />
+                        </div>
+                        <span className={`text-sm font-medium ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                          ${data.pnl.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {sortedStates.length > 0 && (() => {
+                const best = sortedStates.reduce((a, b) => {
+                  const aWr = a[1].trades > 0 ? (a[1].wins / a[1].trades) * 100 : 0;
+                  const bWr = b[1].trades > 0 ? (b[1].wins / b[1].trades) * 100 : 0;
+                  return bWr > aWr ? b : a;
+                });
+                const bestInfo = getMentalStateInfo(best[0]);
+                const bestWr = best[1].trades > 0 ? (best[1].wins / best[1].trades) * 100 : 0;
+                return bestWr >= 50 ? (
+                  <div className="mt-4 p-3 bg-success/10 border border-success/30 rounded-lg">
+                    <p className="text-sm text-success">
+                      💡 <strong>תובנה:</strong> כשאתה {bestInfo?.label || best[0]} יש לך {bestWr.toFixed(0)}% הצלחה!
+                    </p>
+                  </div>
+                ) : null;
+              })()}
+            </Card>
+          );
+        })()}
+
+        {/* Setup Type Analysis */}
+        {(() => {
+          const setupData = trades.reduce((acc, trade) => {
+            const setup = trade.setup_type;
+            if (setup) {
+              if (!acc[setup]) acc[setup] = { trades: 0, wins: 0, pnl: 0 };
+              acc[setup].trades++;
+              if ((trade.pnl || 0) > 0) acc[setup].wins++;
+              acc[setup].pnl += trade.pnl || 0;
+            }
+            return acc;
+          }, {} as Record<string, { trades: number; wins: number; pnl: number }>);
+          
+          const sortedSetups = Object.entries(setupData).sort((a, b) => b[1].trades - a[1].trades);
+          
+          if (sortedSetups.length === 0) return null;
+          
+          return (
+            <Card className="bg-card border-border p-6">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                ניתוח לפי סוג Setup
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {sortedSetups.map(([setup, data]) => {
+                  const winRate = data.trades > 0 ? (data.wins / data.trades) * 100 : 0;
+                  return (
+                    <div key={setup} className={`p-4 rounded-lg border ${data.pnl >= 0 ? 'border-success/30 bg-success/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="outline" className="text-violet-400 border-violet-500/30">{setup}</Badge>
+                        <span className="text-sm text-muted-foreground">{data.trades} עסקאות</span>
+                      </div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className={winRate >= 50 ? 'text-success font-bold' : 'text-destructive font-bold'}>{winRate.toFixed(0)}% הצלחה</span>
+                        <span className={data.pnl >= 0 ? 'text-success' : 'text-destructive'}>${data.pnl.toFixed(2)}</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className={`h-full ${winRate >= 50 ? 'bg-success' : 'bg-destructive'}`} style={{ width: `${winRate}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          );
+        })()}
+
+        {/* Mistakes Analysis */}
+        {(() => {
+          const mistakeData: Record<string, { count: number; totalPnl: number }> = {};
+          trades.forEach(trade => {
+            if (trade.mistakes && trade.mistakes.length > 0) {
+              trade.mistakes.forEach(m => {
+                if (!mistakeData[m]) mistakeData[m] = { count: 0, totalPnl: 0 };
+                mistakeData[m].count++;
+                mistakeData[m].totalPnl += trade.pnl || 0;
+              });
+            }
+          });
+          
+          const sortedMistakes = Object.entries(mistakeData).sort((a, b) => b[1].count - a[1].count);
+          
+          if (sortedMistakes.length === 0) return null;
+          
+          return (
+            <Card className="bg-card border-border p-6">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                ניתוח טעויות
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                הטעויות הנפוצות ביותר והעלות שלהן
+              </p>
+              <div className="grid gap-3">
+                {sortedMistakes.map(([mistake, data]) => (
+                  <div key={mistake} className="p-3 rounded-lg border border-orange-500/20 bg-orange-500/5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-foreground">{mistake}</span>
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="text-muted-foreground">{data.count} פעמים</span>
+                        <span className={`font-bold ${data.totalPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                          ${data.totalPnl.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-orange-500/60" style={{ width: `${(data.count / sortedMistakes[0][1].count) * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {sortedMistakes.length > 0 && sortedMistakes[0][1].totalPnl < 0 && (
+                <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                  <p className="text-sm text-orange-400">
+                    ⚠️ <strong>שים לב:</strong> הטעות "{sortedMistakes[0][0]}" עלתה לך ${Math.abs(sortedMistakes[0][1].totalPnl).toFixed(2)} ב-{sortedMistakes[0][1].count} עסקאות!
+                  </p>
+                </div>
+              )}
+            </Card>
+          );
+        })()}
 
         {/* Session Statistics */}
         {sortedSessions.length > 0 && (
