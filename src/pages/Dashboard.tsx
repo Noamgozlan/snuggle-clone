@@ -14,19 +14,21 @@ import {
   Plus, 
   Activity,
   Zap,
-  Award,
   BarChart3,
   ArrowUpRight,
   ArrowDownRight,
   Flame,
   Trophy,
   Skull,
-  Share2
+  Share2,
+  Calendar,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area, ScatterChart, Scatter, ZAxis, Cell } from "recharts";
-import { format, subMonths, startOfMonth, endOfMonth, getDay, differenceInSeconds, differenceInMinutes } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area, Cell } from "recharts";
+import { format, subMonths, startOfMonth, endOfMonth, getDay } from "date-fns";
 import { he } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePortfolio } from "@/contexts/PortfolioContext";
@@ -109,16 +111,13 @@ const Dashboard = () => {
     };
   }, [trades, allStats, dateRange]);
 
-  // Get recent trades (last 5)
   const recentTrades = trades.slice(0, 5);
-
-  // Calculate portfolio balance first (needed for weeklyData)
   const portfolioBalance = activePortfolio?.balance || 0;
 
-  // Calculate weekly data from real trades (reversed for RTL display)
+  // Weekly data
   const weeklyData = useMemo(() => {
     const days = ["ש׳", "ו׳", "ה׳", "ד׳", "ג׳", "ב׳", "א׳"];
-    const dayIndexes = [6, 5, 4, 3, 2, 1, 0]; // Saturday to Sunday
+    const dayIndexes = [6, 5, 4, 3, 2, 1, 0];
     const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
@@ -138,24 +137,16 @@ const Dashboard = () => {
       
       let value: number;
       switch (displayMode) {
-        case "points":
-          value = pointsValue;
-          break;
-        case "percentage":
-          value = portfolioBalance > 0 ? (pnlValue / portfolioBalance) * 100 : 0;
-          break;
-        case "balance":
-        case "money":
-        default:
-          value = pnlValue;
-          break;
+        case "points": value = pointsValue; break;
+        case "percentage": value = portfolioBalance > 0 ? (pnlValue / portfolioBalance) * 100 : 0; break;
+        default: value = pnlValue; break;
       }
       
       return { day, value, pnl: pnlValue, points: pointsValue, trades: dayTrades.length };
     });
   }, [trades, displayMode, portfolioBalance]);
 
-  // Calculate monthly breakdown from real trades
+  // Monthly breakdown
   const monthlyBreakdown = useMemo(() => {
     const months = [];
     const now = new Date();
@@ -177,8 +168,7 @@ const Dashboard = () => {
       
       months.push({
         month: format(monthDate, "MMM", { locale: he }),
-        pnl,
-        points,
+        pnl, points,
         trades: monthTrades.length,
         winRate,
         highlight: i === 0 && monthTrades.length > 0,
@@ -188,7 +178,7 @@ const Dashboard = () => {
     return months.reverse();
   }, [trades]);
 
-  // Calculate streaks and best/worst trades
+  // Streaks
   const tradingStreaks = useMemo(() => {
     if (trades.length === 0) return { currentStreak: 0, isWinning: true, maxWinStreak: 0, maxLoseStreak: 0, bestTrade: null, worstTrade: null };
     
@@ -196,100 +186,30 @@ const Dashboard = () => {
       new Date(b.entry_date || b.created_at).getTime() - new Date(a.entry_date || a.created_at).getTime()
     );
     
-    // Current streak
     let currentStreak = 0;
     let isWinning = (sortedTrades[0]?.pnl || 0) > 0;
     for (const trade of sortedTrades) {
       const isWin = (trade.pnl || 0) > 0;
       const isLoss = (trade.pnl || 0) < 0;
-      if (trade.pnl === 0) continue; // Skip break-even
+      if (trade.pnl === 0) continue;
       if ((isWinning && isWin) || (!isWinning && isLoss)) {
         currentStreak++;
-      } else {
-        break;
-      }
+      } else break;
     }
     
-    // Max streaks
-    let maxWinStreak = 0, maxLoseStreak = 0;
-    let tempWin = 0, tempLose = 0;
+    let maxWinStreak = 0, maxLoseStreak = 0, tempWin = 0, tempLose = 0;
     for (const trade of sortedTrades) {
-      if ((trade.pnl || 0) > 0) {
-        tempWin++;
-        tempLose = 0;
-        maxWinStreak = Math.max(maxWinStreak, tempWin);
-      } else if ((trade.pnl || 0) < 0) {
-        tempLose++;
-        tempWin = 0;
-        maxLoseStreak = Math.max(maxLoseStreak, tempLose);
-      }
+      if ((trade.pnl || 0) > 0) { tempWin++; tempLose = 0; maxWinStreak = Math.max(maxWinStreak, tempWin); }
+      else if ((trade.pnl || 0) < 0) { tempLose++; tempWin = 0; maxLoseStreak = Math.max(maxLoseStreak, tempLose); }
     }
     
-    // Best and worst trades
     const bestTrade = trades.reduce((best, t) => (t.pnl || 0) > (best?.pnl || -Infinity) ? t : best, trades[0]);
     const worstTrade = trades.reduce((worst, t) => (t.pnl || 0) < (worst?.pnl || Infinity) ? t : worst, trades[0]);
     
     return { currentStreak, isWinning, maxWinStreak, maxLoseStreak, bestTrade, worstTrade };
   }, [trades]);
 
-  // Calculate equity curve data
-  const equityCurveData = useMemo(() => {
-    if (trades.length === 0) return [];
-    
-    const sortedTrades = [...trades].sort((a, b) => 
-      new Date(a.entry_date || a.created_at).getTime() - new Date(b.entry_date || b.created_at).getTime()
-    );
-    
-    let cumulative = 0;
-    return sortedTrades.map((trade, index) => {
-      cumulative += (trade.pnl || 0);
-      return {
-        index: index + 1,
-        date: format(new Date(trade.entry_date || trade.created_at), "dd/MM"),
-        equity: cumulative,
-        pnl: trade.pnl || 0,
-      };
-    });
-  }, [trades]);
-
-  // Calculate performance by day of week
-  const dayOfWeekPerformance = useMemo(() => {
-    const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-    const dayData: { [day: number]: { totalPnl: number; count: number; wins: number; losses: number } } = {};
-    
-    trades
-      .filter(t => t.entry_date && t.pnl !== null)
-      .forEach(trade => {
-        const entryDate = new Date(trade.entry_date!);
-        const day = getDay(entryDate);
-        const pnl = trade.pnl || 0;
-        
-        if (!dayData[day]) {
-          dayData[day] = { totalPnl: 0, count: 0, wins: 0, losses: 0 };
-        }
-        dayData[day].totalPnl += pnl;
-        dayData[day].count += 1;
-        if (pnl > 0) dayData[day].wins += 1;
-        if (pnl < 0) dayData[day].losses += 1;
-      });
-    
-    // Create array for all days (0=Sunday to 6=Saturday)
-    return Array.from({ length: 7 }, (_, i) => {
-      const data = dayData[i] || { totalPnl: 0, count: 0, wins: 0, losses: 0 };
-      return {
-        day: i,
-        dayName: dayNames[i],
-        pnl: data.totalPnl,
-        count: data.count,
-        wins: data.wins,
-        losses: data.losses,
-        winRate: data.count > 0 ? Math.round((data.wins / data.count) * 100) : 0,
-        avgPnl: data.count > 0 ? data.totalPnl / data.count : 0,
-      };
-    }).filter(d => d.count > 0); // Only show days with trades
-  }, [trades]);
-
-  // Calculate cumulative PNL over time
+  // Cumulative PNL
   const cumulativePnlData = useMemo(() => {
     const sortedTrades = trades
       .filter(t => t.entry_date && t.pnl !== null)
@@ -302,284 +222,250 @@ const Dashboard = () => {
         index: index + 1,
         date: format(new Date(trade.entry_date!), "dd/MM", { locale: he }),
         fullDate: format(new Date(trade.entry_date!), "dd/MM/yyyy", { locale: he }),
-        pnl: trade.pnl || 0,
-        cumulative,
-        symbol: trade.symbol,
+        pnl: trade.pnl || 0, cumulative, symbol: trade.symbol,
       };
     });
   }, [trades]);
 
-  // Calculate percentage of portfolio (portfolioBalance already defined above)
-  const percentageDisplay = portfolioBalance > 0 
-    ? (stats.totalPnl / portfolioBalance) * 100 
-    : 0;
-  const balanceWithPnl = portfolioBalance + stats.totalPnl;
+  // Day of week performance
+  const dayOfWeekPerformance = useMemo(() => {
+    const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    const dayData: { [day: number]: { totalPnl: number; count: number; wins: number; losses: number } } = {};
+    
+    trades.filter(t => t.entry_date && t.pnl !== null).forEach(trade => {
+      const day = getDay(new Date(trade.entry_date!));
+      const pnl = trade.pnl || 0;
+      if (!dayData[day]) dayData[day] = { totalPnl: 0, count: 0, wins: 0, losses: 0 };
+      dayData[day].totalPnl += pnl;
+      dayData[day].count += 1;
+      if (pnl > 0) dayData[day].wins += 1;
+      if (pnl < 0) dayData[day].losses += 1;
+    });
+    
+    return Array.from({ length: 7 }, (_, i) => {
+      const data = dayData[i] || { totalPnl: 0, count: 0, wins: 0, losses: 0 };
+      return {
+        day: i, dayName: dayNames[i], pnl: data.totalPnl, count: data.count,
+        wins: data.wins, losses: data.losses,
+        winRate: data.count > 0 ? Math.round((data.wins / data.count) * 100) : 0,
+        avgPnl: data.count > 0 ? data.totalPnl / data.count : 0,
+      };
+    }).filter(d => d.count > 0);
+  }, [trades]);
 
-  const totalDisplay = displayMode === "money" 
-    ? stats.totalPnl 
-    : displayMode === "points" 
-      ? stats.totalPoints 
-      : displayMode === "percentage"
-        ? percentageDisplay
-        : balanceWithPnl;
-  const avgDisplay = displayMode === "money" || displayMode === "balance" 
-    ? stats.avgPnl 
-    : displayMode === "points" 
-      ? stats.avgPoints 
-      : portfolioBalance > 0 ? (stats.avgPnl / portfolioBalance) * 100 : 0;
+  const percentageDisplay = portfolioBalance > 0 ? (stats.totalPnl / portfolioBalance) * 100 : 0;
+  const balanceWithPnl = portfolioBalance + stats.totalPnl;
+  const totalDisplay = displayMode === "money" ? stats.totalPnl : displayMode === "points" ? stats.totalPoints : displayMode === "percentage" ? percentageDisplay : balanceWithPnl;
+  const avgDisplay = displayMode === "money" || displayMode === "balance" ? stats.avgPnl : displayMode === "points" ? stats.avgPoints : portfolioBalance > 0 ? (stats.avgPnl / portfolioBalance) * 100 : 0;
+
+  const displayModes = [
+    { key: "money" as const, label: "כסף", icon: "$" },
+    { key: "points" as const, label: "נקודות", icon: "P" },
+    { key: "percentage" as const, label: "אחוזים", icon: "%" },
+    { key: "balance" as const, label: "מצב תיק", icon: "B" },
+  ];
 
   return (
     <DashboardLayout>
-      <div className="space-y-4 md:space-y-6 max-w-full overflow-x-hidden">
+      <div className="space-y-5 md:space-y-6 max-w-full overflow-x-hidden">
         {/* Header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="mt-8 md:mt-0">
-            <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-l from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-              סקירה כללית
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-6 md:mt-0">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
+              דשבורד
             </h1>
-            <p className="text-muted-foreground mt-1 text-xs md:text-base">ניתוח הביצועים שלך במבט אחד</p>
+            <p className="text-muted-foreground text-sm mt-0.5">ניתוח ביצועים</p>
           </div>
-          <div className="flex items-center gap-1.5 md:gap-3 flex-wrap max-w-full">
-            <DateRangeFilter 
-              dateRange={dateRange} 
-              onDateRangeChange={setDateRange} 
-            />
-            <div className="flex bg-secondary/50 rounded-lg p-1 flex-wrap">
-              <Button 
-                variant="ghost"
-                size="sm" 
-                className={`transition-all text-xs md:text-sm ${displayMode === "money" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
-                onClick={() => setDisplayMode("money")}
-              >
-                💵 <span className="hidden sm:inline ml-1">כסף</span>
-              </Button>
-              <Button 
-                variant="ghost"
-                size="sm"
-                className={`transition-all text-xs md:text-sm ${displayMode === "points" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
-                onClick={() => setDisplayMode("points")}
-              >
-                📊 <span className="hidden sm:inline ml-1">נקודות</span>
-              </Button>
-              <Button 
-                variant="ghost"
-                size="sm"
-                className={`transition-all text-xs md:text-sm ${displayMode === "percentage" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
-                onClick={() => setDisplayMode("percentage")}
-                title="אחוז מיתרת התיק"
-              >
-                📈 <span className="hidden sm:inline ml-1">אחוזים</span>
-              </Button>
-              <Button 
-                variant="ghost"
-                size="sm"
-                className={`transition-all text-xs md:text-sm ${displayMode === "balance" ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
-                onClick={() => setDisplayMode("balance")}
-                title="מצב התיק - יתרה + רווח/הפסד"
-              >
-                💰 <span className="hidden sm:inline ml-1">מצב תיק</span>
-              </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <DateRangeFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+            <div className="flex bg-muted/50 rounded-lg p-0.5 border border-border/50">
+              {displayModes.map((mode) => (
+                <button
+                  key={mode.key}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    displayMode === mode.key 
+                      ? "bg-card text-foreground shadow-sm border border-border/50" 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => setDisplayMode(mode.key)}
+                >
+                  <span className="hidden sm:inline">{mode.label}</span>
+                  <span className="sm:hidden">{mode.icon}</span>
+                </button>
+              ))}
             </div>
             <Button 
-              variant="outline"
-              size="icon"
-              className="hover:bg-primary/10 hover:border-primary h-8 w-8 md:h-10 md:w-10"
+              variant="ghost" size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
               onClick={() => setIsShareOpen(true)}
-              title="שתף את הביצועים שלך"
             >
               <Share2 className="h-4 w-4" />
             </Button>
             <Button 
-              className="gap-2 bg-gradient-to-l from-primary to-primary/80 hover:opacity-90 shadow-lg shadow-primary/25 text-xs md:text-sm"
+              size="sm"
+              className="gap-1.5 h-8"
               onClick={() => setIsAddTradeOpen(true)}
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">הוסף עסקה</span>
               <span className="sm:hidden">הוסף</span>
             </Button>
           </div>
         </div>
 
-        {/* Main Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Total PnL */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-primary/50" />
-            <div className="flex items-start justify-between gap-1">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1 truncate">
-                  {displayMode === "percentage" ? "תשואה" : displayMode === "balance" ? "מצב תיק" : "רווח/הפסד"}
-                </p>
-                <p className={`text-lg md:text-3xl font-bold truncate ${displayMode === "balance" ? (balanceWithPnl >= portfolioBalance ? 'text-success' : 'text-destructive') : (totalDisplay >= 0 ? 'text-success' : 'text-destructive')}`}>
-                  {displayMode === "balance" 
-                    ? `$${balanceWithPnl.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-                    : `${totalDisplay >= 0 ? '+' : ''}${displayMode === "money" 
-                      ? `$${totalDisplay.toFixed(2)}` 
-                      : displayMode === "points" 
-                        ? `${totalDisplay.toFixed(1)}` 
-                        : `${totalDisplay.toFixed(2)}%`}`}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {displayMode === "balance" 
-                    ? `יתרה: $${portfolioBalance.toLocaleString()} | רווח: ${stats.totalPnl >= 0 ? '+' : ''}$${stats.totalPnl.toFixed(2)}`
-                    : `${stats.totalTrades} עסקאות`}
-                </p>
-              </div>
-              <div className={`p-2 md:p-3 rounded-xl shrink-0 ${totalDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                {totalDisplay >= 0 ? (
-                  <TrendingUp className="h-4 w-4 md:h-6 md:w-6 text-success" />
-                ) : (
-                  <TrendingDown className="h-4 w-4 md:h-6 md:w-6 text-destructive" />
-                )}
+          <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {displayMode === "percentage" ? "תשואה" : displayMode === "balance" ? "מצב תיק" : "רווח/הפסד"}
+              </span>
+              <div className={`p-1.5 rounded-md ${totalDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                {totalDisplay >= 0 ? <TrendingUp className="h-3.5 w-3.5 text-success" /> : <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
               </div>
             </div>
+            <p className={`text-xl md:text-2xl font-bold tracking-tight ${
+              displayMode === "balance" 
+                ? (balanceWithPnl >= portfolioBalance ? 'text-success' : 'text-destructive') 
+                : (totalDisplay >= 0 ? 'text-success' : 'text-destructive')
+            }`}>
+              {displayMode === "balance" 
+                ? `$${balanceWithPnl.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                : `${totalDisplay >= 0 ? '+' : ''}${displayMode === "money" ? `$${totalDisplay.toFixed(2)}` : displayMode === "points" ? `${totalDisplay.toFixed(1)}` : `${totalDisplay.toFixed(2)}%`}`}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              {displayMode === "balance" 
+                ? `יתרה: $${portfolioBalance.toLocaleString()}`
+                : `${stats.totalTrades} עסקאות`}
+            </p>
           </Card>
 
           {/* Win Rate */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-warning to-warning/50" />
-            <div className="flex items-start justify-between gap-1">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">אחוז הצלחה</p>
-                <p className="text-lg md:text-3xl font-bold text-foreground">{stats.winRate.toFixed(1)}%</p>
-                <div className="flex items-center gap-1 mt-0.5 md:mt-1 flex-wrap">
-                  <span className="text-[10px] md:text-xs text-success">{stats.winningTrades} רווח</span>
-                  <span className="text-[10px] md:text-xs text-muted-foreground">|</span>
-                  <span className="text-[10px] md:text-xs text-destructive">{stats.losingTrades} הפסד</span>
-                </div>
-              </div>
-              <div className="p-2 md:p-3 rounded-xl bg-warning/10 shrink-0">
-                <Target className="h-4 w-4 md:h-6 md:w-6 text-warning" />
+          <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">אחוז הצלחה</span>
+              <div className="p-1.5 rounded-md bg-primary/10">
+                <Target className="h-3.5 w-3.5 text-primary" />
               </div>
             </div>
-            <div className="mt-2 md:mt-3 h-1.5 md:h-2 bg-secondary rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-l from-success to-success/70 transition-all"
-                style={{ width: `${stats.winRate}%` }}
-              />
+            <p className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{stats.winRate.toFixed(1)}%</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-xs text-success">{stats.winningTrades}W</span>
+              <span className="text-xs text-muted-foreground">/</span>
+              <span className="text-xs text-destructive">{stats.losingTrades}L</span>
+            </div>
+            <div className="mt-2.5 h-1 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary transition-all rounded-full" style={{ width: `${stats.winRate}%` }} />
             </div>
           </Card>
 
           {/* Avg RR */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-primary to-primary/50" />
-            <div className="flex items-start justify-between gap-1">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Avg RR</p>
-                <p className="text-lg md:text-3xl font-bold text-foreground">{stats.avgRR.toFixed(2)}</p>
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
-                  {stats.avgRR >= 2 ? '🔥 מצוין' : stats.avgRR >= 1 ? '✓ טוב' : '⚠️ לשפר'}
-                </p>
-              </div>
-              <div className="p-2 md:p-3 rounded-xl bg-primary/10 shrink-0">
-                <Zap className="h-4 w-4 md:h-6 md:w-6 text-primary" />
+          <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ממוצע R:R</span>
+              <div className="p-1.5 rounded-md bg-primary/10">
+                <Zap className="h-3.5 w-3.5 text-primary" />
               </div>
             </div>
+            <p className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{stats.avgRR.toFixed(2)}</p>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              {stats.avgRR >= 2 ? 'מצוין' : stats.avgRR >= 1 ? 'טוב' : 'לשפר'}
+            </p>
           </Card>
 
           {/* Average PnL */}
-          <Card className="relative overflow-hidden bg-gradient-to-br from-card to-card/50 border-border/50 p-2.5 md:p-5 group hover:border-primary/30 transition-all min-w-0">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-l from-success to-success/50" />
-            <div className="flex items-start justify-between gap-1">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">ממוצע לעסקה</p>
-                <p className={`text-lg md:text-3xl font-bold truncate ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
-                  {displayMode === "money" || displayMode === "balance"
-                    ? `$${stats.avgPnl.toFixed(0)}` 
-                    : displayMode === "points"
-                      ? stats.avgPoints.toFixed(1)
-                      : `${avgDisplay.toFixed(1)}%`}
-                </p>
-                <div className="flex items-center gap-1 mt-0.5 md:mt-1">
-                  <span className="text-[10px] md:text-xs text-success">↑ ${stats.maxWin.toFixed(0)}</span>
-                  <span className="text-[10px] md:text-xs text-destructive">↓ ${Math.abs(stats.maxLoss).toFixed(0)}</span>
-                </div>
+          <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ממוצע לעסקה</span>
+              <div className={`p-1.5 rounded-md ${avgDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                <Activity className="h-3.5 w-3.5 ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}" />
               </div>
-              <div className="p-2 md:p-3 rounded-xl bg-success/10 shrink-0">
-                <Activity className="h-4 w-4 md:h-6 md:w-6 text-success" />
-              </div>
+            </div>
+            <p className={`text-xl md:text-2xl font-bold tracking-tight ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
+              {displayMode === "money" || displayMode === "balance"
+                ? `$${stats.avgPnl.toFixed(0)}` 
+                : displayMode === "points" ? stats.avgPoints.toFixed(1) : `${avgDisplay.toFixed(1)}%`}
+            </p>
+            <div className="flex items-center gap-3 mt-1.5">
+              <span className="text-xs text-success flex items-center gap-0.5">
+                <ChevronUp className="h-3 w-3" />${stats.maxWin.toFixed(0)}
+              </span>
+              <span className="text-xs text-destructive flex items-center gap-0.5">
+                <ChevronDown className="h-3 w-3" />${Math.abs(stats.maxLoss).toFixed(0)}
+              </span>
             </div>
           </Card>
         </div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6">
-          {/* Calendar */}
-          <div className="lg:col-span-7 space-y-3 md:space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
+          {/* Left Column */}
+          <div className="lg:col-span-7 space-y-4">
             <TradingCalendar trades={trades} displayMode={displayMode} portfolioBalance={portfolioBalance} />
 
             {/* Streaks & Records */}
-            <Card className="bg-card/50 border-border/50 p-5">
-              <h3 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+            <Card className="bg-card border-border p-4 md:p-5">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
                 <Flame className="h-4 w-4 text-primary" />
                 רצפים ושיאים
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {/* Current Streak */}
-                <div className={`rounded-xl p-4 ${tradingStreaks.isWinning ? 'bg-success/10 border border-success/20' : 'bg-destructive/10 border border-destructive/20'}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Flame className={`h-5 w-5 ${tradingStreaks.isWinning ? 'text-success' : 'text-destructive'}`} />
-                    <span className="text-sm text-muted-foreground">רצף נוכחי</span>
-                  </div>
-                  <p className={`text-2xl font-bold ${tradingStreaks.isWinning ? 'text-success' : 'text-destructive'}`}>
-                    {tradingStreaks.currentStreak} {tradingStreaks.isWinning ? 'זכיות' : 'הפסדים'}
+              <div className="grid grid-cols-2 gap-3">
+                <div className={`rounded-lg p-3.5 border ${tradingStreaks.isWinning ? 'bg-success/5 border-success/20' : 'bg-destructive/5 border-destructive/20'}`}>
+                  <span className="text-xs text-muted-foreground block mb-1">רצף נוכחי</span>
+                  <p className={`text-xl font-bold ${tradingStreaks.isWinning ? 'text-success' : 'text-destructive'}`}>
+                    {tradingStreaks.currentStreak}
                   </p>
+                  <span className={`text-xs ${tradingStreaks.isWinning ? 'text-success/70' : 'text-destructive/70'}`}>
+                    {tradingStreaks.isWinning ? 'זכיות ברצף' : 'הפסדים ברצף'}
+                  </span>
                 </div>
                 
-                {/* Max Streaks */}
-                <div className="bg-secondary/30 rounded-xl p-4">
-                  <p className="text-sm text-muted-foreground mb-2">שיאי רצפים</p>
-                  <div className="flex justify-between">
+                <div className="bg-muted/30 rounded-lg p-3.5 border border-border/50">
+                  <span className="text-xs text-muted-foreground block mb-1">שיאי רצפים</span>
+                  <div className="flex items-baseline gap-3 mt-1">
                     <div>
-                      <p className="text-lg font-bold text-success">{tradingStreaks.maxWinStreak}</p>
-                      <p className="text-xs text-muted-foreground">זכיות</p>
+                      <span className="text-xl font-bold text-success">{tradingStreaks.maxWinStreak}</span>
+                      <span className="text-xs text-muted-foreground mr-1">W</span>
                     </div>
                     <div>
-                      <p className="text-lg font-bold text-destructive">{tradingStreaks.maxLoseStreak}</p>
-                      <p className="text-xs text-muted-foreground">הפסדים</p>
+                      <span className="text-xl font-bold text-destructive">{tradingStreaks.maxLoseStreak}</span>
+                      <span className="text-xs text-muted-foreground mr-1">L</span>
                     </div>
                   </div>
                 </div>
                 
-                {/* Best Trade */}
                 {tradingStreaks.bestTrade && (
-                  <div className="bg-success/5 rounded-xl p-4 border border-success/10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Trophy className="h-4 w-4 text-success" />
-                      <span className="text-sm text-muted-foreground">העסקה הטובה ביותר</span>
+                  <div className="bg-success/5 rounded-lg p-3.5 border border-success/15">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Trophy className="h-3.5 w-3.5 text-success" />
+                      <span className="text-xs text-muted-foreground">עסקה הכי טובה</span>
                     </div>
                     <p className="text-lg font-bold text-success">
-                      {displayMode === "points" 
-                        ? `+${(tradingStreaks.bestTrade.pnl_points || 0).toFixed(0)} נק׳`
-                        : `+$${(tradingStreaks.bestTrade.pnl || 0).toFixed(0)}`}
+                      {displayMode === "points" ? `+${(tradingStreaks.bestTrade.pnl_points || 0).toFixed(0)}` : `+$${(tradingStreaks.bestTrade.pnl || 0).toFixed(0)}`}
                     </p>
                     <p className="text-xs text-muted-foreground">{tradingStreaks.bestTrade.symbol}</p>
                   </div>
                 )}
                 
-                {/* Worst Trade */}
                 {tradingStreaks.worstTrade && (
-                  <div className="bg-destructive/5 rounded-xl p-4 border border-destructive/10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Skull className="h-4 w-4 text-destructive" />
-                      <span className="text-sm text-muted-foreground">העסקה הגרועה ביותר</span>
+                  <div className="bg-destructive/5 rounded-lg p-3.5 border border-destructive/15">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Skull className="h-3.5 w-3.5 text-destructive" />
+                      <span className="text-xs text-muted-foreground">עסקה הכי גרועה</span>
                     </div>
                     <p className="text-lg font-bold text-destructive">
-                      {displayMode === "points" 
-                        ? `${(tradingStreaks.worstTrade.pnl_points || 0).toFixed(0)} נק׳`
-                        : `$${(tradingStreaks.worstTrade.pnl || 0).toFixed(0)}`}
+                      {displayMode === "points" ? `${(tradingStreaks.worstTrade.pnl_points || 0).toFixed(0)}` : `$${(tradingStreaks.worstTrade.pnl || 0).toFixed(0)}`}
                     </p>
                     <p className="text-xs text-muted-foreground">{tradingStreaks.worstTrade.symbol}</p>
                   </div>
                 )}
               </div>
             </Card>
-
           </div>
 
           {/* Right Column */}
           <div className="lg:col-span-5 space-y-4">
-            {/* Trading Score */}
             <TradingScore 
               winRate={stats.winRate}
               avgRR={stats.avgRR}
@@ -587,84 +473,47 @@ const Dashboard = () => {
             />
 
             {/* Weekly Performance */}
-            <Card className="bg-card/50 border-border/50 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  ביצועים שבועיים
-                </h3>
-              </div>
+            <Card className="bg-card border-border p-4 md:p-5">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
+                <BarChart3 className="h-4 w-4 text-primary" />
+                ביצועים שבועיים
+              </h3>
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={weeklyData}>
-                    <XAxis 
-                      dataKey="day" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} 
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} 
-                    />
+                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
                     <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                       formatter={(value: number) => {
-                        let formatted: string;
                         switch (displayMode) {
-                          case "points":
-                            formatted = `${value.toFixed(1)} נק׳`;
-                            break;
-                          case "percentage":
-                            formatted = `${value.toFixed(2)}%`;
-                            break;
-                          case "balance":
-                          case "money":
-                          default:
-                            formatted = `$${value.toFixed(2)}`;
-                            break;
+                          case "points": return [`${value.toFixed(1)} נק׳`, ""];
+                          case "percentage": return [`${value.toFixed(2)}%`, ""];
+                          default: return [`$${value.toFixed(2)}`, ""];
                         }
-                        return [formatted, "רווח/הפסד"];
                       }}
                     />
-                    <Bar 
-                      dataKey="value" 
-                      radius={[6, 6, 0, 0]}
-                      fill="url(#barGradient)"
-                    />
-                    <defs>
-                      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" />
-                        <stop offset="100%" stopColor="hsl(var(--primary) / 0.5)" />
-                      </linearGradient>
-                    </defs>
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {weeklyData.map((entry, index) => (
+                        <Cell key={index} fill={entry.value >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))'} opacity={0.85} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </Card>
 
             {/* Recent Trades */}
-            <Card className="bg-card/50 border-border/50 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Award className="h-4 w-4 text-primary" />
-                  עסקאות אחרונות
-                </h3>
-              </div>
-              <div className="space-y-2">
+            <Card className="bg-card border-border p-4 md:p-5">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                <Activity className="h-4 w-4 text-primary" />
+                עסקאות אחרונות
+              </h3>
+              <div className="space-y-1">
                 {recentTrades.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground text-sm">אין עסקאות להצגה</p>
-                    <Button 
-                      variant="link" 
-                      className="text-primary mt-2"
-                      onClick={() => setIsAddTradeOpen(true)}
-                    >
+                    <Button variant="link" className="text-primary mt-1 text-sm" onClick={() => setIsAddTradeOpen(true)}>
                       הוסף עסקה ראשונה
                     </Button>
                   </div>
@@ -676,41 +525,26 @@ const Dashboard = () => {
                     
                     const getDisplayValue = () => {
                       switch (displayMode) {
-                        case "points":
-                          return `${isProfit ? '+' : ''}${pointsValue.toFixed(1)} נק׳`;
+                        case "points": return `${isProfit ? '+' : ''}${pointsValue.toFixed(1)}`;
                         case "percentage":
                           const pct = portfolioBalance > 0 ? (moneyValue / portfolioBalance) * 100 : 0;
                           return `${isProfit ? '+' : ''}${pct.toFixed(2)}%`;
-                        case "balance":
-                        case "money":
-                        default:
-                          return `${isProfit ? '+' : ''}$${moneyValue.toFixed(2)}`;
+                        default: return `${isProfit ? '+' : ''}$${moneyValue.toFixed(2)}`;
                       }
                     };
                     
                     return (
-                      <div 
-                        key={trade.id}
-                        className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl hover:bg-secondary/50 transition-all group cursor-pointer"
-                      >
+                      <div key={trade.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-muted/30 transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${isProfit ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                            {isProfit ? (
-                              <ArrowUpRight className="h-4 w-4 text-success" />
-                            ) : (
-                              <ArrowDownRight className="h-4 w-4 text-destructive" />
-                            )}
-                          </div>
+                          <div className={`w-1 h-8 rounded-full ${isProfit ? 'bg-success' : 'bg-destructive'}`} />
                           <div>
-                            <p className="font-medium text-foreground">{trade.symbol}</p>
+                            <p className="text-sm font-medium text-foreground">{trade.symbol}</p>
                             <p className="text-xs text-muted-foreground">
-                              {trade.entry_date 
-                                ? new Date(trade.entry_date).toLocaleDateString('he-IL') 
-                                : new Date(trade.created_at).toLocaleDateString('he-IL')}
+                              {trade.entry_date ? new Date(trade.entry_date).toLocaleDateString('he-IL') : new Date(trade.created_at).toLocaleDateString('he-IL')}
                             </p>
                           </div>
                         </div>
-                        <span className={`font-bold ${isProfit ? 'text-success' : 'text-destructive'}`}>
+                        <span className={`text-sm font-semibold tabular-nums ${isProfit ? 'text-success' : 'text-destructive'}`}>
                           {getDisplayValue()}
                         </span>
                       </div>
@@ -722,67 +556,42 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Trade Time & Duration Performance Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Day of Week Performance */}
-          <Card className="bg-card/50 border-border/50 p-3 md:p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm md:text-base">
-                📅 ביצועים לפי יום בשבוע
-              </h3>
-            </div>
+          <Card className="bg-card border-border p-4 md:p-5">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
+              <Calendar className="h-4 w-4 text-primary" />
+              ביצועים לפי יום
+            </h3>
             {dayOfWeekPerformance.length === 0 ? (
-              <div className="h-48 md:h-64 flex items-center justify-center">
+              <div className="h-48 md:h-56 flex items-center justify-center">
                 <p className="text-muted-foreground text-sm">אין מספיק נתונים</p>
               </div>
             ) : (
-              <div className="h-48 md:h-64">
+              <div className="h-48 md:h-56">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dayOfWeekPerformance} margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
-                    <XAxis 
-                      dataKey="dayName" 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                    />
-                    <YAxis 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      tickFormatter={(value) => `$${value}`}
-                    />
+                  <BarChart data={dayOfWeekPerformance} margin={{ top: 5, right: 5, bottom: 15, left: 35 }}>
+                    <XAxis dataKey="dayName" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
                     <Tooltip 
                       content={({ active, payload }) => {
-                        if (active && payload && payload.length > 0) {
+                        if (active && payload?.[0]) {
                           const data = payload[0].payload;
                           return (
-                            <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-                              <p className="font-bold text-base mb-1">יום {data.dayName}</p>
-                              <p className={`font-bold ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                סה"כ: ${data.pnl.toFixed(2)}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {data.count} עסקאות
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {data.winRate}% הצלחה | ממוצע: ${data.avgPnl.toFixed(2)}
-                              </p>
+                            <div className="bg-card border border-border rounded-lg p-2.5 shadow-lg text-xs">
+                              <p className="font-semibold text-sm mb-1">יום {data.dayName}</p>
+                              <p className={`font-bold ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>${data.pnl.toFixed(2)}</p>
+                              <p className="text-muted-foreground">{data.count} עסקאות · {data.winRate}% הצלחה</p>
                             </div>
                           );
                         }
                         return null;
                       }}
                     />
-                    <Bar 
-                      dataKey="pnl" 
-                      radius={[4, 4, 0, 0]}
-                      fill="hsl(var(--primary))"
-                    >
+                    <Bar dataKey="pnl" radius={[3, 3, 0, 0]}>
                       {dayOfWeekPerformance.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`}
-                          fill={entry.pnl >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
-                        />
+                        <Cell key={index} fill={entry.pnl >= 0 ? 'hsl(var(--success))' : 'hsl(var(--destructive))'} opacity={0.8} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -791,67 +600,45 @@ const Dashboard = () => {
             )}
           </Card>
 
-          {/* Cumulative PNL Chart */}
-          <Card className="bg-card/50 border-border/50 p-3 md:p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm md:text-base">
-                📈 עקומת רווח/הפסד
-              </h3>
-            </div>
+          {/* Cumulative PNL */}
+          <Card className="bg-card border-border p-4 md:p-5">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              עקומת הון
+            </h3>
             {cumulativePnlData.length === 0 ? (
-              <div className="h-48 md:h-64 flex items-center justify-center">
+              <div className="h-48 md:h-56 flex items-center justify-center">
                 <p className="text-muted-foreground text-sm">אין מספיק נתונים</p>
               </div>
             ) : (
-              <div className="h-48 md:h-64">
+              <div className="h-48 md:h-56">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={cumulativePnlData} margin={{ top: 10, right: 10, bottom: 20, left: 40 }}>
+                  <AreaChart data={cumulativePnlData} margin={{ top: 5, right: 5, bottom: 15, left: 35 }}>
                     <defs>
                       <linearGradient id="colorCumulativePnl" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
                         <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <XAxis 
-                      dataKey="date" 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                      tickFormatter={(value) => `$${value}`}
-                    />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} interval="preserveStartEnd" />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
                     <Tooltip 
                       content={({ active, payload }) => {
-                        if (active && payload && payload.length > 0) {
+                        if (active && payload?.[0]) {
                           const data = payload[0].payload;
                           return (
-                            <div className="bg-card border border-border rounded-lg p-2 shadow-lg">
-                              <p className="font-medium">{data.symbol}</p>
-                              <p className="text-xs text-muted-foreground">{data.fullDate}</p>
-                              <p className={`text-sm ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                עסקה: ${data.pnl.toFixed(2)}
-                              </p>
-                              <p className={`font-bold ${data.cumulative >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                סה"כ: ${data.cumulative.toFixed(2)}
-                              </p>
+                            <div className="bg-card border border-border rounded-lg p-2.5 shadow-lg text-xs">
+                              <p className="font-semibold text-sm">{data.symbol}</p>
+                              <p className="text-muted-foreground">{data.fullDate}</p>
+                              <p className={`${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>עסקה: ${data.pnl.toFixed(2)}</p>
+                              <p className={`font-bold ${data.cumulative >= 0 ? 'text-success' : 'text-destructive'}`}>סה"כ: ${data.cumulative.toFixed(2)}</p>
                             </div>
                           );
                         }
                         return null;
                       }}
                     />
-                    <Area 
-                      type="monotone"
-                      dataKey="cumulative" 
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      fill="url(#colorCumulativePnl)"
-                    />
+                    <Area type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={1.5} fill="url(#colorCumulativePnl)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -860,72 +647,61 @@ const Dashboard = () => {
         </div>
 
         {/* Monthly Breakdown */}
-        <Card className="bg-card/50 border-border/50 p-3 md:p-5 overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-4 md:mb-5">
-            <div className="flex bg-secondary/50 rounded-lg p-1 overflow-x-auto max-w-full">
+        <Card className="bg-card border-border p-4 md:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4">
+            <h3 className="text-sm font-semibold text-foreground">פירוט חודשי</h3>
+            <div className="flex bg-muted/50 rounded-lg p-0.5 border border-border/50 mr-auto sm:mr-0">
               {[
-                { key: "pnl", label: "💰", labelFull: "💰 רווח/הפסד" },
-                { key: "trades", label: "📈", labelFull: "📈 עסקאות" },
-                { key: "winrate", label: "🎯", labelFull: "🎯 הצלחה" },
-                { key: "points", label: "📊", labelFull: "📊 נקודות" },
+                { key: "pnl", label: "רווח/הפסד", short: "$" },
+                { key: "trades", label: "עסקאות", short: "#" },
+                { key: "winrate", label: "הצלחה", short: "%" },
+                { key: "points", label: "נקודות", short: "P" },
               ].map((item) => (
-                <Button
+                <button
                   key={item.key}
-                  variant="ghost"
-                  size="sm"
-                  className={`transition-all text-xs md:text-sm whitespace-nowrap ${monthlyViewMode === item.key ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-secondary"}`}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                    monthlyViewMode === item.key 
+                      ? "bg-card text-foreground shadow-sm border border-border/50" 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                   onClick={() => setMonthlyViewMode(item.key as MonthlyViewMode)}
                 >
-                  <span className="md:hidden">{item.label}</span>
-                  <span className="hidden md:inline">{item.labelFull}</span>
-                </Button>
+                  <span className="hidden md:inline">{item.label}</span>
+                  <span className="md:hidden">{item.short}</span>
+                </button>
               ))}
             </div>
-            <span className="text-muted-foreground mr-auto font-medium text-sm">2025</span>
+            <span className="text-xs text-muted-foreground mr-auto font-medium">2025</span>
           </div>
           
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2 md:gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
             {monthlyBreakdown.map((month, index) => {
               let displayValue: string;
               let isPositive = true;
               
               switch (monthlyViewMode) {
-                case "pnl":
-                  displayValue = `$${month.pnl.toFixed(0)}`;
-                  isPositive = month.pnl >= 0;
-                  break;
-                case "trades":
-                  displayValue = String(month.trades);
-                  isPositive = month.trades > 0;
-                  break;
-                case "winrate":
-                  displayValue = `${month.winRate.toFixed(0)}%`;
-                  isPositive = month.winRate >= 50;
-                  break;
-                case "points":
-                  displayValue = `${month.points.toFixed(0)}`;
-                  isPositive = month.points >= 0;
-                  break;
+                case "pnl": displayValue = `$${month.pnl.toFixed(0)}`; isPositive = month.pnl >= 0; break;
+                case "trades": displayValue = String(month.trades); isPositive = month.trades > 0; break;
+                case "winrate": displayValue = `${month.winRate.toFixed(0)}%`; isPositive = month.winRate >= 50; break;
+                case "points": displayValue = `${month.points.toFixed(0)}`; isPositive = month.points >= 0; break;
               }
               
               return (
                 <div
                   key={index}
-                  className={`text-center p-2 md:p-4 rounded-xl cursor-pointer transition-all hover:scale-105 ${
+                  className={`text-center p-2 md:p-3 rounded-lg transition-all ${
                     month.highlight 
-                      ? "bg-gradient-to-b from-primary/20 to-primary/5 border border-primary/30 shadow-lg shadow-primary/10" 
-                      : "bg-secondary/30 hover:bg-secondary/50 border border-transparent"
+                      ? "bg-primary/10 border border-primary/25" 
+                      : "bg-muted/20 border border-transparent hover:bg-muted/40"
                   }`}
                 >
-                  <p className={`text-sm md:text-lg font-bold truncate ${
-                    month.highlight 
-                      ? (isPositive ? "text-success" : "text-destructive")
-                      : "text-foreground"
+                  <p className={`text-sm md:text-base font-bold truncate ${
+                    month.highlight ? (isPositive ? "text-success" : "text-destructive") : "text-foreground"
                   }`}>
                     {displayValue}
                   </p>
-                  <p className="text-[10px] md:text-xs text-muted-foreground">{month.trades} עס׳</p>
-                  <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1 font-medium">{month.month}</p>
+                  <p className="text-[10px] text-muted-foreground">{month.trades} עס׳</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">{month.month}</p>
                 </div>
               );
             })}
