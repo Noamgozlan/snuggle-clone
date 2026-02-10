@@ -17,7 +17,7 @@ import {
   LayoutGrid,
   MinusSquare,
   Zap,
-  Square,
+  Monitor,
 } from "lucide-react";
 import { useFont, fontOptions, FontFamily } from "@/contexts/FontContext";
 import { useTheme, colorSchemeOptions, visualStyleOptions } from "@/contexts/ThemeContext";
@@ -64,9 +64,9 @@ export const useBreakEvenConfig = () => {
 
 const visualStyleIcons: Record<string, React.ReactNode> = {
   layout: <LayoutGrid className="h-6 w-6" />,
+  monitor: <Monitor className="h-6 w-6" />,
   "minus-square": <MinusSquare className="h-6 w-6" />,
   zap: <Zap className="h-6 w-6" />,
-  square: <Square className="h-6 w-6" />,
 };
 
 const Settings = () => {
