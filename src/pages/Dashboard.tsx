@@ -7,7 +7,7 @@ import { ShareStatsDialog } from "@/components/dashboard/ShareStatsDialog";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { GoalsTracker } from "@/components/dashboard/GoalsTracker";
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview";
-import { PerformanceGauges } from "@/components/dashboard/PerformanceGauges";
+import { PerformanceGauges, MiniGauge } from "@/components/dashboard/PerformanceGauges";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
 import { useTrades } from "@/hooks/useTrades";
@@ -402,34 +402,37 @@ const Dashboard = () => {
             </p>
           </Card>
 
-          {/* Win Rate */}
+          {/* Win Rate with Semi-Circle Gauge */}
           <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">אחוז הצלחה</span>
               <div className="p-1.5 rounded-md bg-primary/10">
                 <Target className="h-3.5 w-3.5 text-primary" />
               </div>
             </div>
-            <p className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{stats.winRate.toFixed(1)}%</p>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-success">{stats.winningTrades}W</span>
-              <span className="text-xs text-muted-foreground">/</span>
-              <span className="text-xs text-destructive">{stats.losingTrades}L</span>
+            <div className="flex items-center gap-3">
+              <p className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{stats.winRate.toFixed(1)}%</p>
+              <MiniGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
             </div>
-            <div className="mt-2.5 h-1 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary transition-all rounded-full" style={{ width: `${stats.winRate}%` }} />
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{stats.winningTrades}</span>
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-warning/15 text-warning">{stats.breakevenTrades}</span>
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive">{stats.losingTrades}</span>
             </div>
           </Card>
 
-          {/* Avg RR */}
+          {/* Avg RR with Semi-Circle Gauge */}
           <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ממוצע R:R</span>
               <div className="p-1.5 rounded-md bg-primary/10">
                 <Zap className="h-3.5 w-3.5 text-primary" />
               </div>
             </div>
-            <p className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{stats.avgRR.toFixed(2)}</p>
+            <div className="flex items-center gap-3">
+              <p className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{stats.avgRR.toFixed(2)}</p>
+              <MiniGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
+            </div>
             <p className="text-xs text-muted-foreground mt-1.5">
               {stats.avgRR >= 2 ? 'מצוין' : stats.avgRR >= 1 ? 'טוב' : 'לשפר'}
             </p>
@@ -459,20 +462,6 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Performance Gauges */}
-        <PerformanceGauges
-          winRate={stats.winRate}
-          profitFactor={stats.profitFactor}
-          dayWinPercent={dayStats.dayWinPercent}
-          winningTrades={stats.winningTrades}
-          losingTrades={stats.losingTrades}
-          breakevenTrades={stats.breakevenTrades}
-          winningDays={dayStats.winningDays}
-          losingDays={dayStats.losingDays}
-          breakevenDays={dayStats.breakevenDays}
-          avgWin={stats.avgWin}
-          avgLoss={stats.avgLoss}
-        />
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
