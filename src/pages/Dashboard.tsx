@@ -7,6 +7,7 @@ import { ShareStatsDialog } from "@/components/dashboard/ShareStatsDialog";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { GoalsTracker } from "@/components/dashboard/GoalsTracker";
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview";
+import { RecurringMistakesBanner } from "@/components/dashboard/RecurringMistakesBanner";
 import { PerformanceGauges, MiniGauge } from "@/components/dashboard/PerformanceGauges";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
@@ -329,6 +330,8 @@ const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="space-y-5 md:space-y-6 max-w-full overflow-x-hidden">
+        {/* Recurring Mistakes Banner */}
+        <RecurringMistakesBanner trades={trades} />
         {/* Header */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-6 md:mt-0">
           <div>

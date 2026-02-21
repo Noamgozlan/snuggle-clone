@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.improve-trade-text]
 verify_jwt = false
+
+[functions.weekly-ai-summary]
+verify_jwt = false

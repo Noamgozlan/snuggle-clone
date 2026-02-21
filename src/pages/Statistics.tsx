@@ -3,7 +3,7 @@ import { calculateAverageTradeDuration } from "@/lib/formatDuration";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrades } from "@/hooks/useTrades";
-import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText, Bot, Globe, Brain, AlertTriangle, Shield, GitCompare } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, Target, Clock, Zap, Hash, DollarSign, BarChart2, Award, Loader2, CheckCircle2, FileText, Bot, Globe, Brain, AlertTriangle, Shield, GitCompare, Sparkles } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { MENTAL_STATES, MISTAKES, SETUP_TYPES, getMentalStateInfo } from "@/components/trades/TradeTagsSection";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { TradeReports } from "@/components/statistics/TradeReports";
 import AITradingAdvisor from "@/components/statistics/AITradingAdvisor";
 import { RiskManagement } from "@/components/statistics/RiskManagement";
 import { PeriodComparison } from "@/components/statistics/PeriodComparison";
+import { AIWeeklySummary } from "@/components/statistics/AIWeeklySummary";
 
 interface TradeConfirmation {
   trade_id: string;
@@ -262,11 +263,16 @@ const Statistics = () => {
   return (
     <DashboardLayout title="סטטיסטיקות מתקדמות">
       <Tabs defaultValue="overview" dir="rtl" className="space-y-4 md:space-y-6 max-w-full overflow-hidden">
-        <TabsList className="grid w-full max-w-2xl grid-cols-5 text-xs md:text-sm">
+        <TabsList className="grid w-full max-w-3xl grid-cols-6 text-xs md:text-sm">
           <TabsTrigger value="overview" className="flex items-center gap-1 md:gap-2 px-1 md:px-4">
             <BarChart2 className="h-3 w-3 md:h-4 md:w-4" />
             <span className="hidden sm:inline">סקירה</span>
             <span className="sm:hidden">סקירה</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai-summary" className="flex items-center gap-1 md:gap-2 px-1 md:px-4">
+            <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="hidden sm:inline">סיכום AI</span>
+            <span className="sm:hidden">סיכום</span>
           </TabsTrigger>
           <TabsTrigger value="reports" className="flex items-center gap-1 md:gap-2 px-1 md:px-4">
             <FileText className="h-3 w-3 md:h-4 md:w-4" />
@@ -996,6 +1002,10 @@ const Statistics = () => {
             </p>
           </Card>
         </div>
+        </TabsContent>
+
+        <TabsContent value="ai-summary">
+          <AIWeeklySummary trades={trades} stats={stats} />
         </TabsContent>
 
         <TabsContent value="reports">
