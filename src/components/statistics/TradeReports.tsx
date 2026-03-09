@@ -22,11 +22,13 @@ import {
   X,
   FileText,
   Brain,
-  AlertTriangle
+  AlertTriangle,
+  Download
 } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { generateTradingPDF } from "@/lib/generatePDF";
 
 interface Trade {
   id: string;
