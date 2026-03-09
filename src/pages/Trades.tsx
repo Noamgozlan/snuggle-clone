@@ -753,10 +753,10 @@ const Trades = () => {
           </div>
           <DialogFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setConfirmationDialogOpen(false)}>
-              ביטול
+              {t("general.cancel")}
             </Button>
             <Button onClick={handleSaveConfirmation} disabled={!newConfirmationName.trim()}>
-              הוסף
+              {t("general.add")}
             </Button>
           </DialogFooter>
         </DialogContent>
