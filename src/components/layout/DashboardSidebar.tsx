@@ -90,7 +90,7 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
   const displayName =
     profile?.first_name && profile?.last_name
       ? `${profile.first_name} ${profile.last_name}`
-      : profile?.username || user?.email?.split("@")[0] || "משתמש";
+      : profile?.username || user?.email?.split("@")[0] || "";
 
   const displayEmail = profile?.email || user?.email || "";
 
