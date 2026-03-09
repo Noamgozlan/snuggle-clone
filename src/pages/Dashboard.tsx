@@ -394,8 +394,8 @@ const Dashboard = () => {
                 <span className="text-[11px] font-medium text-muted-foreground">Net P&L</span>
                 <UITooltip>
                   <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">רווח/הפסד נקי מצטבר</TooltipContent>
-                </UITooltip>
+                <TooltipContent side="top" className="text-xs">{t("stats.netPnlTooltip")}</TooltipContent>
+              </UITooltip>
                 <span className="text-[10px] text-muted-foreground/60 tabular-nums">{stats.totalTrades}</span>
               </div>
             </div>
