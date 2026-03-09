@@ -9,12 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Minus, Star, Upload, Loader2, X, Layers, Clock } from "lucide-react";
 import { TradeTagsSection } from "@/components/trades/TradeTagsSection";
+import { SymbolCombobox } from "@/components/trades/SymbolCombobox";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Trade } from "@/hooks/useTrades";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useSavedSymbols } from "@/hooks/useSavedSymbols";
 
 interface EditTradeDialogProps {
   trade: Trade | null;
@@ -26,6 +28,7 @@ interface EditTradeDialogProps {
 export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: EditTradeDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { symbols: savedSymbols, addSymbol, removeSymbol } = useSavedSymbols();
   const [rating, setRating] = useState(0);
   const [tradeType, setTradeType] = useState<"long" | "short">("long");
   const [pnlSign, setPnlSign] = useState<"positive" | "negative">("positive");
@@ -246,6 +249,17 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           : Math.abs(parseFloat(formData.pnl))
         : null;
 
+      // Auto-calculate RR if not provided
+      let rrValue: number | null = formData.rr ? parseFloat(formData.rr) : null;
+      const riskValue = formData.risk ? parseFloat(formData.risk) : null;
+      if (rrValue === null && riskValue && riskValue > 0 && pnlValue !== null) {
+        rrValue = parseFloat((Math.abs(pnlValue) / riskValue).toFixed(2));
+        if (pnlValue < 0) rrValue = -rrValue;
+      }
+
+      // Save symbol for future use
+      addSymbol(formData.symbol);
+
       const combinedNotes =
         formData.entryReason || formData.conclusions
           ? `${formData.entryReason || ""}\n\n[CONCLUSIONS]\n${formData.conclusions || ""}`.trim()
@@ -264,7 +278,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           pnl: pnlValue,
           pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
           risk: formData.risk ? parseFloat(formData.risk) : null,
-          rr: formData.rr ? parseFloat(formData.rr) : null,
+          rr: rrValue,
           rating: rating || null,
           strategy: formData.strategy || null,
           session: session || null,
@@ -353,11 +367,11 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סימול *</Label>
-              <Input
+              <SymbolCombobox
                 value={formData.symbol}
-                onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
-                className="bg-input border-border"
-                required
+                onChange={(val) => setFormData({ ...formData, symbol: val })}
+                savedSymbols={savedSymbols}
+                onRemoveSymbol={removeSymbol}
               />
             </div>
 

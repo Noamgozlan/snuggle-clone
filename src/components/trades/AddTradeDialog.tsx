@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Plus, Minus, Star, Upload, Loader2, X, CalendarIcon, Layers, Sparkles } from "lucide-react";
 import { TradeTagsSection } from "@/components/trades/TradeTagsSection";
+import { SymbolCombobox } from "@/components/trades/SymbolCombobox";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useStrategies, Strategy } from "@/hooks/useStrategies";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useSavedSymbols } from "@/hooks/useSavedSymbols";
 
 interface AddTradeDialogProps {
   trigger?: React.ReactNode;
@@ -31,6 +33,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const { toast } = useToast();
   const { strategies } = useStrategies();
   const { activePortfolio } = usePortfolio();
+  const { symbols: savedSymbols, addSymbol, removeSymbol } = useSavedSymbols();
   const [rating, setRating] = useState(0);
   const [tradeType, setTradeType] = useState<"long" | "short">("long");
   const [pnlSign, setPnlSign] = useState<"positive" | "negative">("positive");
@@ -285,6 +288,17 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       }
 
       // Sync across selected portfolios
+      // Auto-calculate RR if not provided
+      let rrValue: number | null = formData.rr ? parseFloat(formData.rr) : null;
+      const riskValue = formData.risk ? parseFloat(formData.risk) : null;
+      if (rrValue === null && riskValue && riskValue > 0 && pnlValue !== null) {
+        rrValue = parseFloat((Math.abs(pnlValue) / riskValue).toFixed(2));
+        if (pnlValue < 0) rrValue = -rrValue;
+      }
+
+      // Save symbol for future use
+      addSymbol(formData.symbol);
+
       const portfoliosToCreate = selectedPortfolioIds.length > 0 ? selectedPortfolioIds : [activePortfolio?.id || null];
 
       for (const portfolioId of portfoliosToCreate) {
@@ -303,7 +317,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             pnl: pnlValue,
             pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
             risk: formData.risk ? parseFloat(formData.risk) : null,
-            rr: formData.rr ? parseFloat(formData.rr) : null,
+            rr: rrValue,
             rating: rating || null,
             strategy: selectedStrategy?.name || null,
             session: session || null,
@@ -386,12 +400,11 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 stagger-children">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סימול *</Label>
-              <Input
-                placeholder="NQ, ES..."
+              <SymbolCombobox
                 value={formData.symbol}
-                onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
-                className="bg-input border-border hover:border-primary/50 transition-colors"
-                required
+                onChange={(val) => setFormData({ ...formData, symbol: val })}
+                savedSymbols={savedSymbols}
+                onRemoveSymbol={removeSymbol}
               />
             </div>
 
