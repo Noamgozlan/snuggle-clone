@@ -407,10 +407,10 @@ const Dashboard = () => {
           <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
             <div className="flex items-center gap-1.5 mb-2">
               <span className="text-[11px] font-medium text-muted-foreground">Trade win %</span>
-              <Tooltip>
+              <UITooltip>
                 <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">אחוז עסקאות מנצחות</TooltipContent>
-              </Tooltip>
+              </UITooltip>
             </div>
             <div className="flex items-center justify-between">
               <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">{stats.winRate.toFixed(2)}%</p>
