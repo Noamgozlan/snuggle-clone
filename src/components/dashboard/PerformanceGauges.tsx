@@ -84,14 +84,14 @@ const SemiCircleGauge = ({ label, value, tooltip, wins, breakeven, losses, isRat
       {/* Data pills */}
       <div className="flex items-center gap-2 mt-2">
         <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-success/15 text-success">
-          {wins}
-        </span>
-        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-primary/15 text-primary">
-          {breakeven}
-        </span>
-        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-destructive/15 text-destructive">
-          {losses}
-        </span>
+           {wins}
+         </span>
+         <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-warning/15 text-warning">
+           {breakeven}
+         </span>
+         <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-destructive/15 text-destructive">
+           {losses}
+         </span>
       </div>
     </div>
   );
@@ -137,7 +137,7 @@ export const MiniGauge = ({ wins, breakeven, losses }: { wins: number; breakeven
       )}
       {/* Breakeven */}
       {bePct > 0 && (
-        <path d={arcPath(winEnd, Math.min(beEnd, 0.999))} fill="none" stroke="hsl(45 93% 47%)" strokeWidth={sw} strokeLinecap="round" />
+        <path d={arcPath(winEnd, Math.min(beEnd, 0.999))} fill="none" stroke="hsl(var(--warning))" strokeWidth={sw} strokeLinecap="round" />
       )}
       {/* Losses */}
       {lossPct > 0 && (

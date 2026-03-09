@@ -417,9 +417,9 @@ const Dashboard = () => {
               <MiniGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{stats.winningTrades}</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/15 text-primary">{stats.breakevenTrades}</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive">{stats.losingTrades}</span>
+               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{stats.winningTrades}</span>
+               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-warning/15 text-warning">{stats.breakevenTrades}</span>
+               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive">{stats.losingTrades}</span>
             </div>
           </Card>
 
@@ -451,9 +451,9 @@ const Dashboard = () => {
               <MiniGauge wins={dayStats.winningDays} breakeven={dayStats.breakevenDays} losses={dayStats.losingDays} />
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{dayStats.winningDays}</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/15 text-primary">{dayStats.breakevenDays}</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive">{dayStats.losingDays}</span>
+               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{dayStats.winningDays}</span>
+               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-warning/15 text-warning">{dayStats.breakevenDays}</span>
+               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive">{dayStats.losingDays}</span>
             </div>
           </Card>
 
