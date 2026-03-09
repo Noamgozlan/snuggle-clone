@@ -740,8 +740,7 @@ const Trades = () => {
                   id="confirmation-name"
                   value={newConfirmationName}
                   onChange={(e) => setNewConfirmationName(e.target.value)}
-                  placeholder="הזן שם אישור..."
-                  className="text-right"
+                    placeholder={t("trades.enterConfirmation")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
