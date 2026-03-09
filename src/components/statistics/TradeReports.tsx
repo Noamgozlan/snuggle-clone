@@ -237,7 +237,7 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <FileText className="h-6 w-6 text-primary" />
@@ -245,14 +245,26 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
           </h2>
           <p className="text-muted-foreground">סנן את העסקאות שלך וקבל תובנות מפורטות</p>
         </div>
-        <Button
-          variant={showFilters ? "default" : "outline"}
-          onClick={() => setShowFilters(!showFilters)}
-          className="gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          {showFilters ? 'הסתר פילטרים' : 'הצג פילטרים'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              generateTradingPDF(filteredTrades as any, stats, "דו״ח מסחר מותאם אישית");
+            }}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            ייצוא PDF
+          </Button>
+          <Button
+            variant={showFilters ? "default" : "outline"}
+            onClick={() => setShowFilters(!showFilters)}
+            className="gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            {showFilters ? 'הסתר פילטרים' : 'הצג פילטרים'}
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
