@@ -64,9 +64,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   }, [open, activePortfolio]);
 
   const [session, setSession] = useState<string>("");
-  const [mentalState, setMentalState] = useState("");
+  const [mentalStates, setMentalStates] = useState<string[]>([]);
   const [tradeMistakes, setTradeMistakes] = useState<string[]>([]);
-  const [setupType, setSetupType] = useState("");
+  const [setupTypes, setSetupTypes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
@@ -110,9 +110,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setSelectedPortfolioIds(activePortfolio ? [activePortfolio.id] : []);
     setIsBreakeven(false);
     setSession("");
-    setMentalState("");
+    setMentalStates([]);
     setTradeMistakes([]);
-    setSetupType("");
+    setSetupTypes([]);
   };
 
   const handleStrategyChange = (strategyId: string) => {
@@ -313,9 +313,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                 : null,
             is_closed: true,
             screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
-            mental_state: mentalState || null,
+            mental_state: mentalStates.length > 0 ? mentalStates.join(",") : null,
             mistakes: tradeMistakes.length > 0 ? tradeMistakes : null,
-            setup_type: setupType || null,
+            setup_type: setupTypes.length > 0 ? setupTypes.join(",") : null,
           } as any)
           .select("id")
           .single();
@@ -754,12 +754,12 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
 
           {/* Tags Section */}
           <TradeTagsSection
-            mentalState={mentalState}
-            onMentalStateChange={setMentalState}
+            mentalStates={mentalStates}
+            onMentalStatesChange={setMentalStates}
             mistakes={tradeMistakes}
             onMistakesChange={setTradeMistakes}
-            setupType={setupType}
-            onSetupTypeChange={setSetupType}
+            setupTypes={setupTypes}
+            onSetupTypesChange={setSetupTypes}
           />
 
           {/* Confirmations */}

@@ -22,11 +22,13 @@ import {
   X,
   FileText,
   Brain,
-  AlertTriangle
+  AlertTriangle,
+  Download
 } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { generateTradingPDF } from "@/lib/generatePDF";
 
 interface Trade {
   id: string;
@@ -117,11 +119,17 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
       // Quantity filter
       if (trade.quantity < quantityRange[0] || trade.quantity > quantityRange[1]) return false;
 
-      // Mental state filter
-      if (selectedMentalState !== 'all' && trade.mental_state !== selectedMentalState) return false;
+      // Mental state filter (comma-separated)
+      if (selectedMentalState !== 'all') {
+        const states = (trade.mental_state || "").split(",").map(s => s.trim());
+        if (!states.includes(selectedMentalState)) return false;
+      }
 
-      // Setup type filter
-      if (selectedSetupType !== 'all' && trade.setup_type !== selectedSetupType) return false;
+      // Setup type filter (comma-separated)
+      if (selectedSetupType !== 'all') {
+        const setups = (trade.setup_type || "").split(",").map(s => s.trim());
+        if (!setups.includes(selectedSetupType)) return false;
+      }
 
       // Mistake filter
       if (selectedMistake !== 'all' && (!trade.mistakes || !trade.mistakes.includes(selectedMistake))) return false;
@@ -137,16 +145,18 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
     const losingTrades = closedTrades.filter(t => (t.pnl || 0) < 0);
     
     const totalPnl = closedTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
-    const avgWin = winningTrades.length > 0 
-      ? winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0) / winningTrades.length 
-      : 0;
-    const avgLoss = losingTrades.length > 0 
-      ? Math.abs(losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0)) / losingTrades.length 
-      : 0;
+    const totalWins = winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+    const totalLosses = Math.abs(losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0));
+    const avgWin = winningTrades.length > 0 ? totalWins / winningTrades.length : 0;
+    const avgLoss = losingTrades.length > 0 ? totalLosses / losingTrades.length : 0;
     const winRate = closedTrades.length > 0 
       ? (winningTrades.length / closedTrades.length) * 100 
       : 0;
     const avgRR = avgLoss > 0 ? avgWin / avgLoss : 0;
+    const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0;
+    const pnls = closedTrades.map(t => t.pnl || 0);
+    const maxWin = pnls.length > 0 ? Math.max(...pnls) : 0;
+    const maxLoss = pnls.length > 0 ? Math.min(...pnls) : 0;
 
     return {
       totalTrades: closedTrades.length,
@@ -156,7 +166,11 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
       avgWin,
       avgLoss,
       winRate,
-      avgRR
+      avgRR,
+      profitFactor,
+      avgPnl: closedTrades.length > 0 ? totalPnl / closedTrades.length : 0,
+      maxWin,
+      maxLoss,
     };
   }, [filteredTrades]);
 
@@ -229,7 +243,7 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <FileText className="h-6 w-6 text-primary" />
@@ -237,14 +251,26 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
           </h2>
           <p className="text-muted-foreground">סנן את העסקאות שלך וקבל תובנות מפורטות</p>
         </div>
-        <Button
-          variant={showFilters ? "default" : "outline"}
-          onClick={() => setShowFilters(!showFilters)}
-          className="gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          {showFilters ? 'הסתר פילטרים' : 'הצג פילטרים'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              generateTradingPDF(filteredTrades as any, stats, "דו״ח מסחר מותאם אישית");
+            }}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            ייצוא PDF
+          </Button>
+          <Button
+            variant={showFilters ? "default" : "outline"}
+            onClick={() => setShowFilters(!showFilters)}
+            className="gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            {showFilters ? 'הסתר פילטרים' : 'הצג פילטרים'}
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

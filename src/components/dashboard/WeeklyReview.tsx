@@ -30,11 +30,14 @@ export const WeeklyReview = ({ trades }: WeeklyReviewProps) => {
     // Best mental state
     const mentalCounts: Record<string, { count: number; pnl: number }> = {};
     weekTrades.forEach(t => {
-      const ms = (t as any).mental_state;
-      if (!ms) return;
-      if (!mentalCounts[ms]) mentalCounts[ms] = { count: 0, pnl: 0 };
-      mentalCounts[ms].count++;
-      mentalCounts[ms].pnl += t.pnl || 0;
+      const msRaw = (t as any).mental_state;
+      if (!msRaw) return;
+      const states = (msRaw as string).split(",").map((s: string) => s.trim()).filter(Boolean);
+      states.forEach(ms => {
+        if (!mentalCounts[ms]) mentalCounts[ms] = { count: 0, pnl: 0 };
+        mentalCounts[ms].count++;
+        mentalCounts[ms].pnl += t.pnl || 0;
+      });
     });
     const bestMental = Object.entries(mentalCounts).sort((a, b) => b[1].pnl - a[1].pnl)[0];
 

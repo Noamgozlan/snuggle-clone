@@ -47,9 +47,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   const { portfolios } = usePortfolio();
   const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
   const [session, setSession] = useState<string>("");
-  const [mentalState, setMentalState] = useState("");
+  const [mentalStates, setMentalStates] = useState<string[]>([]);
   const [tradeMistakes, setTradeMistakes] = useState<string[]>([]);
-  const [setupType, setSetupType] = useState("");
+  const [setupTypes, setSetupTypes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
@@ -116,9 +116,11 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       setPnlSign(pnl >= 0 ? "positive" : "negative");
       setSelectedPortfolioIds(trade.portfolio_id ? [trade.portfolio_id] : []);
       setSession((trade as any).session || "");
-      setMentalState((trade as any).mental_state || "");
+      const msVal = (trade as any).mental_state || "";
+      setMentalStates(msVal ? msVal.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
       setTradeMistakes((trade as any).mistakes || []);
-      setSetupType((trade as any).setup_type || "");
+      const stVal = (trade as any).setup_type || "";
+      setSetupTypes(stVal ? stVal.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
       
       // Load existing screenshots
       if (trade.screenshot_url) {
@@ -269,9 +271,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           notes: combinedNotes,
           is_closed: true,
           screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
-          mental_state: mentalState || null,
+          mental_state: mentalStates.length > 0 ? mentalStates.join(",") : null,
           mistakes: tradeMistakes.length > 0 ? tradeMistakes : null,
-          setup_type: setupType || null,
+          setup_type: setupTypes.length > 0 ? setupTypes.join(",") : null,
         } as any)
         .eq("id", trade.id);
 
@@ -637,12 +639,12 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
 
           {/* Tags Section */}
           <TradeTagsSection
-            mentalState={mentalState}
-            onMentalStateChange={setMentalState}
+            mentalStates={mentalStates}
+            onMentalStatesChange={setMentalStates}
             mistakes={tradeMistakes}
             onMistakesChange={setTradeMistakes}
-            setupType={setupType}
-            onSetupTypeChange={setSetupType}
+            setupTypes={setupTypes}
+            onSetupTypesChange={setSetupTypes}
           />
 
           {/* Notes & Screenshot */}

@@ -589,22 +589,26 @@ const Trades = () => {
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex flex-wrap gap-1 max-w-[200px]">
-                          {(trade as any).mental_state && (() => {
-                            const info = getMentalStateInfo((trade as any).mental_state);
+                          {(trade as any).mental_state && ((trade as any).mental_state as string).split(",").map((ms: string) => {
+                            const trimmed = ms.trim();
+                            const info = getMentalStateInfo(trimmed);
                             if (!info) return null;
                             const Icon = info.icon;
                             return (
-                              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${info.color}`}>
+                              <span key={trimmed} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${info.color}`}>
                                 <Icon className="h-3 w-3" />
                                 {info.label}
                               </span>
                             );
-                          })()}
-                          {(trade as any).setup_type && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-400 border border-violet-500/30">
-                              {(trade as any).setup_type}
-                            </span>
-                          )}
+                          })}
+                          {(trade as any).setup_type && ((trade as any).setup_type as string).split(",").map((st: string) => {
+                            const trimmed = st.trim();
+                            return (
+                              <span key={trimmed} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-400 border border-violet-500/30">
+                                {trimmed}
+                              </span>
+                            );
+                          })}
                           {((trade as any).mistakes || []).slice(0, 2).map((m: string, i: number) => (
                             <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-500/10 text-orange-400 border border-orange-500/30">
                               {m}
