@@ -208,7 +208,7 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
           onClick={handleSignOut}
         >
           <LogOut className="h-3.5 w-3.5" />
-          התנתק
+          {t("nav.logout")}
         </Button>
       </div>
     </aside>
