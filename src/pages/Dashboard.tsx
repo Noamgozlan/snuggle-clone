@@ -537,6 +537,8 @@ const Dashboard = () => {
               winRate={stats.winRate}
               avgRR={stats.avgRR}
               avgWinLossRatio={stats.avgWin > 0 && stats.avgLoss !== 0 ? Math.abs(stats.avgWin / stats.avgLoss) : 0}
+              profitFactor={stats.profitFactor === Infinity ? 3 : stats.profitFactor}
+              consistency={dayStats.dayWinPercent}
             />
 
             {/* Weekly Performance */}
