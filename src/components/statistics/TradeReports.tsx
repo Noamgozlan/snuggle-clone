@@ -117,11 +117,17 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
       // Quantity filter
       if (trade.quantity < quantityRange[0] || trade.quantity > quantityRange[1]) return false;
 
-      // Mental state filter
-      if (selectedMentalState !== 'all' && trade.mental_state !== selectedMentalState) return false;
+      // Mental state filter (comma-separated)
+      if (selectedMentalState !== 'all') {
+        const states = (trade.mental_state || "").split(",").map(s => s.trim());
+        if (!states.includes(selectedMentalState)) return false;
+      }
 
-      // Setup type filter
-      if (selectedSetupType !== 'all' && trade.setup_type !== selectedSetupType) return false;
+      // Setup type filter (comma-separated)
+      if (selectedSetupType !== 'all') {
+        const setups = (trade.setup_type || "").split(",").map(s => s.trim());
+        if (!setups.includes(selectedSetupType)) return false;
+      }
 
       // Mistake filter
       if (selectedMistake !== 'all' && (!trade.mistakes || !trade.mistakes.includes(selectedMistake))) return false;
