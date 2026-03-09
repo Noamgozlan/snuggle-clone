@@ -650,7 +650,7 @@ const Trades = () => {
                                 onClick={() => handleDeleteTrade(trade.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                מחק
+                                {t("general.delete")}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
