@@ -145,16 +145,18 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
     const losingTrades = closedTrades.filter(t => (t.pnl || 0) < 0);
     
     const totalPnl = closedTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
-    const avgWin = winningTrades.length > 0 
-      ? winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0) / winningTrades.length 
-      : 0;
-    const avgLoss = losingTrades.length > 0 
-      ? Math.abs(losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0)) / losingTrades.length 
-      : 0;
+    const totalWins = winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+    const totalLosses = Math.abs(losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0));
+    const avgWin = winningTrades.length > 0 ? totalWins / winningTrades.length : 0;
+    const avgLoss = losingTrades.length > 0 ? totalLosses / losingTrades.length : 0;
     const winRate = closedTrades.length > 0 
       ? (winningTrades.length / closedTrades.length) * 100 
       : 0;
     const avgRR = avgLoss > 0 ? avgWin / avgLoss : 0;
+    const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0;
+    const pnls = closedTrades.map(t => t.pnl || 0);
+    const maxWin = pnls.length > 0 ? Math.max(...pnls) : 0;
+    const maxLoss = pnls.length > 0 ? Math.min(...pnls) : 0;
 
     return {
       totalTrades: closedTrades.length,
@@ -164,7 +166,11 @@ export const TradeReports = ({ trades, strategies }: TradeReportsProps) => {
       avgWin,
       avgLoss,
       winRate,
-      avgRR
+      avgRR,
+      profitFactor,
+      avgPnl: closedTrades.length > 0 ? totalPnl / closedTrades.length : 0,
+      maxWin,
+      maxLoss,
     };
   }, [filteredTrades]);
 
