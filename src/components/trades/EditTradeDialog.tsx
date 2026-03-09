@@ -116,9 +116,11 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       setPnlSign(pnl >= 0 ? "positive" : "negative");
       setSelectedPortfolioIds(trade.portfolio_id ? [trade.portfolio_id] : []);
       setSession((trade as any).session || "");
-      setMentalState((trade as any).mental_state || "");
+      const msVal = (trade as any).mental_state || "";
+      setMentalStates(msVal ? msVal.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
       setTradeMistakes((trade as any).mistakes || []);
-      setSetupType((trade as any).setup_type || "");
+      const stVal = (trade as any).setup_type || "";
+      setSetupTypes(stVal ? stVal.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
       
       // Load existing screenshots
       if (trade.screenshot_url) {
