@@ -773,7 +773,7 @@ const Dashboard = () => {
                             <Cell key={index} fill={entry.fill} />
                           ))}
                         </Pie>
-                        <Tooltip
+                        <RechartsTooltip
                           content={({ active, payload }) => {
                             if (active && payload?.[0]) {
                               const d = payload[0].payload;
