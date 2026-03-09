@@ -137,7 +137,7 @@ export const MiniGauge = ({ wins, breakeven, losses }: { wins: number; breakeven
       )}
       {/* Breakeven */}
       {bePct > 0 && (
-        <path d={arcPath(winEnd, Math.min(beEnd, 0.999))} fill="none" stroke="hsl(45 93% 47%)" strokeWidth={sw} strokeLinecap="round" />
+        <path d={arcPath(winEnd, Math.min(beEnd, 0.999))} fill="none" stroke="hsl(var(--warning))" strokeWidth={sw} strokeLinecap="round" />
       )}
       {/* Losses */}
       {lossPct > 0 && (
