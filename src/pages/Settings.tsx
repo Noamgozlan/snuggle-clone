@@ -112,8 +112,8 @@ const Settings = () => {
               <Type className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">פונט</h2>
-              <p className="text-muted-foreground text-sm">בחר את הפונט המועדף עליך לכל האתר</p>
+              <h2 className="text-xl font-bold text-foreground">{t("settings.font")}</h2>
+              <p className="text-muted-foreground text-sm">{t("settings.fontDesc")}</p>
             </div>
           </div>
 
@@ -123,18 +123,18 @@ const Settings = () => {
                 key={option.value}
                 onClick={() => handleFontChange(option.value)}
                 className={cn(
-                  "relative p-4 rounded-xl border-2 transition-all duration-200 text-right",
+                  "relative p-4 rounded-xl border-2 transition-all duration-200",
                   "hover:border-primary/50 hover:bg-primary/5",
                   font === option.value ? "border-primary bg-primary/10" : "border-border bg-card",
                 )}
               >
                 {font === option.value && (
-                  <div className="absolute top-2 left-2 p-1 rounded-full bg-primary">
+                  <div className="absolute top-2 start-2 p-1 rounded-full bg-primary">
                     <Check className="h-3 w-3 text-primary-foreground" />
                   </div>
                 )}
                 <p className={cn("text-lg font-medium text-foreground", option.className)}>{option.label}</p>
-                <p className={cn("text-sm text-muted-foreground mt-1", option.className)}>זהו טקסט לדוגמה</p>
+                <p className={cn("text-sm text-muted-foreground mt-1", option.className)}>{t("settings.sampleText")}</p>
               </button>
             ))}
           </div>
@@ -147,14 +147,14 @@ const Settings = () => {
               <Palette className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">ערכת עיצוב</h2>
-              <p className="text-muted-foreground text-sm">בחר את הצבעים והסגנון המועדפים עליך</p>
+              <h2 className="text-xl font-bold text-foreground">{t("settings.theme")}</h2>
+              <p className="text-muted-foreground text-sm">{t("settings.themeDesc")}</p>
             </div>
           </div>
 
           {/* Light/Dark Mode Toggle */}
           <div className="mt-6 mb-6">
-            <p className="text-sm font-medium text-foreground mb-3">מצב תצוגה</p>
+            <p className="text-sm font-medium text-foreground mb-3">{t("settings.displayMode")}</p>
             <div className="flex gap-3">
               <button
                 onClick={() => theme === "light" && toggleTheme()}
@@ -165,9 +165,9 @@ const Settings = () => {
                 )}
               >
                 <Moon className="h-5 w-5" />
-                <span className="font-medium">מצב כהה</span>
+                <span className="font-medium">{t("settings.darkMode")}</span>
                 {theme === "dark" && (
-                  <div className="p-1 rounded-full bg-primary mr-auto">
+                  <div className="p-1 rounded-full bg-primary ms-auto">
                     <Check className="h-3 w-3 text-primary-foreground" />
                   </div>
                 )}
@@ -181,9 +181,9 @@ const Settings = () => {
                 )}
               >
                 <Sun className="h-5 w-5" />
-                <span className="font-medium">מצב בהיר</span>
+                <span className="font-medium">{t("settings.lightMode")}</span>
                 {theme === "light" && (
-                  <div className="p-1 rounded-full bg-primary mr-auto">
+                  <div className="p-1 rounded-full bg-primary ms-auto">
                     <Check className="h-3 w-3 text-primary-foreground" />
                   </div>
                 )}
@@ -193,14 +193,14 @@ const Settings = () => {
 
           {/* Color Schemes */}
           <div>
-            <p className="text-sm font-medium text-foreground mb-3">צבע ראשי</p>
+            <p className="text-sm font-medium text-foreground mb-3">{t("settings.primaryColor")}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {colorSchemeOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => {
                     setColorScheme(option.value);
-                    toast.success(`ערכת הצבעים שונתה ל${option.label}`);
+                    toast.success(t("settings.colorSchemeChanged"));
                   }}
                   className={cn(
                     "relative p-4 rounded-xl border-2 transition-all duration-200",
@@ -209,7 +209,7 @@ const Settings = () => {
                   )}
                 >
                   {colorScheme === option.value && (
-                    <div className="absolute top-2 left-2 p-1 rounded-full bg-primary">
+                    <div className="absolute top-2 start-2 p-1 rounded-full bg-primary">
                       <Check className="h-3 w-3 text-primary-foreground" />
                     </div>
                   )}
@@ -224,23 +224,23 @@ const Settings = () => {
 
           {/* Visual Styles */}
           <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-sm font-medium text-foreground mb-3">סגנון עיצוב</p>
+            <p className="text-sm font-medium text-foreground mb-3">{t("settings.visualStyle")}</p>
             <div className="grid grid-cols-2 gap-3">
               {visualStyleOptions.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => {
                     setVisualStyle(option.value);
-                    toast.success(`סגנון העיצוב שונה ל${option.label}`);
+                    toast.success(t("settings.visualStyleChanged"));
                   }}
                   className={cn(
-                    "relative p-4 rounded-xl border-2 transition-all duration-200 text-right",
+                    "relative p-4 rounded-xl border-2 transition-all duration-200",
                     "hover:border-primary/50 hover:scale-[1.02]",
                     visualStyle === option.value ? "border-primary bg-primary/10" : "border-border bg-card",
                   )}
                 >
                   {visualStyle === option.value && (
-                    <div className="absolute top-2 left-2 p-1 rounded-full bg-primary">
+                    <div className="absolute top-2 start-2 p-1 rounded-full bg-primary">
                       <Check className="h-3 w-3 text-primary-foreground" />
                     </div>
                   )}
@@ -325,14 +325,14 @@ const Settings = () => {
               <Scale className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">הגדרת Break Even</h2>
-              <p className="text-muted-foreground text-sm">הגדר טווח (בדולרים) שיחשב כ"ברייק איבן" (0) בסטטיסטיקות</p>
+              <h2 className="text-xl font-bold text-foreground">{t("settings.breakEven")}</h2>
+              <p className="text-muted-foreground text-sm">{t("settings.breakEvenDesc")}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-6">
             <div className="space-y-2">
-              <Label htmlFor="be-min">מינימום (הפסד מותר)</Label>
+              <Label htmlFor="be-min">{t("settings.beMin")}</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                 <Input
@@ -344,10 +344,10 @@ const Settings = () => {
                   placeholder="-10"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">לדוגמה: -20 (הפסד של עד $20 יחשב כ-0)</p>
+              <p className="text-xs text-muted-foreground">{t("settings.beMinExample")}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="be-max">מקסימום (רווח מותר)</Label>
+              <Label htmlFor="be-max">{t("settings.beMax")}</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                 <Input
@@ -359,7 +359,7 @@ const Settings = () => {
                   placeholder="10"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">לדוגמה: 20 (רווח של עד $20 יחשב כ-0)</p>
+              <p className="text-xs text-muted-foreground">{t("settings.beMaxExample")}</p>
             </div>
           </div>
         </Card>
@@ -375,8 +375,8 @@ const Settings = () => {
               )}
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-foreground">פרטיות פרופיל</h2>
-              <p className="text-muted-foreground text-sm">קבע אם אחרים יכולים לראות את הפרופיל וצבעי הגרף שלך</p>
+              <h2 className="text-xl font-bold text-foreground">{t("settings.privacy")}</h2>
+              <p className="text-muted-foreground text-sm">{t("settings.privacyDesc")}</p>
             </div>
           </div>
 
@@ -388,11 +388,9 @@ const Settings = () => {
                 <Lock className="h-5 w-5 text-muted-foreground" />
               )}
               <div>
-                <p className="font-medium text-foreground">{profile?.is_public ? "פרופיל ציבורי" : "פרופיל פרטי"}</p>
+                <p className="font-medium text-foreground">{profile?.is_public ? t("settings.publicProfile") : t("settings.privateProfile")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {profile?.is_public
-                    ? "אחרים יכולים לראות את הפרופיל וצבעי הגרף שלך"
-                    : "רק אתה יכול לראות את הפרופיל שלך"}
+                  {profile?.is_public ? t("settings.publicDesc") : t("settings.privateDesc")}
                 </p>
               </div>
             </div>
@@ -416,37 +414,37 @@ const Settings = () => {
               <BookOpen className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">מדריך משתמש</h2>
-              <p className="text-muted-foreground text-sm">הצג שוב את המדריך האינטראקטיבי למערכת</p>
+              <h2 className="text-xl font-bold text-foreground">{t("settings.userGuide")}</h2>
+              <p className="text-muted-foreground text-sm">{t("settings.userGuideDesc")}</p>
             </div>
           </div>
           <Button variant="outline" className="mt-4" onClick={startTour}>
-            הצג מדריך שוב
+            {t("settings.showGuide")}
           </Button>
         </Card>
 
         {/* Change Password */}
         <Card className="bg-card border-border p-6">
-          <h2 className="text-xl font-bold text-foreground mb-2">שינוי סיסמה</h2>
-          <p className="text-muted-foreground text-sm mb-6">שנה את הסיסמה שלך למערכת</p>
+          <h2 className="text-xl font-bold text-foreground mb-2">{t("settings.changePassword")}</h2>
+          <p className="text-muted-foreground text-sm mb-6">{t("settings.changePasswordDesc")}</p>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="currentPassword">סיסמה נוכחית</Label>
+              <Label htmlFor="currentPassword">{t("settings.currentPassword")}</Label>
               <Input id="currentPassword" type="password" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="newPassword">סיסמה חדשה</Label>
+              <Label htmlFor="newPassword">{t("settings.newPassword")}</Label>
               <Input id="newPassword" type="password" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">אימות סיסמה חדשה</Label>
+              <Label htmlFor="confirmPassword">{t("settings.confirmPassword")}</Label>
               <Input id="confirmPassword" type="password" />
             </div>
 
-            <Button variant="default">שנה סיסמה</Button>
+            <Button variant="default">{t("settings.changeBtn")}</Button>
           </div>
         </Card>
       </div>
