@@ -585,7 +585,7 @@ const Dashboard = () => {
                   <BarChart data={weeklyData}>
                     <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-                    <Tooltip 
+                    <RechartsTooltip 
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                       formatter={(value: number) => {
                         switch (displayMode) {
