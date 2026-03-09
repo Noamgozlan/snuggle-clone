@@ -329,26 +329,26 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-5 md:space-y-6 max-w-full overflow-x-hidden">
+      <div className="space-y-4 md:space-y-5 max-w-full overflow-x-hidden">
         {/* Recurring Mistakes Banner */}
         <RecurringMistakesBanner trades={trades} />
         {/* Header */}
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-6 md:mt-0">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-4 md:mt-0">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">
+            <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight">
               דשבורד
             </h1>
-            <p className="text-muted-foreground text-sm mt-0.5">ניתוח ביצועים</p>
+            <p className="text-muted-foreground text-xs mt-0.5">ניתוח ביצועים</p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <DateRangeFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
-            <div className="flex bg-muted/50 rounded-lg p-0.5 border border-border/50">
+            <div className="flex bg-muted/30 rounded-md p-0.5 border border-border">
               {displayModes.map((mode) => (
                 <button
                   key={mode.key}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  className={`px-2.5 py-1 text-[11px] font-medium rounded transition-all ${
                     displayMode === mode.key 
-                      ? "bg-card text-foreground shadow-sm border border-border/50" 
+                      ? "bg-card text-foreground shadow-sm border border-border" 
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                   onClick={() => setDisplayMode(mode.key)}
@@ -360,17 +360,17 @@ const Dashboard = () => {
             </div>
             <Button 
               variant="ghost" size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
               onClick={() => setIsShareOpen(true)}
             >
-              <Share2 className="h-4 w-4" />
+              <Share2 className="h-3.5 w-3.5" />
             </Button>
             <Button 
               size="sm"
-              className="gap-1.5 h-8"
+              className="gap-1.5 h-7 text-xs"
               onClick={() => setIsAddTradeOpen(true)}
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-3 w-3" />
               <span className="hidden sm:inline">הוסף עסקה</span>
               <span className="sm:hidden">הוסף</span>
             </Button>
