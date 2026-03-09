@@ -56,6 +56,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { activePortfolio } = usePortfolio();
   const { goals, createGoal, deleteGoal } = useTradingGoals();
+  const { t, language } = useLanguage();
 
   // Filter trades by date range
   const trades = useMemo(() => {
