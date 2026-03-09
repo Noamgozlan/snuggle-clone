@@ -157,6 +157,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
     </FontProvider>
+    </LanguageProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
