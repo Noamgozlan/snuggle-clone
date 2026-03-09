@@ -28,6 +28,7 @@ import MentorChat from "./pages/MentorChat";
 import Giveaways from "./pages/Giveaways";
 import Admin from "./pages/Admin";
 import Backtesting from "./pages/Backtesting";
+import EconomicNews from "./pages/EconomicNews";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
