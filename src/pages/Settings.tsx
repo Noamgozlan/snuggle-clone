@@ -78,20 +78,23 @@ const Settings = () => {
   const { startTour } = useOnboarding();
   const { profile, updateProfile } = useProfile();
   const { min: beMin, max: beMax, setRange: setBeRange } = useBreakEvenConfig();
+  const { language, setLanguage, t, isRTL } = useLanguage();
 
   const handlePublicToggle = async (checked: boolean) => {
     const success = await updateProfile({ is_public: checked });
     if (success) {
-      toast.success(checked ? "הפרופיל שלך כעת ציבורי" : "הפרופיל שלך כעת פרטי");
+      toast.success(t(checked ? "settings.profilePublic" : "settings.profilePrivate"));
     } else {
-      toast.error("שגיאה בעדכון ההגדרות");
+      toast.error(t("settings.updateError"));
     }
   };
 
   const handleFontChange = (newFont: FontFamily) => {
     setFont(newFont);
-    toast.success("הפונט שונה בהצלחה");
+    toast.success(t("settings.fontChanged"));
   };
+
+  const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   return (
     <DashboardLayout>
