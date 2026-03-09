@@ -341,15 +341,15 @@ const Trades = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                  <AlertDialogTitle>{t("trades.deleteConfirm")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    פעולה זו תמחק את כל העסקאות שלך לצמיתות. לא ניתן לבטל פעולה זו.
+                    {t("trades.deleteConfirmDesc")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>ביטול</AlertDialogCancel>
+                  <AlertDialogCancel>{t("general.cancel")}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDeleteAll} disabled={isDeleting}>
-                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "מחק הכל"}
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("trades.deleteAll")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
