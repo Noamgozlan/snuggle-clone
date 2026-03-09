@@ -22,23 +22,24 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useMentorRelationships } from "@/hooks/useMentorRelationships";
 import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "דף ראשי", href: "/dashboard" },
-  { icon: TrendingUp, label: "עסקאות", href: "/trades" },
-  { icon: BarChart3, label: "סטטיסטיקות", href: "/statistics" },
-  { icon: Target, label: "אסטרטגיות", href: "/strategies" },
-  { icon: TrendingUp, label: "Gozlan Forever Model", href: "/backtesting" },
-  { icon: Users, label: "קהילה", href: "/community" },
-  { icon: Gift, label: "הגרלות", href: "/giveaways" },
+const menuItemDefs = [
+  { icon: LayoutDashboard, labelKey: "nav.dashboard", href: "/dashboard" },
+  { icon: TrendingUp, labelKey: "nav.trades", href: "/trades" },
+  { icon: BarChart3, labelKey: "nav.statistics", href: "/statistics" },
+  { icon: Target, labelKey: "nav.strategies", href: "/strategies" },
+  { icon: TrendingUp, labelKey: "nav.backtesting", href: "/backtesting" },
+  { icon: Users, labelKey: "nav.community", href: "/community" },
+  { icon: Gift, labelKey: "nav.giveaways", href: "/giveaways" },
 ];
 
-const bottomMenuItems = [
-  { icon: User, label: "פרופיל", href: "/profile" },
-  { icon: Settings, label: "הגדרות", href: "/settings" },
+const bottomMenuItemDefs = [
+  { icon: User, labelKey: "nav.profile", href: "/profile" },
+  { icon: Settings, labelKey: "nav.settings", href: "/settings" },
 ];
 
 interface DashboardSidebarProps {
