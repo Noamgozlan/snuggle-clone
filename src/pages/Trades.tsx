@@ -460,7 +460,7 @@ const Trades = () => {
           </Card>
 
           <Card className="bg-card border-border p-3.5 flex flex-col items-center justify-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">אחוז הצלחה</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("trades.winRate")}</p>
             <ProgressRing value={stats.winRate} size={70} strokeWidth={5} />
           </Card>
 
