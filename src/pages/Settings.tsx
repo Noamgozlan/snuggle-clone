@@ -101,8 +101,8 @@ const Settings = () => {
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-2 text-muted-foreground">
-          <ArrowRight className="h-4 w-4" />
-          <span>הגדרות מסחר</span>
+          <BackArrow className="h-4 w-4" />
+          <span>{t("settings.title")}</span>
         </div>
 
         {/* Font Settings */}
