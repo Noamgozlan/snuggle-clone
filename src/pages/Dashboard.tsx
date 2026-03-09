@@ -477,7 +477,7 @@ const Dashboard = () => {
               <span className="text-[11px] font-medium text-muted-foreground">Avg win/loss trade</span>
               <UITooltip>
                 <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">יחס ממוצע רווח לממוצע הפסד</TooltipContent>
+                <TooltipContent side="top" className="text-xs">{t("stats.avgWinLossTooltip")}</TooltipContent>
               </UITooltip>
             </div>
             <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight mb-2">
