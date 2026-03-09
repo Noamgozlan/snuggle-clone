@@ -485,10 +485,10 @@ const Trades = () => {
             </div>
           ) : trades.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground text-sm mb-4">אין עסקאות להצגה</p>
+              <p className="text-muted-foreground text-sm mb-4">{t("trades.noTrades")}</p>
               <Button variant="default" size="sm" onClick={() => setIsAddTradeOpen(true)}>
-                <Plus className="h-4 w-4 ml-2" />
-                הוסף עסקה ראשונה
+                <Plus className="h-4 w-4 me-2" />
+                {t("trades.addFirst")}
               </Button>
             </div>
           ) : (
