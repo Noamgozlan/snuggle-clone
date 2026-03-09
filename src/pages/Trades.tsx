@@ -368,7 +368,7 @@ const Trades = () => {
                   )}
                 >
                   <CalendarIcon className="h-4 w-4 ml-1 md:ml-2" />
-                  {fromDate ? format(fromDate, "dd/MM/yy") : "מתאריך"}
+                  {fromDate ? format(fromDate, "dd/MM/yy") : t("trades.fromDate")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
