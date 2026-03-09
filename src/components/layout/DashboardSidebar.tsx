@@ -131,7 +131,7 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
   };
 
   return (
-    <aside className="h-svh w-[85vw] max-w-[280px] md:w-64 bg-sidebar flex flex-col border-l border-sidebar-border">
+    <aside className="h-svh w-[85vw] max-w-[280px] md:w-64 bg-sidebar flex flex-col border-s border-sidebar-border">
       {/* Logo */}
       <div className="px-5 py-5 flex items-center">
         <Link to="/" className="flex items-center gap-2" onClick={handleLinkClick}>
