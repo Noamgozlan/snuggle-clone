@@ -491,12 +491,15 @@ const Statistics = () => {
         {/* Mental State Analysis */}
         {(() => {
           const mentalStateData = trades.reduce((acc, trade) => {
-            const state = trade.mental_state;
-            if (state) {
-              if (!acc[state]) acc[state] = { trades: 0, wins: 0, pnl: 0 };
-              acc[state].trades++;
-              if ((trade.pnl || 0) > 0) acc[state].wins++;
-              acc[state].pnl += trade.pnl || 0;
+            const stateRaw = trade.mental_state;
+            if (stateRaw) {
+              const states = stateRaw.split(",").map(s => s.trim()).filter(Boolean);
+              states.forEach(state => {
+                if (!acc[state]) acc[state] = { trades: 0, wins: 0, pnl: 0 };
+                acc[state].trades++;
+                if ((trade.pnl || 0) > 0) acc[state].wins++;
+                acc[state].pnl += trade.pnl || 0;
+              });
             }
             return acc;
           }, {} as Record<string, { trades: number; wins: number; pnl: number }>);
