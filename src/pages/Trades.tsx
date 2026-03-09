@@ -412,10 +412,10 @@ const Trades = () => {
             )}
             <div className="hidden md:flex gap-1">
               <Button variant="default" size="sm" className="bg-primary">
-                כסף $
+                {t("trades.moneyBtn")}
               </Button>
               <Button variant="secondary" size="sm">
-                נקודות
+                {t("trades.pointsBtn")}
               </Button>
             </div>
             <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
