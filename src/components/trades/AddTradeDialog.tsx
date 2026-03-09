@@ -33,6 +33,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const { toast } = useToast();
   const { strategies } = useStrategies();
   const { activePortfolio } = usePortfolio();
+  const { symbols: savedSymbols, addSymbol, removeSymbol } = useSavedSymbols();
   const [rating, setRating] = useState(0);
   const [tradeType, setTradeType] = useState<"long" | "short">("long");
   const [pnlSign, setPnlSign] = useState<"positive" | "negative">("positive");
