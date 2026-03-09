@@ -461,10 +461,10 @@ const Dashboard = () => {
           <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
             <div className="flex items-center gap-1.5 mb-2">
               <span className="text-[11px] font-medium text-muted-foreground">Avg win/loss trade</span>
-              <Tooltip>
+              <UITooltip>
                 <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">יחס ממוצע רווח לממוצע הפסד</TooltipContent>
-              </Tooltip>
+              </UITooltip>
             </div>
             <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight mb-2">
               {stats.avgLoss !== 0 ? Math.abs(stats.avgWin / stats.avgLoss).toFixed(2) : '—'}
