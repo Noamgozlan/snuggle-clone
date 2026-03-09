@@ -157,7 +157,7 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
 
       {/* Main Navigation */}
       <nav className="flex-1 px-3 py-2 overflow-y-auto">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-2 px-3">{t("nav.navigation")}</p>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-2 px-3">{t("nav.navigation")}vigation")}</p>
         <ul className="space-y-0.5">
           {menuItems.map((item) => renderNavItem(item))}
 
@@ -171,7 +171,7 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
 
         <Separator className="bg-sidebar-border my-3" />
         
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-2 px-3">חשבון</p>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] {t("nav.account")}>חשבון</p>
         <ul className="space-y-0.5">
           {bottomMenuItems.map((item) => renderNavItem(item))}
         </ul>
