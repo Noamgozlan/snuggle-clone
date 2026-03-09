@@ -105,7 +105,21 @@ Deno.serve(async (req) => {
     }
 
     const rawData = await response.json();
-    const eventsData: RapidAPIEvent[] = Array.isArray(rawData) ? rawData : [];
+    console.log('Raw API response type:', typeof rawData, 'isArray:', Array.isArray(rawData));
+    console.log('Raw API response keys:', rawData ? Object.keys(rawData).slice(0, 10) : 'null');
+    console.log('Raw API response sample:', JSON.stringify(rawData).substring(0, 500));
+    
+    // Handle different response structures
+    let eventsData: RapidAPIEvent[] = [];
+    if (Array.isArray(rawData)) {
+      eventsData = rawData;
+    } else if (rawData && typeof rawData === 'object') {
+      // Try common wrapper keys
+      if (Array.isArray(rawData.result)) eventsData = rawData.result;
+      else if (Array.isArray(rawData.data)) eventsData = rawData.data;
+      else if (Array.isArray(rawData.events)) eventsData = rawData.events;
+      else if (Array.isArray(rawData.calendar)) eventsData = rawData.calendar;
+    }
 
     const countryToCurrency: Record<string, string> = {
       'US': 'USD', 'EU': 'EUR', 'GB': 'GBP', 'JP': 'JPY',
