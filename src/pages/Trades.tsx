@@ -430,7 +430,7 @@ const Trades = () => {
           <Card className="bg-card border-border p-3.5">
             <div className="flex items-center gap-3">
               <div className="flex-1">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">רווח/הפסד נטו</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{t("trades.netPnl")}</p>
                 <p className={`text-xl font-bold tabular-nums ${stats.totalPnl >= 0 ? "text-success" : "text-destructive"}`}>
                   {stats.totalPnl >= 0 ? "+" : ""}${stats.totalPnl.toFixed(2)}
                 </p>
