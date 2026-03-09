@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { getMentalStateInfo, MENTAL_STATES } from "@/components/trades/TradeTagsSection";
 import { TradingCalendar } from "@/components/dashboard/TradingCalendar";
 import { TradingScore } from "@/components/dashboard/TradingScore";
@@ -55,6 +56,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { activePortfolio } = usePortfolio();
   const { goals, createGoal, deleteGoal } = useTradingGoals();
+  const { t, language } = useLanguage();
 
   // Filter trades by date range
   const trades = useMemo(() => {
@@ -100,23 +102,8 @@ const Dashboard = () => {
     const avgLoss = losingTrades > 0 ? -grossLoss / losingTrades : 0;
     
     return {
-      totalPnl,
-      totalPoints,
-      winningTrades,
-      losingTrades,
-      breakevenTrades,
-      winRate,
-      avgPnl,
-      avgPoints,
-      avgRR,
-      totalTrades: trades.length,
-      maxWin,
-      maxLoss,
-      maxWinPoints,
-      maxLossPoints,
-      profitFactor,
-      avgWin,
-      avgLoss,
+      totalPnl, totalPoints, winningTrades, losingTrades, breakevenTrades, winRate, avgPnl, avgPoints, avgRR,
+      totalTrades: trades.length, maxWin, maxLoss, maxWinPoints, maxLossPoints, profitFactor, avgWin, avgLoss,
     };
   }, [trades, allStats, dateRange]);
 
@@ -125,7 +112,9 @@ const Dashboard = () => {
 
   // Weekly data
   const weeklyData = useMemo(() => {
-    const days = ["ש׳", "ו׳", "ה׳", "ד׳", "ג׳", "ב׳", "א׳"];
+    const days = language === "he" 
+      ? ["ש׳", "ו׳", "ה׳", "ד׳", "ג׳", "ב׳", "א׳"]
+      : ["Sat", "Fri", "Thu", "Wed", "Tue", "Mon", "Sun"];
     const dayIndexes = [6, 5, 4, 3, 2, 1, 0];
     const today = new Date();
     const startOfWeek = new Date(today);
@@ -153,7 +142,7 @@ const Dashboard = () => {
       
       return { day, value, pnl: pnlValue, points: pointsValue, trades: dayTrades.length };
     });
-  }, [trades, displayMode, portfolioBalance]);
+  }, [trades, displayMode, portfolioBalance, language]);
 
   // Monthly breakdown
   const monthlyBreakdown = useMemo(() => {
@@ -176,7 +165,7 @@ const Dashboard = () => {
       const winRate = monthTrades.length > 0 ? (winningTrades / monthTrades.length) * 100 : 0;
       
       months.push({
-        month: format(monthDate, "MMM", { locale: he }),
+        month: format(monthDate, "MMM", { locale: language === "he" ? he : undefined }),
         pnl, points,
         trades: monthTrades.length,
         winRate,
@@ -185,7 +174,7 @@ const Dashboard = () => {
     }
     
     return months.reverse();
-  }, [trades]);
+  }, [trades, language]);
 
   // Streaks
   const tradingStreaks = useMemo(() => {
@@ -212,33 +201,34 @@ const Dashboard = () => {
       else if ((trade.pnl || 0) < 0) { tempLose++; tempWin = 0; maxLoseStreak = Math.max(maxLoseStreak, tempLose); }
     }
     
-    const bestTrade = trades.reduce((best, t) => (t.pnl || 0) > (best?.pnl || -Infinity) ? t : best, trades[0]);
-    const worstTrade = trades.reduce((worst, t) => (t.pnl || 0) < (worst?.pnl || Infinity) ? t : worst, trades[0]);
+    const bestTrade = sortedTrades.reduce((best, t) => (!best || (t.pnl || 0) > (best.pnl || 0)) ? t : best, sortedTrades[0]);
+    const worstTrade = sortedTrades.reduce((worst, t) => (!worst || (t.pnl || 0) < (worst.pnl || 0)) ? t : worst, sortedTrades[0]);
     
     return { currentStreak, isWinning, maxWinStreak, maxLoseStreak, bestTrade, worstTrade };
   }, [trades]);
 
-  // Cumulative PNL
+  // Cumulative PNL data
   const cumulativePnlData = useMemo(() => {
-    const sortedTrades = trades
-      .filter(t => t.entry_date && t.pnl !== null)
-      .sort((a, b) => new Date(a.entry_date!).getTime() - new Date(b.entry_date!).getTime());
-    
+    const sorted = [...trades].filter(t => t.entry_date).sort((a, b) => 
+      new Date(a.entry_date!).getTime() - new Date(b.entry_date!).getTime()
+    );
     let cumulative = 0;
-    return sortedTrades.map((trade, index) => {
+    return sorted.map((trade, index) => {
       cumulative += trade.pnl || 0;
       return {
         index: index + 1,
-        date: format(new Date(trade.entry_date!), "dd/MM", { locale: he }),
-        fullDate: format(new Date(trade.entry_date!), "dd/MM/yyyy", { locale: he }),
+        date: format(new Date(trade.entry_date!), "dd/MM", { locale: language === "he" ? he : undefined }),
+        fullDate: format(new Date(trade.entry_date!), "dd/MM/yyyy", { locale: language === "he" ? he : undefined }),
         pnl: trade.pnl || 0, cumulative, symbol: trade.symbol,
       };
     });
-  }, [trades]);
+  }, [trades, language]);
 
   // Day of week performance
   const dayOfWeekPerformance = useMemo(() => {
-    const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    const dayNames = language === "he" 
+      ? ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
+      : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayData: { [day: number]: { totalPnl: number; count: number; wins: number; losses: number } } = {};
     
     trades.filter(t => t.entry_date && t.pnl !== null).forEach(trade => {
@@ -260,7 +250,7 @@ const Dashboard = () => {
         avgPnl: data.count > 0 ? data.totalPnl / data.count : 0,
       };
     }).filter(d => d.count > 0);
-  }, [trades]);
+  }, [trades, language]);
 
   // Day win/loss stats for gauges
   const dayStats = useMemo(() => {
@@ -323,10 +313,10 @@ const Dashboard = () => {
   const avgDisplay = displayMode === "money" || displayMode === "balance" ? stats.avgPnl : displayMode === "points" ? stats.avgPoints : portfolioBalance > 0 ? (stats.avgPnl / portfolioBalance) * 100 : 0;
 
   const displayModes = [
-    { key: "money" as const, label: "כסף", icon: "$" },
-    { key: "points" as const, label: "נקודות", icon: "P" },
-    { key: "percentage" as const, label: "אחוזים", icon: "%" },
-    { key: "balance" as const, label: "מצב תיק", icon: "B" },
+    { key: "money" as const, label: t("mode.money"), icon: "$" },
+    { key: "points" as const, label: t("mode.points"), icon: "P" },
+    { key: "percentage" as const, label: t("mode.percentage"), icon: "%" },
+    { key: "balance" as const, label: t("mode.balance"), icon: "B" },
   ];
 
   return (
@@ -338,9 +328,9 @@ const Dashboard = () => {
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-4 md:mt-0">
           <div>
             <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight">
-              דשבורד
+              {t("dashboard.title")}
             </h1>
-            <p className="text-muted-foreground text-xs mt-0.5">ניתוח ביצועים</p>
+            <p className="text-muted-foreground text-xs mt-0.5">{t("dashboard.subtitle")}</p>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             <DateRangeFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
@@ -373,8 +363,8 @@ const Dashboard = () => {
               onClick={() => setIsAddTradeOpen(true)}
             >
               <Plus className="h-3 w-3" />
-              <span className="hidden sm:inline">הוסף עסקה</span>
-              <span className="sm:hidden">הוסף</span>
+              <span className="hidden sm:inline">{t("dashboard.addTrade")}</span>
+              <span className="sm:hidden">{t("dashboard.addTradeShort")}</span>
             </Button>
           </div>
         </div>
@@ -385,10 +375,10 @@ const Dashboard = () => {
           <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-medium text-muted-foreground">Net P&L</span>
+                <span className="text-[11px] font-medium text-muted-foreground">{t("stats.netPnl")}</span>
                 <UITooltip>
                   <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">רווח/הפסד נקי מצטבר</TooltipContent>
+                  <TooltipContent side="top" className="text-xs">{t("stats.netPnlTooltip")}</TooltipContent>
                 </UITooltip>
                 <span className="text-[10px] text-muted-foreground/60 tabular-nums">{stats.totalTrades}</span>
               </div>
@@ -406,10 +396,10 @@ const Dashboard = () => {
           {/* Trade Win % */}
           <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
             <div className="flex items-center gap-1.5 mb-2">
-              <span className="text-[11px] font-medium text-muted-foreground">Trade win %</span>
+              <span className="text-[11px] font-medium text-muted-foreground">{t("stats.tradeWin")}</span>
               <UITooltip>
                 <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">אחוז עסקאות מנצחות</TooltipContent>
+                <TooltipContent side="top" className="text-xs">{t("stats.tradeWinTooltip")}</TooltipContent>
               </UITooltip>
             </div>
             <div className="flex items-center justify-between">
@@ -426,10 +416,10 @@ const Dashboard = () => {
           {/* Profit Factor */}
           <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
             <div className="flex items-center gap-1.5 mb-2">
-              <span className="text-[11px] font-medium text-muted-foreground">Profit factor</span>
+              <span className="text-[11px] font-medium text-muted-foreground">{t("stats.profitFactor")}</span>
               <UITooltip>
                 <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">יחס רווח גולמי להפסד גולמי</TooltipContent>
+                <TooltipContent side="top" className="text-xs">{t("stats.profitFactorTooltip")}</TooltipContent>
               </UITooltip>
             </div>
             <div className="flex items-center justify-between">
@@ -448,10 +438,10 @@ const Dashboard = () => {
           {/* Day Win % */}
           <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
             <div className="flex items-center gap-1.5 mb-2">
-              <span className="text-[11px] font-medium text-muted-foreground">Day win %</span>
+              <span className="text-[11px] font-medium text-muted-foreground">{t("stats.dayWin")}</span>
               <UITooltip>
                 <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">אחוז ימי מסחר רווחיים</TooltipContent>
+                <TooltipContent side="top" className="text-xs">{t("stats.dayWinTooltip")}</TooltipContent>
               </UITooltip>
             </div>
             <div className="flex items-center justify-between">
@@ -468,17 +458,16 @@ const Dashboard = () => {
           {/* Avg Win/Loss Trade */}
           <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
             <div className="flex items-center gap-1.5 mb-2">
-              <span className="text-[11px] font-medium text-muted-foreground">Avg win/loss trade</span>
+              <span className="text-[11px] font-medium text-muted-foreground">{t("stats.avgWinLoss")}</span>
               <UITooltip>
                 <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">יחס ממוצע רווח לממוצע הפסד</TooltipContent>
+                <TooltipContent side="top" className="text-xs">{t("stats.avgWinLossTooltip")}</TooltipContent>
               </UITooltip>
             </div>
             <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight mb-2">
               {stats.avgLoss !== 0 ? Math.abs(stats.avgWin / stats.avgLoss).toFixed(2) : '—'}
             </p>
-            {/* Win/Loss bar */}
-            <div className="w-full h-1.5 rounded-full overflow-hidden flex bg-muted">
+            <div className="w-full h-2 rounded-full overflow-hidden flex bg-muted">
               <div
                 className="h-full rounded-r-full transition-all"
                 style={{ 
@@ -516,29 +505,29 @@ const Dashboard = () => {
             <Card className="bg-card border-border p-4 md:p-5">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
                 <Flame className="h-4 w-4 text-primary" />
-                רצפים ושיאים
+                {t("dashboard.streaks")}
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className={`rounded-lg p-3.5 border ${tradingStreaks.isWinning ? 'bg-success/5 border-success/20' : 'bg-destructive/5 border-destructive/20'}`}>
-                  <span className="text-xs text-muted-foreground block mb-1">רצף נוכחי</span>
+                  <span className="text-xs text-muted-foreground block mb-1">{t("dashboard.currentStreak")}</span>
                   <p className={`text-xl font-bold ${tradingStreaks.isWinning ? 'text-success' : 'text-destructive'}`}>
                     {tradingStreaks.currentStreak}
                   </p>
                   <span className={`text-xs ${tradingStreaks.isWinning ? 'text-success/70' : 'text-destructive/70'}`}>
-                    {tradingStreaks.isWinning ? 'זכיות ברצף' : 'הפסדים ברצף'}
+                    {tradingStreaks.isWinning ? t("dashboard.winsInRow") : t("dashboard.lossesInRow")}
                   </span>
                 </div>
                 
                 <div className="bg-muted/30 rounded-lg p-3.5 border border-border/50">
-                  <span className="text-xs text-muted-foreground block mb-1">שיאי רצפים</span>
+                  <span className="text-xs text-muted-foreground block mb-1">{t("dashboard.streakRecords")}</span>
                   <div className="flex items-baseline gap-3 mt-1">
                     <div>
                       <span className="text-xl font-bold text-success">{tradingStreaks.maxWinStreak}</span>
-                      <span className="text-xs text-muted-foreground mr-1">W</span>
+                      <span className="text-xs text-muted-foreground ms-1">W</span>
                     </div>
                     <div>
                       <span className="text-xl font-bold text-destructive">{tradingStreaks.maxLoseStreak}</span>
-                      <span className="text-xs text-muted-foreground mr-1">L</span>
+                      <span className="text-xs text-muted-foreground ms-1">L</span>
                     </div>
                   </div>
                 </div>
@@ -547,7 +536,7 @@ const Dashboard = () => {
                   <div className="bg-success/5 rounded-lg p-3.5 border border-success/15">
                     <div className="flex items-center gap-1.5 mb-1">
                       <Trophy className="h-3.5 w-3.5 text-success" />
-                      <span className="text-xs text-muted-foreground">עסקה הכי טובה</span>
+                      <span className="text-xs text-muted-foreground">{t("dashboard.bestTrade")}</span>
                     </div>
                     <p className="text-lg font-bold text-success">
                       {displayMode === "points" ? `+${(tradingStreaks.bestTrade.pnl_points || 0).toFixed(0)}` : `+$${(tradingStreaks.bestTrade.pnl || 0).toFixed(0)}`}
@@ -560,7 +549,7 @@ const Dashboard = () => {
                   <div className="bg-destructive/5 rounded-lg p-3.5 border border-destructive/15">
                     <div className="flex items-center gap-1.5 mb-1">
                       <Skull className="h-3.5 w-3.5 text-destructive" />
-                      <span className="text-xs text-muted-foreground">עסקה הכי גרועה</span>
+                      <span className="text-xs text-muted-foreground">{t("dashboard.worstTrade")}</span>
                     </div>
                     <p className="text-lg font-bold text-destructive">
                       {displayMode === "points" ? `${(tradingStreaks.worstTrade.pnl_points || 0).toFixed(0)}` : `$${(tradingStreaks.worstTrade.pnl || 0).toFixed(0)}`}
@@ -586,7 +575,7 @@ const Dashboard = () => {
             <Card className="bg-card border-border p-4 md:p-5">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
                 <BarChart3 className="h-4 w-4 text-primary" />
-                ביצועים שבועיים
+                {t("dashboard.weeklyPerf")}
               </h3>
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
@@ -597,7 +586,7 @@ const Dashboard = () => {
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                       formatter={(value: number) => {
                         switch (displayMode) {
-                          case "points": return [`${value.toFixed(1)} נק׳`, ""];
+                          case "points": return [`${value.toFixed(1)} pts`, ""];
                           case "percentage": return [`${value.toFixed(2)}%`, ""];
                           default: return [`$${value.toFixed(2)}`, ""];
                         }
@@ -617,14 +606,14 @@ const Dashboard = () => {
             <Card className="bg-card border-border p-4 md:p-5">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                 <Activity className="h-4 w-4 text-primary" />
-                עסקאות אחרונות
+                {t("dashboard.recentTrades")}
               </h3>
               <div className="space-y-1">
                 {recentTrades.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground text-sm">אין עסקאות להצגה</p>
+                    <p className="text-muted-foreground text-sm">{t("dashboard.noTrades")}</p>
                     <Button variant="link" className="text-primary mt-1 text-sm" onClick={() => setIsAddTradeOpen(true)}>
-                      הוסף עסקה ראשונה
+                      {t("dashboard.addFirstTrade")}
                     </Button>
                   </div>
                 ) : (
@@ -650,7 +639,7 @@ const Dashboard = () => {
                           <div>
                             <p className="text-sm font-medium text-foreground">{trade.symbol}</p>
                             <p className="text-xs text-muted-foreground">
-                              {trade.entry_date ? new Date(trade.entry_date).toLocaleDateString('he-IL') : new Date(trade.created_at).toLocaleDateString('he-IL')}
+                              {trade.entry_date ? new Date(trade.entry_date).toLocaleDateString(language === "he" ? 'he-IL' : 'en-US') : new Date(trade.created_at).toLocaleDateString(language === "he" ? 'he-IL' : 'en-US')}
                             </p>
                           </div>
                         </div>
@@ -672,11 +661,11 @@ const Dashboard = () => {
           <Card className="bg-card border-border p-4 md:p-5">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
               <Calendar className="h-4 w-4 text-primary" />
-              ביצועים לפי יום
+              {t("dashboard.dayPerformance")}
             </h3>
             {dayOfWeekPerformance.length === 0 ? (
               <div className="h-48 md:h-56 flex items-center justify-center">
-                <p className="text-muted-foreground text-sm">אין מספיק נתונים</p>
+                <p className="text-muted-foreground text-sm">{t("dashboard.notEnoughData")}</p>
               </div>
             ) : (
               <div className="h-48 md:h-56">
@@ -690,9 +679,9 @@ const Dashboard = () => {
                           const data = payload[0].payload;
                           return (
                             <div className="bg-card border border-border rounded-lg p-2.5 shadow-lg text-xs">
-                              <p className="font-semibold text-sm mb-1">יום {data.dayName}</p>
+                              <p className="font-semibold text-sm mb-1">{data.dayName}</p>
                               <p className={`font-bold ${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>${data.pnl.toFixed(2)}</p>
-                              <p className="text-muted-foreground">{data.count} עסקאות · {data.winRate}% הצלחה</p>
+                              <p className="text-muted-foreground">{data.count} {t("dashboard.trades")} · {data.winRate}%</p>
                             </div>
                           );
                         }
@@ -714,11 +703,11 @@ const Dashboard = () => {
           <Card className="bg-card border-border p-4 md:p-5">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
               <TrendingUp className="h-4 w-4 text-primary" />
-              עקומת הון
+              {t("dashboard.equityCurve")}
             </h3>
             {cumulativePnlData.length === 0 ? (
               <div className="h-48 md:h-56 flex items-center justify-center">
-                <p className="text-muted-foreground text-sm">אין מספיק נתונים</p>
+                <p className="text-muted-foreground text-sm">{t("dashboard.notEnoughData")}</p>
               </div>
             ) : (
               <div className="h-48 md:h-56">
@@ -740,8 +729,8 @@ const Dashboard = () => {
                             <div className="bg-card border border-border rounded-lg p-2.5 shadow-lg text-xs">
                               <p className="font-semibold text-sm">{data.symbol}</p>
                               <p className="text-muted-foreground">{data.fullDate}</p>
-                              <p className={`${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>עסקה: ${data.pnl.toFixed(2)}</p>
-                              <p className={`font-bold ${data.cumulative >= 0 ? 'text-success' : 'text-destructive'}`}>סה"כ: ${data.cumulative.toFixed(2)}</p>
+                              <p className={`${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>{language === "he" ? "עסקה" : "Trade"}: ${data.pnl.toFixed(2)}</p>
+                              <p className={`font-bold ${data.cumulative >= 0 ? 'text-success' : 'text-destructive'}`}>{t("dashboard.total")}: ${data.cumulative.toFixed(2)}</p>
                             </div>
                           );
                         }
@@ -788,7 +777,7 @@ const Dashboard = () => {
                               return (
                                 <div className="bg-card border border-border rounded-lg p-2.5 shadow-lg text-xs">
                                   <p className="font-semibold text-sm">{d.name}</p>
-                                  <p className="text-muted-foreground">{d.value} עסקאות · {d.winRate}% הצלחה</p>
+                                  <p className="text-muted-foreground">{d.value} {t("dashboard.trades")} · {d.winRate}%</p>
                                   <p className={d.pnl >= 0 ? 'text-success' : 'text-destructive'}>${d.pnl.toFixed(0)}</p>
                                 </div>
                               );
@@ -827,7 +816,7 @@ const Dashboard = () => {
                       <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={75} />
                       <RechartsTooltip
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
-                        formatter={(value: number) => [`${value} פעמים`, '']}
+                        formatter={(value: number) => [`${value} ${t("dashboard.times")}`, '']}
                       />
                       <Bar dataKey="count" radius={[0, 4, 4, 0]} fill="hsl(24, 95%, 53%)" opacity={0.75} />
                     </BarChart>
@@ -841,13 +830,13 @@ const Dashboard = () => {
         {/* Monthly Breakdown */}
         <Card className="bg-card border-border p-4 md:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-4">
-            <h3 className="text-sm font-semibold text-foreground">פירוט חודשי</h3>
-            <div className="flex bg-muted/50 rounded-lg p-0.5 border border-border/50 mr-auto sm:mr-0">
+            <h3 className="text-sm font-semibold text-foreground">{t("dashboard.monthlyBreakdown")}</h3>
+            <div className="flex bg-muted/50 rounded-lg p-0.5 border border-border/50 ms-auto sm:ms-0">
               {[
-                { key: "pnl", label: "רווח/הפסד", short: "$" },
-                { key: "trades", label: "עסקאות", short: "#" },
-                { key: "winrate", label: "הצלחה", short: "%" },
-                { key: "points", label: "נקודות", short: "P" },
+                { key: "pnl", label: t("monthly.pnl"), short: "$" },
+                { key: "trades", label: t("monthly.trades"), short: "#" },
+                { key: "winrate", label: t("monthly.winrate"), short: "%" },
+                { key: "points", label: t("monthly.points"), short: "P" },
               ].map((item) => (
                 <button
                   key={item.key}
@@ -863,7 +852,7 @@ const Dashboard = () => {
                 </button>
               ))}
             </div>
-            <span className="text-xs text-muted-foreground mr-auto font-medium">2025</span>
+            <span className="text-xs text-muted-foreground ms-auto font-medium">2025</span>
           </div>
           
           <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
@@ -892,7 +881,7 @@ const Dashboard = () => {
                   }`}>
                     {displayValue}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">{month.trades} עס׳</p>
+                  <p className="text-[10px] text-muted-foreground">{month.trades}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">{month.month}</p>
                 </div>
               );
