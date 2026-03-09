@@ -304,7 +304,7 @@ const Trades = () => {
   };
 
   return (
-    <DashboardLayout title="עסקאות">
+    <DashboardLayout title={t("trades.title")}>
       <div className="space-y-6">
         {/* Filters - Mobile Responsive */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between animate-fade-in mt-8 md:mt-0">
