@@ -419,8 +419,8 @@ const Trades = () => {
               </Button>
             </div>
             <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
-              <Filter className="h-4 w-4 md:ml-2" />
-              <span className="hidden md:inline">מסננים</span>
+               <Filter className="h-4 w-4 md:me-2" />
+               <span className="hidden md:inline">{t("trades.filters")}</span>
             </Button>
           </div>
         </div>
