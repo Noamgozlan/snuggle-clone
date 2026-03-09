@@ -11,59 +11,62 @@ interface TradingScoreProps {
   winRate: number;
   avgRR: number;
   avgWinLossRatio: number;
+  profitFactor?: number;
+  maxDrawdown?: number;
+  recoveryFactor?: number;
+  consistency?: number;
 }
 
-export const TradingScore = ({ winRate, avgRR, avgWinLossRatio }: TradingScoreProps) => {
-  // Normalize values to 0-100 scale for the radar chart
-  const normalizedValues = useMemo(() => {
-    return {
-      winRate: Math.min(winRate, 100),
-      avgRR: Math.min((avgRR / 3) * 100, 100), // 3.0 = 100%
-      avgWinLoss: Math.min((avgWinLossRatio / 3) * 100, 100), // 3.0 = 100%
-    };
-  }, [winRate, avgRR, avgWinLossRatio]);
+export const TradingScore = ({ 
+  winRate, avgRR, avgWinLossRatio, 
+  profitFactor = 0, maxDrawdown = 0, recoveryFactor = 0, consistency = 0 
+}: TradingScoreProps) => {
+  // 6 metrics for hexagonal radar
+  const metrics = useMemo(() => [
+    { label: "Win %", value: Math.min(winRate, 100), angle: 270 },
+    { label: "Profit factor", value: Math.min((profitFactor / 3) * 100, 100), angle: 330 },
+    { label: "Avg win/loss", value: Math.min((avgWinLossRatio / 3) * 100, 100), angle: 30 },
+    { label: "Recovery factor", value: Math.min((recoveryFactor / 3) * 100, 100), angle: 90 },
+    { label: "Max drawdown", value: Math.min(maxDrawdown > 0 ? ((10 - Math.min(maxDrawdown, 10)) / 10) * 100 : 50, 100), angle: 150 },
+    { label: "Consistency", value: Math.min(consistency, 100), angle: 210 },
+  ], [winRate, profitFactor, avgWinLossRatio, recoveryFactor, maxDrawdown, consistency]);
 
-  // Calculate overall score (weighted average)
   const overallScore = useMemo(() => {
     const score = (
-      normalizedValues.winRate * 0.35 +
-      normalizedValues.avgRR * 0.35 +
-      normalizedValues.avgWinLoss * 0.30
+      metrics[0].value * 0.25 +
+      metrics[1].value * 0.20 +
+      metrics[2].value * 0.15 +
+      metrics[3].value * 0.15 +
+      metrics[4].value * 0.10 +
+      metrics[5].value * 0.15
     );
     return Math.min(score, 100);
-  }, [normalizedValues]);
+  }, [metrics]);
 
-  // Triangle radar chart calculations
-  const centerX = 100;
-  const centerY = 90;
-  const maxRadius = 65;
+  const centerX = 150;
+  const centerY = 130;
+  const maxRadius = 95;
 
-  // Three points at 120 degree intervals (top, bottom-left, bottom-right)
   const getPoint = (angle: number, value: number) => {
-    const normalizedValue = value / 100;
-    const radius = maxRadius * normalizedValue;
-    const angleRad = (angle - 90) * (Math.PI / 180);
-    return {
-      x: centerX + radius * Math.cos(angleRad),
-      y: centerY + radius * Math.sin(angleRad),
-    };
+    const r = maxRadius * (value / 100);
+    const rad = (angle - 90) * (Math.PI / 180);
+    return { x: centerX + r * Math.cos(rad), y: centerY + r * Math.sin(rad) };
   };
 
-  const points = [
-    getPoint(0, normalizedValues.winRate),      // Top
-    getPoint(240, normalizedValues.avgWinLoss), // Bottom-left
-    getPoint(120, normalizedValues.avgRR), // Bottom-right
-  ];
+  const dataPoints = metrics.map(m => getPoint(m.angle, m.value));
+  const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
 
-  const maxPoints = [
-    getPoint(0, 100),
-    getPoint(240, 100),
-    getPoint(120, 100),
-  ];
+  // Grid levels
+  const gridLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
 
-  const pathData = `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y} L ${points[2].x} ${points[2].y} Z`;
-  const maxPathData = `M ${maxPoints[0].x} ${maxPoints[0].y} L ${maxPoints[1].x} ${maxPoints[1].y} L ${maxPoints[2].x} ${maxPoints[2].y} Z`;
+  // Label positions (slightly further out)
+  const labelRadius = maxRadius + 22;
+  const labelPoints = metrics.map(m => {
+    const rad = (m.angle - 90) * (Math.PI / 180);
+    return { x: centerX + labelRadius * Math.cos(rad), y: centerY + labelRadius * Math.sin(rad) };
+  });
 
+  // Score color gradient position (0-100 mapped to gradient bar)
   const getScoreColor = () => {
     if (overallScore >= 70) return "text-success";
     if (overallScore >= 40) return "text-warning";
@@ -71,106 +74,131 @@ export const TradingScore = ({ winRate, avgRR, avgWinLossRatio }: TradingScorePr
   };
 
   return (
-    <Card className="bg-card/50 border-border/50 p-5">
-      <div className="flex items-center gap-2 mb-2">
-        <h3 className="font-semibold text-foreground">Gozlan Score</h3>
+    <Card className="bg-card border-border p-4 md:p-5">
+      <div className="flex items-center gap-2 mb-1">
+        <h3 className="text-sm font-semibold text-foreground">Gozlan Score</h3>
         <Tooltip>
           <TooltipTrigger>
-            <Info className="h-4 w-4 text-muted-foreground" />
+            <Info className="h-3.5 w-3.5 text-muted-foreground" />
           </TooltipTrigger>
           <TooltipContent className="max-w-xs text-right" side="left">
-            <p>ציון משוקלל המבוסס על אחוז הצלחה (35%), Avg RR (35%), ויחס ממוצע רווח/הפסד (30%)</p>
+            <p className="text-xs">ציון משוקלל המבוסס על 6 מדדי ביצוע: Win%, Profit Factor, Avg Win/Loss, Recovery Factor, Max Drawdown, Consistency</p>
           </TooltipContent>
         </Tooltip>
-        <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full mr-auto">BETA</span>
       </div>
 
       <div className="flex flex-col items-center">
-        <svg width="200" height="160" viewBox="0 0 200 160" className="overflow-visible">
-          {/* Grid lines */}
-          {[0.33, 0.66, 1].map((scale, i) => {
-            const gridPoints = [
-              getPoint(0, scale * 100),
-              getPoint(240, scale * 100),
-              getPoint(120, scale * 100),
-            ];
-            return (
-              <path
-                key={i}
-                d={`M ${gridPoints[0].x} ${gridPoints[0].y} L ${gridPoints[1].x} ${gridPoints[1].y} L ${gridPoints[2].x} ${gridPoints[2].y} Z`}
-                fill="none"
-                stroke="hsl(var(--border))"
-                strokeWidth="1"
-                opacity={0.3 + i * 0.2}
-              />
-            );
-          })}
-
-          {/* Axis lines from center */}
-          {[0, 120, 240].map((angle, i) => {
-            const endPoint = getPoint(angle, 100);
-            return (
-              <line
-                key={i}
-                x1={centerX}
-                y1={centerY}
-                x2={endPoint.x}
-                y2={endPoint.y}
-                stroke="hsl(var(--border))"
-                strokeWidth="1"
-                opacity="0.4"
-              />
-            );
-          })}
-
-          {/* Gradient definition */}
+        <svg width="300" height="260" viewBox="0 0 300 260" className="overflow-visible w-full max-w-[300px]">
           <defs>
-            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+            {/* Radar fill gradient */}
+            <linearGradient id="radarFill" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.08" />
+            </linearGradient>
+            {/* Score bar gradient */}
+            <linearGradient id="scoreBarGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="hsl(0, 72%, 51%)" />
+              <stop offset="25%" stopColor="hsl(25, 95%, 53%)" />
+              <stop offset="50%" stopColor="hsl(45, 93%, 47%)" />
+              <stop offset="75%" stopColor="hsl(152, 76%, 48%)" />
+              <stop offset="100%" stopColor="hsl(189, 94%, 43%)" />
             </linearGradient>
           </defs>
 
-          {/* Value area */}
+          {/* Grid polygons */}
+          {gridLevels.map((level, li) => {
+            const pts = metrics.map(m => getPoint(m.angle, level * 100));
+            const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+            return (
+              <path
+                key={li}
+                d={path}
+                fill="none"
+                stroke="hsl(var(--border))"
+                strokeWidth="0.8"
+                opacity={0.15 + li * 0.12}
+              />
+            );
+          })}
+
+          {/* Axis lines */}
+          {metrics.map((m, i) => {
+            const end = getPoint(m.angle, 100);
+            return (
+              <line
+                key={i}
+                x1={centerX} y1={centerY}
+                x2={end.x} y2={end.y}
+                stroke="hsl(var(--border))"
+                strokeWidth="0.8"
+                opacity="0.25"
+              />
+            );
+          })}
+
+          {/* Data shape */}
           <path
-            d={pathData}
-            fill="url(#scoreGradient)"
+            d={dataPath}
+            fill="url(#radarFill)"
             stroke="hsl(var(--primary))"
-            strokeWidth="2"
-            className="transition-all duration-500"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            className="transition-all duration-700 ease-out"
           />
 
           {/* Data points */}
-          {points.map((point, i) => (
-            <circle
-              key={i}
-              cx={point.x}
-              cy={point.y}
-              r="4"
-              fill="hsl(var(--primary))"
-              stroke="hsl(var(--background))"
-              strokeWidth="2"
-            />
+          {dataPoints.map((p, i) => (
+            <g key={i}>
+              <circle cx={p.x} cy={p.y} r="5" fill="hsl(var(--primary))" opacity="0.15" />
+              <circle cx={p.x} cy={p.y} r="3" fill="hsl(var(--primary))" stroke="hsl(var(--card))" strokeWidth="1.5" />
+            </g>
           ))}
 
           {/* Labels */}
-          <text x={centerX} y="12" textAnchor="middle" className="fill-muted-foreground text-xs">
-            Win %
-          </text>
-          <text x="30" y="145" textAnchor="middle" className="fill-muted-foreground text-xs">
-            Avg win/loss
-          </text>
-          <text x="170" y="145" textAnchor="middle" className="fill-muted-foreground text-xs">
-            Avg RR
-          </text>
+          {labelPoints.map((p, i) => (
+            <text
+              key={i}
+              x={p.x}
+              y={p.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="fill-muted-foreground"
+              style={{ fontSize: '10px' }}
+            >
+              {metrics[i].label}
+            </text>
+          ))}
         </svg>
 
         {/* Score display */}
-        <div className="text-center mt-2">
-          <p className="text-sm text-muted-foreground">Your Gozlan Score:</p>
-          <p className={`text-3xl font-bold ${getScoreColor()}`}>
-            {overallScore.toFixed(2)}
-          </p>
+        <div className="w-full mt-1 space-y-2">
+          <div className="flex items-baseline gap-2">
+            <p className="text-xs text-muted-foreground">Your Gozlan Score</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <p className={`text-2xl font-bold tabular-nums ${getScoreColor()}`}>
+              {overallScore.toFixed(2)}
+            </p>
+            {/* Gradient score bar */}
+            <div className="flex-1 relative">
+              <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'url(#scoreBarGradient)' }}>
+                <svg width="100%" height="100%" className="rounded-full">
+                  <rect width="100%" height="100%" fill="url(#scoreBarGradient)" rx="5" />
+                </svg>
+              </div>
+              {/* Score indicator */}
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-foreground rounded-full shadow-md transition-all duration-500"
+                style={{ left: `${Math.min(overallScore, 100)}%` }}
+              />
+              {/* Scale labels */}
+              <div className="flex justify-between mt-1">
+                {[0, 20, 40, 60, 80, 100].map(v => (
+                  <span key={v} className="text-[8px] text-muted-foreground tabular-nums">{v}</span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Card>
