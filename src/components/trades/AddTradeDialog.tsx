@@ -317,7 +317,7 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
             pnl: pnlValue,
             pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
             risk: formData.risk ? parseFloat(formData.risk) : null,
-            rr: formData.rr ? parseFloat(formData.rr) : null,
+            rr: rrValue,
             rating: rating || null,
             strategy: selectedStrategy?.name || null,
             session: session || null,
