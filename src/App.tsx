@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { FontProvider } from "@/contexts/FontContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { PortfolioProvider } from "@/contexts/PortfolioContext";
