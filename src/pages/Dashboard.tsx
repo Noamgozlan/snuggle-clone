@@ -817,7 +817,7 @@ const Dashboard = () => {
                     <BarChart data={mistakesData} layout="vertical" margin={{ top: 5, right: 5, bottom: 5, left: 80 }}>
                       <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
                       <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={75} />
-                      <Tooltip
+                      <RechartsTooltip
                         contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                         formatter={(value: number) => [`${value} פעמים`, '']}
                       />
