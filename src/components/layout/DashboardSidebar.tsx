@@ -161,12 +161,12 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
         <ul className="space-y-0.5">
           {menuItems.map((item) => renderNavItem(item))}
 
-          {hasApprovedMentor && renderNavItem({ icon: MessageSquare, label: "צ'אט עם המנטור", href: "/mentor-chat" })}
+          {hasApprovedMentor && renderNavItem({ icon: MessageSquare, label: t("nav.mentorChat"), href: "/mentor-chat" })}
           {hasMentorAccess && renderNavItem(
-            { icon: GraduationCap, label: "לוח מנטור", href: "/mentor" },
+            { icon: GraduationCap, label: t("nav.mentor"), href: "/mentor" },
             pendingRequests.length
           )}
-          {isAdmin && renderNavItem({ icon: Shield, label: "ניהול מערכת", href: "/admin" })}
+          {isAdmin && renderNavItem({ icon: Shield, label: t("nav.admin"), href: "/admin" })}
         </ul>
 
         <Separator className="bg-sidebar-border my-3" />
