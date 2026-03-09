@@ -436,7 +436,7 @@ const Dashboard = () => {
               <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">
                 {stats.profitFactor === Infinity ? '∞' : stats.profitFactor.toFixed(2)}
               </p>
-              <MiniGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
+              <FullCircleGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
             </div>
             <div className="flex items-center gap-1.5 mt-2">
                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{stats.winningTrades}</span>
