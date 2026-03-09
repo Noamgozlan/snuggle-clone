@@ -447,8 +447,8 @@ const Trades = () => {
               />
             </div>
             <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-              <span>הפסד ({stats.losingTrades})</span>
-              <span>רווח ({stats.winningTrades})</span>
+              <span>{t("trades.loss")} ({stats.losingTrades})</span>
+              <span>{t("trades.profit")} ({stats.winningTrades})</span>
             </div>
           </Card>
 
