@@ -415,7 +415,7 @@ const Dashboard = () => {
               <span className="text-[11px] font-medium text-muted-foreground">Trade win %</span>
               <UITooltip>
                 <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">אחוז עסקאות מנצחות</TooltipContent>
+                <TooltipContent side="top" className="text-xs">{t("stats.tradeWinTooltip")}</TooltipContent>
               </UITooltip>
             </div>
             <div className="flex items-center justify-between">
