@@ -110,9 +110,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
     setSelectedPortfolioIds(activePortfolio ? [activePortfolio.id] : []);
     setIsBreakeven(false);
     setSession("");
-    setMentalState("");
+    setMentalStates([]);
     setTradeMistakes([]);
-    setSetupType("");
+    setSetupTypes([]);
   };
 
   const handleStrategyChange = (strategyId: string) => {
