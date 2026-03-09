@@ -8,7 +8,7 @@ import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { GoalsTracker } from "@/components/dashboard/GoalsTracker";
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview";
 import { RecurringMistakesBanner } from "@/components/dashboard/RecurringMistakesBanner";
-import { PerformanceGauges, MiniGauge } from "@/components/dashboard/PerformanceGauges";
+import { PerformanceGauges, MiniGauge, FullCircleGauge } from "@/components/dashboard/PerformanceGauges";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
 import { useTrades } from "@/hooks/useTrades";
