@@ -28,6 +28,7 @@ interface EditTradeDialogProps {
 export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: EditTradeDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { symbols: savedSymbols, addSymbol, removeSymbol } = useSavedSymbols();
   const [rating, setRating] = useState(0);
   const [tradeType, setTradeType] = useState<"long" | "short">("long");
   const [pnlSign, setPnlSign] = useState<"positive" | "negative">("positive");
