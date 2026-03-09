@@ -676,7 +676,7 @@ const Dashboard = () => {
                   <BarChart data={dayOfWeekPerformance} margin={{ top: 5, right: 5, bottom: 15, left: 35 }}>
                     <XAxis dataKey="dayName" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
-                    <Tooltip 
+                    <RechartsTooltip 
                       content={({ active, payload }) => {
                         if (active && payload?.[0]) {
                           const data = payload[0].payload;
