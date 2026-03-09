@@ -378,18 +378,18 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
           {/* Total PnL */}
-          <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <Card className="bg-card border-border p-3.5 hover:border-primary/15 transition-all duration-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 {displayMode === "percentage" ? "תשואה" : displayMode === "balance" ? "מצב תיק" : "רווח/הפסד"}
               </span>
-              <div className={`p-1.5 rounded-md ${totalDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                {totalDisplay >= 0 ? <TrendingUp className="h-3.5 w-3.5 text-success" /> : <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+              <div className={`p-1 rounded ${totalDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                {totalDisplay >= 0 ? <TrendingUp className="h-3 w-3 text-success" /> : <TrendingDown className="h-3 w-3 text-destructive" />}
               </div>
             </div>
-            <p className={`text-xl md:text-2xl font-bold tracking-tight ${
+            <p className={`text-lg md:text-xl font-bold tabular-nums tracking-tight ${
               displayMode === "balance" 
                 ? (balanceWithPnl >= portfolioBalance ? 'text-success' : 'text-destructive') 
                 : (totalDisplay >= 0 ? 'text-success' : 'text-destructive')
@@ -398,68 +398,67 @@ const Dashboard = () => {
                 ? `$${balanceWithPnl.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
                 : `${totalDisplay >= 0 ? '+' : ''}${displayMode === "money" ? `$${totalDisplay.toFixed(2)}` : displayMode === "points" ? `${totalDisplay.toFixed(1)}` : `${totalDisplay.toFixed(2)}%`}`}
             </p>
-            <p className="text-xs text-muted-foreground mt-1.5">
+            <p className="text-[10px] text-muted-foreground mt-1">
               {displayMode === "balance" 
                 ? `יתרה: $${portfolioBalance.toLocaleString()}`
                 : `${stats.totalTrades} עסקאות`}
             </p>
           </Card>
 
-          {/* Win Rate with Semi-Circle Gauge */}
-          <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
+          {/* Win Rate */}
+          <Card className="bg-card border-border p-3.5 hover:border-primary/15 transition-all duration-200">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">אחוז הצלחה</span>
-              <div className="p-1.5 rounded-md bg-primary/10">
-                <Target className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">אחוז הצלחה</span>
+              <div className="p-1 rounded bg-primary/10">
+                <Target className="h-3 w-3 text-primary" />
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <p className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{stats.winRate.toFixed(1)}%</p>
+            <div className="flex items-center gap-2">
+              <p className="text-lg md:text-xl font-bold text-foreground tabular-nums tracking-tight">{stats.winRate.toFixed(1)}%</p>
               <MiniGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
             </div>
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{stats.winningTrades}</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-warning/15 text-warning">{stats.breakevenTrades}</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive">{stats.losingTrades}</span>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="px-1 py-px rounded text-[9px] font-semibold bg-success/10 text-success">{stats.winningTrades}</span>
+              <span className="px-1 py-px rounded text-[9px] font-semibold bg-warning/10 text-warning">{stats.breakevenTrades}</span>
+              <span className="px-1 py-px rounded text-[9px] font-semibold bg-destructive/10 text-destructive">{stats.losingTrades}</span>
             </div>
           </Card>
 
-          {/* Avg RR with Semi-Circle Gauge */}
-          <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
+          {/* Avg RR */}
+          <Card className="bg-card border-border p-3.5 hover:border-primary/15 transition-all duration-200">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ממוצע R:R</span>
-              <div className="p-1.5 rounded-md bg-primary/10">
-                <Zap className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">ממוצע R:R</span>
+              <div className="p-1 rounded bg-primary/10">
+                <Zap className="h-3 w-3 text-primary" />
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <p className="text-xl md:text-2xl font-bold text-foreground tracking-tight">{stats.avgRR.toFixed(2)}</p>
-              <MiniGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
+            <div className="flex items-center gap-2">
+              <p className="text-lg md:text-xl font-bold text-foreground tabular-nums tracking-tight">{stats.avgRR.toFixed(2)}</p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1.5">
+            <p className="text-[10px] text-muted-foreground mt-1">
               {stats.avgRR >= 2 ? 'מצוין' : stats.avgRR >= 1 ? 'טוב' : 'לשפר'}
             </p>
           </Card>
 
           {/* Average PnL */}
-          <Card className="bg-card border-border p-4 hover:border-border/80 transition-colors">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ממוצע לעסקה</span>
-              <div className={`p-1.5 rounded-md ${avgDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                <Activity className="h-3.5 w-3.5 ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}" />
+          <Card className="bg-card border-border p-3.5 hover:border-primary/15 transition-all duration-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">ממוצע לעסקה</span>
+              <div className={`p-1 rounded ${avgDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                <Activity className={`h-3 w-3 ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`} />
               </div>
             </div>
-            <p className={`text-xl md:text-2xl font-bold tracking-tight ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
+            <p className={`text-lg md:text-xl font-bold tabular-nums tracking-tight ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
               {displayMode === "money" || displayMode === "balance"
                 ? `$${stats.avgPnl.toFixed(0)}` 
                 : displayMode === "points" ? stats.avgPoints.toFixed(1) : `${avgDisplay.toFixed(1)}%`}
             </p>
-            <div className="flex items-center gap-3 mt-1.5">
-              <span className="text-xs text-success flex items-center gap-0.5">
-                <ChevronUp className="h-3 w-3" />${stats.maxWin.toFixed(0)}
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] text-success flex items-center gap-0.5 tabular-nums">
+                <ChevronUp className="h-2.5 w-2.5" />${stats.maxWin.toFixed(0)}
               </span>
-              <span className="text-xs text-destructive flex items-center gap-0.5">
-                <ChevronDown className="h-3 w-3" />${Math.abs(stats.maxLoss).toFixed(0)}
+              <span className="text-[10px] text-destructive flex items-center gap-0.5 tabular-nums">
+                <ChevronDown className="h-2.5 w-2.5" />${Math.abs(stats.maxLoss).toFixed(0)}
               </span>
             </div>
           </Card>
