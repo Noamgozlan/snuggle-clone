@@ -496,17 +496,17 @@ const Trades = () => {
             <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow className="border-border bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-16">תמונה</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">תאריך</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">סימול</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">סוג</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">אסטרטגיה</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">אישורים</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">תגיות</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">RR</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">רווח/הפסד</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">דירוג</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-12">פעולות</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-16">{t("table.image")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.date")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.symbol")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.type")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.strategy")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.confirmations")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.tags")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.rr")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.pnl")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.rating")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-12">{t("table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
