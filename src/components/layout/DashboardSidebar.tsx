@@ -33,6 +33,7 @@ const menuItemDefs = [
   { icon: BarChart3, labelKey: "nav.statistics", href: "/statistics" },
   { icon: Target, labelKey: "nav.strategies", href: "/strategies" },
   { icon: TrendingUp, labelKey: "nav.backtesting", href: "/backtesting" },
+  { icon: Newspaper, labelKey: "nav.news", href: "/news" },
   { icon: Users, labelKey: "nav.community", href: "/community" },
   { icon: Gift, labelKey: "nav.giveaways", href: "/giveaways" },
 ];
