@@ -64,9 +64,9 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   }, [open, activePortfolio]);
 
   const [session, setSession] = useState<string>("");
-  const [mentalState, setMentalState] = useState("");
+  const [mentalStates, setMentalStates] = useState<string[]>([]);
   const [tradeMistakes, setTradeMistakes] = useState<string[]>([]);
-  const [setupType, setSetupType] = useState("");
+  const [setupTypes, setSetupTypes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
