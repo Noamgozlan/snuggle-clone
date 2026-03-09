@@ -377,88 +377,119 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-          {/* Total PnL */}
-          <Card className="bg-card border-border p-3.5 hover:border-primary/15 transition-all duration-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {displayMode === "percentage" ? "תשואה" : displayMode === "balance" ? "מצב תיק" : "רווח/הפסד"}
-              </span>
-              <div className={`p-1 rounded ${totalDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                {totalDisplay >= 0 ? <TrendingUp className="h-3 w-3 text-success" /> : <TrendingDown className="h-3 w-3 text-destructive" />}
+        {/* Stats Grid - TradeZella Style */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
+          {/* Net P&L */}
+          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-medium text-muted-foreground">Net P&L</span>
+                <Tooltip>
+                  <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">רווח/הפסד נקי מצטבר</TooltipContent>
+                </Tooltip>
+                <span className="text-[10px] text-muted-foreground/60 tabular-nums">{stats.totalTrades}</span>
               </div>
             </div>
-            <p className={`text-lg md:text-xl font-bold tabular-nums tracking-tight ${
-              displayMode === "balance" 
-                ? (balanceWithPnl >= portfolioBalance ? 'text-success' : 'text-destructive') 
-                : (totalDisplay >= 0 ? 'text-success' : 'text-destructive')
+            <p className={`text-2xl font-bold tabular-nums tracking-tight ${
+              totalDisplay >= 0 ? 'text-success' : 'text-destructive'
             }`}>
               {displayMode === "balance" 
                 ? `$${balanceWithPnl.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-                : `${totalDisplay >= 0 ? '+' : ''}${displayMode === "money" ? `$${totalDisplay.toFixed(2)}` : displayMode === "points" ? `${totalDisplay.toFixed(1)}` : `${totalDisplay.toFixed(2)}%`}`}
-            </p>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {displayMode === "balance" 
-                ? `יתרה: $${portfolioBalance.toLocaleString()}`
-                : `${stats.totalTrades} עסקאות`}
+                : displayMode === "money" ? `$${Math.abs(totalDisplay).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` 
+                : displayMode === "points" ? totalDisplay.toFixed(1) : `${totalDisplay.toFixed(2)}%`}
             </p>
           </Card>
 
-          {/* Win Rate */}
-          <Card className="bg-card border-border p-3.5 hover:border-primary/15 transition-all duration-200">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">אחוז הצלחה</span>
-              <div className="p-1 rounded bg-primary/10">
-                <Target className="h-3 w-3 text-primary" />
-              </div>
+          {/* Trade Win % */}
+          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-[11px] font-medium text-muted-foreground">Trade win %</span>
+              <Tooltip>
+                <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">אחוז עסקאות מנצחות</TooltipContent>
+              </Tooltip>
             </div>
-            <div className="flex items-center gap-2">
-              <p className="text-lg md:text-xl font-bold text-foreground tabular-nums tracking-tight">{stats.winRate.toFixed(1)}%</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">{stats.winRate.toFixed(2)}%</p>
               <MiniGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
             </div>
-            <div className="flex items-center gap-1 mt-1">
-              <span className="px-1 py-px rounded text-[9px] font-semibold bg-success/10 text-success">{stats.winningTrades}</span>
-              <span className="px-1 py-px rounded text-[9px] font-semibold bg-warning/10 text-warning">{stats.breakevenTrades}</span>
-              <span className="px-1 py-px rounded text-[9px] font-semibold bg-destructive/10 text-destructive">{stats.losingTrades}</span>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{stats.winningTrades}</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/15 text-primary">{stats.breakevenTrades}</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive">{stats.losingTrades}</span>
             </div>
           </Card>
 
-          {/* Avg RR */}
-          <Card className="bg-card border-border p-3.5 hover:border-primary/15 transition-all duration-200">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">ממוצע R:R</span>
-              <div className="p-1 rounded bg-primary/10">
-                <Zap className="h-3 w-3 text-primary" />
-              </div>
+          {/* Profit Factor */}
+          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-[11px] font-medium text-muted-foreground">Profit factor</span>
+              <Tooltip>
+                <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">יחס רווח גולמי להפסד גולמי</TooltipContent>
+              </Tooltip>
             </div>
-            <div className="flex items-center gap-2">
-              <p className="text-lg md:text-xl font-bold text-foreground tabular-nums tracking-tight">{stats.avgRR.toFixed(2)}</p>
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {stats.avgRR >= 2 ? 'מצוין' : stats.avgRR >= 1 ? 'טוב' : 'לשפר'}
+            <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">
+              {stats.profitFactor === Infinity ? '∞' : stats.profitFactor.toFixed(2)}
             </p>
           </Card>
 
-          {/* Average PnL */}
-          <Card className="bg-card border-border p-3.5 hover:border-primary/15 transition-all duration-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">ממוצע לעסקה</span>
-              <div className={`p-1 rounded ${avgDisplay >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                <Activity className={`h-3 w-3 ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`} />
-              </div>
+          {/* Day Win % */}
+          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-[11px] font-medium text-muted-foreground">Day win %</span>
+              <Tooltip>
+                <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">אחוז ימי מסחר רווחיים</TooltipContent>
+              </Tooltip>
             </div>
-            <p className={`text-lg md:text-xl font-bold tabular-nums tracking-tight ${avgDisplay >= 0 ? 'text-success' : 'text-destructive'}`}>
-              {displayMode === "money" || displayMode === "balance"
-                ? `$${stats.avgPnl.toFixed(0)}` 
-                : displayMode === "points" ? stats.avgPoints.toFixed(1) : `${avgDisplay.toFixed(1)}%`}
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">{dayStats.dayWinPercent.toFixed(2)}%</p>
+              <MiniGauge wins={dayStats.winningDays} breakeven={dayStats.breakevenDays} losses={dayStats.losingDays} />
+            </div>
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{dayStats.winningDays}</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/15 text-primary">{dayStats.breakevenDays}</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive">{dayStats.losingDays}</span>
+            </div>
+          </Card>
+
+          {/* Avg Win/Loss Trade */}
+          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-[11px] font-medium text-muted-foreground">Avg win/loss trade</span>
+              <Tooltip>
+                <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground/50" /></TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">יחס ממוצע רווח לממוצע הפסד</TooltipContent>
+              </Tooltip>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight mb-2">
+              {stats.avgLoss !== 0 ? Math.abs(stats.avgWin / stats.avgLoss).toFixed(2) : '—'}
             </p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] text-success flex items-center gap-0.5 tabular-nums">
-                <ChevronUp className="h-2.5 w-2.5" />${stats.maxWin.toFixed(0)}
+            {/* Win/Loss bar */}
+            <div className="w-full h-1.5 rounded-full overflow-hidden flex bg-muted">
+              <div
+                className="h-full rounded-r-full transition-all"
+                style={{ 
+                  width: `${stats.avgWin + Math.abs(stats.avgLoss) > 0 ? (stats.avgWin / (stats.avgWin + Math.abs(stats.avgLoss))) * 100 : 50}%`, 
+                  backgroundColor: 'hsl(var(--success))' 
+                }}
+              />
+              <div
+                className="h-full rounded-l-full transition-all"
+                style={{ 
+                  width: `${stats.avgWin + Math.abs(stats.avgLoss) > 0 ? (Math.abs(stats.avgLoss) / (stats.avgWin + Math.abs(stats.avgLoss))) * 100 : 50}%`, 
+                  backgroundColor: 'hsl(var(--destructive))' 
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-[10px] font-semibold text-success tabular-nums">
+                ${stats.avgWin.toFixed(0)}
               </span>
-              <span className="text-[10px] text-destructive flex items-center gap-0.5 tabular-nums">
-                <ChevronDown className="h-2.5 w-2.5" />${Math.abs(stats.maxLoss).toFixed(0)}
+              <span className="text-[10px] font-semibold text-destructive tabular-nums">
+                -${Math.abs(stats.avgLoss).toFixed(0)}
               </span>
             </div>
           </Card>
