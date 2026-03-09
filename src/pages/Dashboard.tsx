@@ -8,7 +8,7 @@ import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { GoalsTracker } from "@/components/dashboard/GoalsTracker";
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview";
 import { RecurringMistakesBanner } from "@/components/dashboard/RecurringMistakesBanner";
-import { PerformanceGauges, MiniGauge } from "@/components/dashboard/PerformanceGauges";
+import { PerformanceGauges, MiniGauge, FullCircleGauge } from "@/components/dashboard/PerformanceGauges";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
 import { useTrades } from "@/hooks/useTrades";
@@ -436,7 +436,7 @@ const Dashboard = () => {
               <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">
                 {stats.profitFactor === Infinity ? '∞' : stats.profitFactor.toFixed(2)}
               </p>
-              <MiniGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
+              <FullCircleGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
             </div>
             <div className="flex items-center gap-1.5 mt-2">
                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{stats.winningTrades}</span>
