@@ -703,7 +703,7 @@ const Trades = () => {
             {/* Strategy confirmations selector */}
             {strategies.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-right">בחר מאסטרטגיה קיימת</Label>
+                <Label>{t("trades.selectStrategy")}</Label>
                 <Select 
                   value={selectedStrategyForConfirmation} 
                   onValueChange={(value) => {
