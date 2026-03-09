@@ -158,13 +158,13 @@ const Trades = () => {
 
     if (result.success) {
       toast({
-        title: "העסקה נמחקה",
-        description: "העסקה הוסרה בהצלחה",
+        title: t("trades.deleted"),
+        description: t("trades.deletedDesc"),
       });
     } else {
       toast({
-        title: "שגיאה",
-        description: "לא ניתן למחוק את העסקה",
+        title: t("general.error"),
+        description: t("trades.errorDeleteTrade"),
         variant: "destructive",
       });
     }
