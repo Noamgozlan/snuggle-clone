@@ -69,6 +69,7 @@ const Trades = () => {
   const [deletingTradeId, setDeletingTradeId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
   const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
