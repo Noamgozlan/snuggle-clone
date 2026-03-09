@@ -29,11 +29,13 @@ import {
   Share2,
   Calendar,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area, Cell, PieChart, Pie } from "recharts";
+import { Tooltip as UITooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, AreaChart, Area, Cell, PieChart, Pie } from "recharts";
 import { format, subMonths, startOfMonth, endOfMonth, getDay } from "date-fns";
 import { he } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
