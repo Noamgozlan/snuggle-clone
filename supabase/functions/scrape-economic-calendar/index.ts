@@ -1,6 +1,6 @@
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface RapidAPIEvent {
@@ -14,13 +14,14 @@ interface RapidAPIEvent {
   previous?: number | string;
   forecast?: number | string;
   date: string;
-  importance?: number; // 1=low, 2=medium, 3=high
+  importance?: number;
   currency?: string;
 }
 
 interface EconomicEvent {
   title: string;
   country: string;
+  currency: string;
   date: string;
   time: string;
   impact: 'high' | 'medium' | 'low';
@@ -28,6 +29,10 @@ interface EconomicEvent {
   previous?: string;
   actual?: string;
 }
+
+// Simple in-memory cache
+let cachedData: { events: EconomicEvent[]; fetchedAt: number; key: string } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -37,26 +42,50 @@ Deno.serve(async (req) => {
   try {
     const apiKey = Deno.env.get('RAPIDAPI_KEY');
     if (!apiKey) {
-      console.error('RAPIDAPI_KEY not configured');
       return new Response(
         JSON.stringify({ success: false, error: 'API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get today and tomorrow dates
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const formatDate = (d: Date) => d.toISOString().split('T')[0];
-    const fromDate = formatDate(today);
-    const toDate = formatDate(tomorrow);
+    // Parse body params
+    let fromDate: string, toDate: string, countries: string;
+    try {
+      const body = await req.json();
+      fromDate = body.from || '';
+      toDate = body.to || '';
+      countries = body.countries || '';
+    } catch {
+      fromDate = '';
+      toDate = '';
+      countries = '';
+    }
 
-    console.log(`Fetching economic calendar from ${fromDate} to ${toDate}...`);
+    const today = new Date();
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
+    if (!fromDate) fromDate = formatDate(today);
+    if (!toDate) {
+      const next7 = new Date(today);
+      next7.setDate(next7.getDate() + 7);
+      toDate = formatDate(next7);
+    }
+    if (!countries) countries = 'US,EU,GB,JP,AU,CA,CH,NZ,CN';
+
+    const cacheKey = `${fromDate}_${toDate}_${countries}`;
+
+    // Return cached if fresh
+    if (cachedData && cachedData.key === cacheKey && (Date.now() - cachedData.fetchedAt) < CACHE_TTL) {
+      return new Response(
+        JSON.stringify({ success: true, events: cachedData.events, cached: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Fetching economic calendar from ${fromDate} to ${toDate}, countries: ${countries}`);
 
     const response = await fetch(
-      `https://ultimate-economic-calendar.p.rapidapi.com/economic-events/tradingview?from=${fromDate}&to=${toDate}&countries=US,EU,GB,JP,AU,CA,CH,NZ,CN`,
+      `https://ultimate-economic-calendar.p.rapidapi.com/economic-events/tradingview?from=${fromDate}&to=${toDate}&countries=${countries}`,
       {
         method: 'GET',
         headers: {
@@ -76,14 +105,21 @@ Deno.serve(async (req) => {
     }
 
     const rawData = await response.json();
-    console.log('RapidAPI response received, events count:', Array.isArray(rawData) ? rawData.length : 'not array');
-
     const eventsData: RapidAPIEvent[] = Array.isArray(rawData) ? rawData : [];
 
-    // Transform events to our format
+    const countryToCurrency: Record<string, string> = {
+      'US': 'USD', 'EU': 'EUR', 'GB': 'GBP', 'JP': 'JPY',
+      'AU': 'AUD', 'CA': 'CAD', 'CH': 'CHF', 'NZ': 'NZD',
+      'CN': 'CNY', 'DE': 'EUR',
+    };
+
+    const formatValue = (val: number | string | undefined): string | undefined => {
+      if (val === undefined || val === null || val === '') return undefined;
+      return String(val);
+    };
+
     const events: EconomicEvent[] = eventsData.map((event) => {
-      // Parse date - format is ISO
-      let dateStr = formatDate(today);
+      let dateStr = fromDate;
       let timeStr = '00:00';
 
       if (event.date) {
@@ -92,36 +128,16 @@ Deno.serve(async (req) => {
         timeStr = eventDate.toTimeString().substring(0, 5);
       }
 
-      // Map importance to impact level
       let impact: 'high' | 'medium' | 'low' = 'medium';
-      if (event.importance === 3) {
-        impact = 'high';
-      } else if (event.importance === 1) {
-        impact = 'low';
-      }
+      if (event.importance === 3) impact = 'high';
+      else if (event.importance === 1) impact = 'low';
 
-      // Map country codes
-      const countryMap: Record<string, string> = {
-        'US': 'USD',
-        'EU': 'EUR',
-        'GB': 'GBP',
-        'JP': 'JPY',
-        'AU': 'AUD',
-        'CA': 'CAD',
-        'CH': 'CHF',
-        'NZ': 'NZD',
-        'CN': 'CNY',
-        'DE': 'EUR',
-      };
-
-      const formatValue = (val: number | string | undefined): string | undefined => {
-        if (val === undefined || val === null || val === '') return undefined;
-        return String(val);
-      };
+      const currency = event.currency || countryToCurrency[event.country] || event.country || 'USD';
 
       return {
         title: event.title || event.indicator || 'Unknown Event',
-        country: countryMap[event.country] || event.currency || event.country || 'USD',
+        country: event.country || 'US',
+        currency,
         date: dateStr,
         time: timeStr,
         impact,
@@ -131,24 +147,21 @@ Deno.serve(async (req) => {
       };
     });
 
-    // Sort by date and time
-    events.sort((a, b) => {
-      const dateTimeA = `${a.date} ${a.time}`;
-      const dateTimeB = `${b.date} ${b.time}`;
-      return dateTimeA.localeCompare(dateTimeB);
-    });
+    events.sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
 
-    console.log(`Successfully processed ${events.length} economic events`);
+    // Cache results
+    cachedData = { events, fetchedAt: Date.now(), key: cacheKey };
+
+    console.log(`Processed ${events.length} economic events`);
 
     return new Response(
       JSON.stringify({ success: true, events }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: unknown) {
-    console.error('Error fetching economic calendar:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
+      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
