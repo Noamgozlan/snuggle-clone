@@ -249,6 +249,17 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           : Math.abs(parseFloat(formData.pnl))
         : null;
 
+      // Auto-calculate RR if not provided
+      let rrValue: number | null = formData.rr ? parseFloat(formData.rr) : null;
+      const riskValue = formData.risk ? parseFloat(formData.risk) : null;
+      if (rrValue === null && riskValue && riskValue > 0 && pnlValue !== null) {
+        rrValue = parseFloat((Math.abs(pnlValue) / riskValue).toFixed(2));
+        if (pnlValue < 0) rrValue = -rrValue;
+      }
+
+      // Save symbol for future use
+      addSymbol(formData.symbol);
+
       const combinedNotes =
         formData.entryReason || formData.conclusions
           ? `${formData.entryReason || ""}\n\n[CONCLUSIONS]\n${formData.conclusions || ""}`.trim()
@@ -267,7 +278,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           pnl: pnlValue,
           pnl_points: formData.pnlPoints ? parseFloat(formData.pnlPoints) : null,
           risk: formData.risk ? parseFloat(formData.risk) : null,
-          rr: formData.rr ? parseFloat(formData.rr) : null,
+          rr: rrValue,
           rating: rating || null,
           strategy: formData.strategy || null,
           session: session || null,
