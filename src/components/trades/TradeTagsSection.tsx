@@ -41,27 +41,43 @@ export const SETUP_TYPES = [
 ] as const;
 
 interface TradeTagsSectionProps {
-  mentalState: string;
-  onMentalStateChange: (value: string) => void;
+  mentalStates: string[];
+  onMentalStatesChange: (value: string[]) => void;
   mistakes: string[];
   onMistakesChange: (value: string[]) => void;
-  setupType: string;
-  onSetupTypeChange: (value: string) => void;
+  setupTypes: string[];
+  onSetupTypesChange: (value: string[]) => void;
 }
 
 export const TradeTagsSection = ({
-  mentalState,
-  onMentalStateChange,
+  mentalStates,
+  onMentalStatesChange,
   mistakes,
   onMistakesChange,
-  setupType,
-  onSetupTypeChange,
+  setupTypes,
+  onSetupTypesChange,
 }: TradeTagsSectionProps) => {
   const toggleMistake = (mistake: string) => {
     onMistakesChange(
       mistakes.includes(mistake)
         ? mistakes.filter((m) => m !== mistake)
         : [...mistakes, mistake]
+    );
+  };
+
+  const toggleMentalState = (state: string) => {
+    onMentalStatesChange(
+      mentalStates.includes(state)
+        ? mentalStates.filter((s) => s !== state)
+        : [...mentalStates, state]
+    );
+  };
+
+  const toggleSetupType = (setup: string) => {
+    onSetupTypesChange(
+      setupTypes.includes(setup)
+        ? setupTypes.filter((s) => s !== setup)
+        : [...setupTypes, setup]
     );
   };
 
@@ -73,16 +89,18 @@ export const TradeTagsSection = ({
 
       {/* Mental State */}
       <div className="space-y-2">
-        <Label className="text-muted-foreground text-xs uppercase tracking-wider">Mental State</Label>
+        <Label className="text-muted-foreground text-xs uppercase tracking-wider">
+          Mental State {mentalStates.length > 0 && `(${mentalStates.length})`}
+        </Label>
         <div className="flex flex-wrap gap-1.5">
           {MENTAL_STATES.map((state) => {
             const Icon = state.icon;
-            const isSelected = mentalState === state.value;
+            const isSelected = mentalStates.includes(state.value);
             return (
               <button
                 key={state.value}
                 type="button"
-                onClick={() => onMentalStateChange(isSelected ? "" : state.value)}
+                onClick={() => toggleMentalState(state.value)}
                 className={cn(
                   "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200",
                   isSelected
@@ -92,6 +110,7 @@ export const TradeTagsSection = ({
               >
                 <Icon className="h-3.5 w-3.5" />
                 {state.label}
+                {isSelected && <X className="h-3 w-3 ml-0.5" />}
               </button>
             );
           })}
@@ -100,23 +119,26 @@ export const TradeTagsSection = ({
 
       {/* Setup Type */}
       <div className="space-y-2">
-        <Label className="text-muted-foreground text-xs uppercase tracking-wider">Setup Type</Label>
+        <Label className="text-muted-foreground text-xs uppercase tracking-wider">
+          Setup Type {setupTypes.length > 0 && `(${setupTypes.length})`}
+        </Label>
         <div className="flex flex-wrap gap-1.5">
           {SETUP_TYPES.map((setup) => {
-            const isSelected = setupType === setup;
+            const isSelected = setupTypes.includes(setup);
             return (
               <button
                 key={setup}
                 type="button"
-                onClick={() => onSetupTypeChange(isSelected ? "" : setup)}
+                onClick={() => toggleSetupType(setup)}
                 className={cn(
-                  "px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200",
+                  "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200",
                   isSelected
                     ? "bg-violet-500/10 text-violet-400 border-violet-500/30 scale-105 shadow-sm"
                     : "bg-muted/30 border-border/50 text-muted-foreground hover:bg-muted/50"
                 )}
               >
                 {setup}
+                {isSelected && <X className="h-3 w-3 ml-0.5" />}
               </button>
             );
           })}
@@ -157,4 +179,16 @@ export const TradeTagsSection = ({
 // Helper to get mental state display info
 export const getMentalStateInfo = (value: string) => {
   return MENTAL_STATES.find((s) => s.value === value);
+};
+
+// Helper to parse comma-separated values from DB
+export const parseMultiValue = (value: string | null): string[] => {
+  if (!value) return [];
+  return value.split(",").map(v => v.trim()).filter(Boolean);
+};
+
+// Helper to join array for DB storage
+export const joinMultiValue = (values: string[]): string | null => {
+  if (values.length === 0) return null;
+  return values.join(",");
 };

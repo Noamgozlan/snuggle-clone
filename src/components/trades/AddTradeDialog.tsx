@@ -754,12 +754,12 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
 
           {/* Tags Section */}
           <TradeTagsSection
-            mentalState={mentalState}
-            onMentalStateChange={setMentalState}
+            mentalStates={mentalStates}
+            onMentalStatesChange={setMentalStates}
             mistakes={tradeMistakes}
             onMistakesChange={setTradeMistakes}
-            setupType={setupType}
-            onSetupTypeChange={setSetupType}
+            setupTypes={setupTypes}
+            onSetupTypesChange={setSetupTypes}
           />
 
           {/* Confirmations */}

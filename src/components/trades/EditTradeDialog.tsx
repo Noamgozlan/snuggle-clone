@@ -639,12 +639,12 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
 
           {/* Tags Section */}
           <TradeTagsSection
-            mentalState={mentalState}
-            onMentalStateChange={setMentalState}
+            mentalStates={mentalStates}
+            onMentalStatesChange={setMentalStates}
             mistakes={tradeMistakes}
             onMistakesChange={setTradeMistakes}
-            setupType={setupType}
-            onSetupTypeChange={setSetupType}
+            setupTypes={setupTypes}
+            onSetupTypesChange={setSetupTypes}
           />
 
           {/* Notes & Screenshot */}
