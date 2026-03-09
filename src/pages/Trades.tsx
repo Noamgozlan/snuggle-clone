@@ -639,13 +639,13 @@ const Trades = () => {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>מחק עסקה</AlertDialogTitle>
+                              <AlertDialogTitle>{t("trades.deleteTrade")}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                האם אתה בטוח שברצונך למחוק את העסקה על {trade.symbol}?
+                                {t("trades.deleteTradeConfirm")} {trade.symbol}?
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>ביטול</AlertDialogCancel>
+                              <AlertDialogCancel>{t("general.cancel")}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDeleteTrade(trade.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
