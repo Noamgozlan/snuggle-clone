@@ -22,23 +22,24 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useMentorRelationships } from "@/hooks/useMentorRelationships";
 import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "דף ראשי", href: "/dashboard" },
-  { icon: TrendingUp, label: "עסקאות", href: "/trades" },
-  { icon: BarChart3, label: "סטטיסטיקות", href: "/statistics" },
-  { icon: Target, label: "אסטרטגיות", href: "/strategies" },
-  { icon: TrendingUp, label: "Gozlan Forever Model", href: "/backtesting" },
-  { icon: Users, label: "קהילה", href: "/community" },
-  { icon: Gift, label: "הגרלות", href: "/giveaways" },
+const menuItemDefs = [
+  { icon: LayoutDashboard, labelKey: "nav.dashboard", href: "/dashboard" },
+  { icon: TrendingUp, labelKey: "nav.trades", href: "/trades" },
+  { icon: BarChart3, labelKey: "nav.statistics", href: "/statistics" },
+  { icon: Target, labelKey: "nav.strategies", href: "/strategies" },
+  { icon: TrendingUp, labelKey: "nav.backtesting", href: "/backtesting" },
+  { icon: Users, labelKey: "nav.community", href: "/community" },
+  { icon: Gift, labelKey: "nav.giveaways", href: "/giveaways" },
 ];
 
-const bottomMenuItems = [
-  { icon: User, label: "פרופיל", href: "/profile" },
-  { icon: Settings, label: "הגדרות", href: "/settings" },
+const bottomMenuItemDefs = [
+  { icon: User, labelKey: "nav.profile", href: "/profile" },
+  { icon: Settings, labelKey: "nav.settings", href: "/settings" },
 ];
 
 interface DashboardSidebarProps {
@@ -50,8 +51,12 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
+  const { t } = useLanguage();
   const { myMentor, myStudents, pendingRequests } = useMentorRelationships();
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const menuItems = menuItemDefs.map(item => ({ ...item, label: t(item.labelKey) }));
+  const bottomMenuItems = bottomMenuItemDefs.map(item => ({ ...item, label: t(item.labelKey) }));
 
   const hasMentorAccess = myStudents.length > 0 || pendingRequests.length > 0;
   const hasApprovedMentor = myMentor?.status === "accepted";
@@ -85,7 +90,7 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
   const displayName =
     profile?.first_name && profile?.last_name
       ? `${profile.first_name} ${profile.last_name}`
-      : profile?.username || user?.email?.split("@")[0] || "משתמש";
+      : profile?.username || user?.email?.split("@")[0] || "";
 
   const displayEmail = profile?.email || user?.email || "";
 
@@ -126,7 +131,7 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
   };
 
   return (
-    <aside className="h-svh w-[85vw] max-w-[280px] md:w-64 bg-sidebar flex flex-col border-l border-sidebar-border">
+    <aside className="h-svh w-[85vw] max-w-[280px] md:w-64 bg-sidebar flex flex-col border-s border-sidebar-border">
       {/* Logo */}
       <div className="px-5 py-5 flex items-center">
         <Link to="/" className="flex items-center gap-2" onClick={handleLinkClick}>
@@ -156,12 +161,12 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
         <ul className="space-y-0.5">
           {menuItems.map((item) => renderNavItem(item))}
 
-          {hasApprovedMentor && renderNavItem({ icon: MessageSquare, label: "צ'אט עם המנטור", href: "/mentor-chat" })}
+          {hasApprovedMentor && renderNavItem({ icon: MessageSquare, label: t("nav.mentorChat"), href: "/mentor-chat" })}
           {hasMentorAccess && renderNavItem(
-            { icon: GraduationCap, label: "לוח מנטור", href: "/mentor" },
+            { icon: GraduationCap, label: t("nav.mentor"), href: "/mentor" },
             pendingRequests.length
           )}
-          {isAdmin && renderNavItem({ icon: Shield, label: "ניהול מערכת", href: "/admin" })}
+          {isAdmin && renderNavItem({ icon: Shield, label: t("nav.admin"), href: "/admin" })}
         </ul>
 
         <Separator className="bg-sidebar-border my-3" />
@@ -203,7 +208,7 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
           onClick={handleSignOut}
         >
           <LogOut className="h-3.5 w-3.5" />
-          התנתק
+          {t("nav.logout")}
         </Button>
       </div>
     </aside>

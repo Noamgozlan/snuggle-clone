@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   ArrowRight,
+  ArrowLeft,
   Type,
   Check,
   BookOpen,
@@ -18,11 +19,13 @@ import {
   MinusSquare,
   Zap,
   Monitor,
+  Languages,
 } from "lucide-react";
 import { useFont, fontOptions, FontFamily } from "@/contexts/FontContext";
 import { useTheme, colorSchemeOptions, visualStyleOptions } from "@/contexts/ThemeContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { MentorSettings as MentorSettingsSection } from "@/components/mentor/MentorSettings";
@@ -75,28 +78,31 @@ const Settings = () => {
   const { startTour } = useOnboarding();
   const { profile, updateProfile } = useProfile();
   const { min: beMin, max: beMax, setRange: setBeRange } = useBreakEvenConfig();
+  const { language, setLanguage, t, isRTL } = useLanguage();
 
   const handlePublicToggle = async (checked: boolean) => {
     const success = await updateProfile({ is_public: checked });
     if (success) {
-      toast.success(checked ? "הפרופיל שלך כעת ציבורי" : "הפרופיל שלך כעת פרטי");
+      toast.success(t(checked ? "settings.profilePublic" : "settings.profilePrivate"));
     } else {
-      toast.error("שגיאה בעדכון ההגדרות");
+      toast.error(t("settings.updateError"));
     }
   };
 
   const handleFontChange = (newFont: FontFamily) => {
     setFont(newFont);
-    toast.success("הפונט שונה בהצלחה");
+    toast.success(t("settings.fontChanged"));
   };
+
+  const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   return (
     <DashboardLayout>
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-2 text-muted-foreground">
-          <ArrowRight className="h-4 w-4" />
-          <span>הגדרות מסחר</span>
+          <BackArrow className="h-4 w-4" />
+          <span>{t("settings.title")}</span>
         </div>
 
         {/* Font Settings */}
@@ -255,6 +261,60 @@ const Settings = () => {
                 </button>
               ))}
             </div>
+          </div>
+        </Card>
+
+        {/* Language Settings */}
+        <Card className="bg-card border-border p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Languages className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">{t("settings.language")}</h2>
+              <p className="text-muted-foreground text-sm">{t("settings.languageDesc")}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={() => {
+                setLanguage("he");
+                toast.success("השפה שונתה לעברית");
+              }}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
+                "hover:border-primary/50",
+                language === "he" ? "border-primary bg-primary/10" : "border-border bg-card",
+              )}
+            >
+              <span className="text-lg">🇮🇱</span>
+              <span className="font-medium">{t("settings.hebrew")}</span>
+              {language === "he" && (
+                <div className="p-1 rounded-full bg-primary ms-auto">
+                  <Check className="h-3 w-3 text-primary-foreground" />
+                </div>
+              )}
+            </button>
+            <button
+              onClick={() => {
+                setLanguage("en");
+                toast.success("Language changed to English");
+              }}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
+                "hover:border-primary/50",
+                language === "en" ? "border-primary bg-primary/10" : "border-border bg-card",
+              )}
+            >
+              <span className="text-lg">🇺🇸</span>
+              <span className="font-medium">{t("settings.english")}</span>
+              {language === "en" && (
+                <div className="p-1 rounded-full bg-primary ms-auto">
+                  <Check className="h-3 w-3 text-primary-foreground" />
+                </div>
+              )}
+            </button>
           </div>
         </Card>
 
