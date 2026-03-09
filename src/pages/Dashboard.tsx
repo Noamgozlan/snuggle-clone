@@ -522,7 +522,7 @@ const Dashboard = () => {
             <Card className="bg-card border-border p-4 md:p-5">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
                 <Flame className="h-4 w-4 text-primary" />
-                רצפים ושיאים
+                {t("dashboard.streaks")}
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className={`rounded-lg p-3.5 border ${tradingStreaks.isWinning ? 'bg-success/5 border-success/20' : 'bg-destructive/5 border-destructive/20'}`}>
