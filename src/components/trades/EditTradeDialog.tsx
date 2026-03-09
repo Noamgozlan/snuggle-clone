@@ -356,11 +356,11 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סימול *</Label>
-              <Input
+              <SymbolCombobox
                 value={formData.symbol}
-                onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
-                className="bg-input border-border"
-                required
+                onChange={(val) => setFormData({ ...formData, symbol: val })}
+                savedSymbols={savedSymbols}
+                onRemoveSymbol={removeSymbol}
               />
             </div>
 
