@@ -325,7 +325,7 @@ const Trades = () => {
               onClick={() => setIsCSVImportOpen(true)}
             >
               <FileDown className="h-4 w-4" />
-              <span className="hidden sm:inline">יבוא CSV</span>
+              <span className="hidden sm:inline">{t("trades.importCSV")}</span>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
