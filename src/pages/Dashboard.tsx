@@ -379,8 +379,8 @@ const Dashboard = () => {
               onClick={() => setIsAddTradeOpen(true)}
             >
               <Plus className="h-3 w-3" />
-              <span className="hidden sm:inline">הוסף עסקה</span>
-              <span className="sm:hidden">הוסף</span>
+              <span className="hidden sm:inline">{t("dashboard.addTrade")}</span>
+              <span className="sm:hidden">{t("dashboard.addTradeShort")}</span>
             </Button>
           </div>
         </div>
