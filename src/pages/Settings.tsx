@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   ArrowRight,
+  ArrowLeft,
   Type,
   Check,
   BookOpen,
@@ -18,11 +19,13 @@ import {
   MinusSquare,
   Zap,
   Monitor,
+  Languages,
 } from "lucide-react";
 import { useFont, fontOptions, FontFamily } from "@/contexts/FontContext";
 import { useTheme, colorSchemeOptions, visualStyleOptions } from "@/contexts/ThemeContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { MentorSettings as MentorSettingsSection } from "@/components/mentor/MentorSettings";
