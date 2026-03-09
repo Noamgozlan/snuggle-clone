@@ -127,7 +127,9 @@ const Dashboard = () => {
 
   // Weekly data
   const weeklyData = useMemo(() => {
-    const days = ["ש׳", "ו׳", "ה׳", "ד׳", "ג׳", "ב׳", "א׳"];
+    const days = language === "he" 
+      ? ["ש׳", "ו׳", "ה׳", "ד׳", "ג׳", "ב׳", "א׳"]
+      : ["Sat", "Fri", "Thu", "Wed", "Tue", "Mon", "Sun"];
     const dayIndexes = [6, 5, 4, 3, 2, 1, 0];
     const today = new Date();
     const startOfWeek = new Date(today);
