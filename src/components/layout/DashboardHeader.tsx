@@ -1,6 +1,7 @@
 import { Bell, Sun, Moon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { PortfolioSelector } from "@/components/portfolio/PortfolioSelector";
 import { ConsistencyCalculator } from "@/components/portfolio/ConsistencyCalculator";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
@@ -24,6 +25,7 @@ interface DashboardHeaderProps {
 
 export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const { isInstalled, promptInstall } = usePWAInstall();
   const [showInstallDialog, setShowInstallDialog] = useState(false);
   const [quote, setQuote] = useState<{ content: string; author: string | null } | null>(null);
@@ -52,7 +54,7 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
     setShowInstallDialog(false);
     const success = await promptInstall();
     if (success) {
-      toast.success("האפליקציה הותקנה בהצלחה!");
+      toast.success(t("header.installSuccess"));
     }
   };
 
@@ -77,10 +79,10 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
                 size="sm"
                 className="gap-1.5 min-h-[36px] px-2.5 text-xs text-muted-foreground hover:text-foreground"
                 onClick={handleInstallClick}
-                aria-label="התקן אפליקציה"
+                aria-label={t("header.install")}
               >
                 <Download className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">התקן</span>
+                <span className="hidden sm:inline">{t("header.install")}</span>
               </Button>
             )}
           </div>
@@ -104,7 +106,7 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
               variant="ghost" 
               size="icon" 
               className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground" 
-              aria-label="התראות"
+              aria-label={t("header.notifications")}
             >
               <Bell className="h-4 w-4" />
             </Button>
@@ -113,7 +115,7 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
               size="icon"
               className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
               onClick={toggleTheme}
-              aria-label="החלף מצב תצוגה"
+              aria-label={t("header.toggleTheme")}
             >
               {theme === "dark" ? (
                 <Sun className="h-4 w-4" />
@@ -128,12 +130,12 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
       <AlertDialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>התקנת האפליקציה</AlertDialogTitle>
-            <AlertDialogDescription>האם ברצונך להתקין את GozlanJournal כאפליקציה על המכשיר שלך?</AlertDialogDescription>
+            <AlertDialogTitle>{t("header.installApp")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("header.installDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmInstall}>התקן</AlertDialogAction>
+            <AlertDialogCancel>{t("general.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmInstall}>{t("header.installBtn")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

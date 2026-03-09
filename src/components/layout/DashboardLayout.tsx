@@ -4,6 +4,7 @@ import { DashboardHeader } from "./DashboardHeader";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -12,6 +13,7 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isRTL, t } = useLanguage();
 
   useEffect(() => {
     const body = document.body;
@@ -27,9 +29,12 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[60] md:hidden h-9 w-9 bg-card/90 backdrop-blur-sm border border-border shadow-lg"
+        className={cn(
+          "fixed top-[max(0.75rem,env(safe-area-inset-top))] z-[60] md:hidden h-9 w-9 bg-card/90 backdrop-blur-sm border border-border shadow-lg",
+          isRTL ? "right-3" : "left-3"
+        )}
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        aria-label="פתח תפריט"
+        aria-label={t("layout.openMenu")}
       >
         {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </Button>
@@ -45,8 +50,11 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed right-0 top-0 z-50 h-svh transition-transform duration-300 ease-out md:translate-x-0",
-          isMobileMenuOpen ? "translate-x-0" : "translate-x-full md:translate-x-0",
+          "fixed top-0 z-50 h-svh transition-transform duration-300 ease-out",
+          isRTL ? "right-0" : "left-0",
+          isRTL
+            ? (isMobileMenuOpen ? "translate-x-0" : "translate-x-full md:translate-x-0")
+            : (isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0")
         )}
         role="dialog"
         aria-modal="true"
@@ -55,7 +63,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       </div>
 
       {/* Main content */}
-      <div className="md:mr-64">
+      <div className={isRTL ? "md:mr-64" : "md:ml-64"}>
         <DashboardHeader title={title} />
         <main 
           className="px-3 py-3 md:px-5 md:py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
