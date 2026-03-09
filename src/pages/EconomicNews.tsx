@@ -53,15 +53,33 @@ const EconomicNews = () => {
     setError(null);
     try {
       const today = new Date();
-      const from = format(today, "yyyy-MM-dd");
-      const to = format(addDays(today, 7), "yyyy-MM-dd");
+      let from = format(today, "yyyy-MM-dd");
+      let to = format(addDays(today, 7), "yyyy-MM-dd");
 
+      // Try current dates first
       const { data, error: fnError } = await supabase.functions.invoke("scrape-economic-calendar", {
         body: { from, to, countries: "US,EU,GB,JP,AU,CA,CH,NZ" },
       });
 
       if (fnError) throw new Error(fnError.message);
       if (!data?.success) throw new Error(data?.error || "Failed to fetch events");
+
+      // If no events for current dates, fallback to 1 year ago (API may not have future data yet)
+      if (data.events?.length === 0) {
+        const fallbackDate = new Date(today);
+        fallbackDate.setFullYear(fallbackDate.getFullYear() - 1);
+        const fallbackFrom = format(fallbackDate, "yyyy-MM-dd");
+        const fallbackTo = format(addDays(fallbackDate, 7), "yyyy-MM-dd");
+
+        const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke("scrape-economic-calendar", {
+          body: { from: fallbackFrom, to: fallbackTo, countries: "US,EU,GB,JP,AU,CA,CH,NZ" },
+        });
+
+        if (!fallbackError && fallbackData?.success && fallbackData.events?.length > 0) {
+          setEvents(fallbackData.events);
+          return;
+        }
+      }
 
       setEvents(data.events || []);
     } catch (err: any) {
