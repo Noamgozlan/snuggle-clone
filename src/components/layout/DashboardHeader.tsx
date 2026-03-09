@@ -59,43 +59,43 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
   return (
     <>
       <header
-        className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-30"
+        className="border-b border-border bg-card/60 backdrop-blur-xl sticky top-0 z-30"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        <div className="flex items-center justify-between h-14 md:h-16 px-3 md:px-6">
+        <div className="flex items-center justify-between h-12 md:h-14 px-3 md:px-6">
           {/* Left side - empty space for mobile menu button */}
           <div className="w-10 md:hidden" />
           
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="sm:hidden flex items-center gap-2">
               <PortfolioSelector />
               <ConsistencyCalculator />
             </div>
             {!isInstalled && (
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="gap-2 min-h-[40px] px-3 text-xs"
+                className="gap-1.5 min-h-[36px] px-2.5 text-xs text-muted-foreground hover:text-foreground"
                 onClick={handleInstallClick}
                 aria-label="התקן אפליקציה"
               >
-                <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">התקן אפליקציה</span>
+                <Download className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">התקן</span>
               </Button>
             )}
           </div>
 
           {/* Quote or title */}
           {quote ? (
-            <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground italic max-w-md truncate">
-              <span>"{quote.content}"</span>
-              {quote.author && <span className="text-xs not-italic">— {quote.author}</span>}
+            <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground italic max-w-md truncate">
+              <span className="opacity-70">"{quote.content}"</span>
+              {quote.author && <span className="text-[10px] not-italic opacity-50">— {quote.author}</span>}
             </div>
           ) : (
-            title && <h1 className="text-base md:text-xl font-semibold text-foreground hidden md:block">{title}</h1>
+            title && <h1 className="text-sm md:text-base font-semibold text-foreground hidden md:block tracking-tight">{title}</h1>
           )}
 
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-1 md:gap-2">
             <div className="hidden sm:flex items-center gap-2">
               <PortfolioSelector />
               <ConsistencyCalculator />
@@ -103,22 +103,22 @@ export const DashboardHeader = ({ title }: DashboardHeaderProps) => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-10 w-10 rounded-full" 
+              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground" 
               aria-label="התראות"
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 rounded-full"
+              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
               onClick={toggleTheme}
               aria-label="החלף מצב תצוגה"
             >
               {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
+                <Sun className="h-4 w-4" />
               ) : (
-                <Moon className="h-5 w-5" />
+                <Moon className="h-4 w-4" />
               )}
             </Button>
           </div>
