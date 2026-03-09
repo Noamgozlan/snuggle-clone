@@ -389,12 +389,11 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 stagger-children">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סימול *</Label>
-              <Input
-                placeholder="NQ, ES..."
+              <SymbolCombobox
                 value={formData.symbol}
-                onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
-                className="bg-input border-border hover:border-primary/50 transition-colors"
-                required
+                onChange={(val) => setFormData({ ...formData, symbol: val })}
+                savedSymbols={savedSymbols}
+                onRemoveSymbol={removeSymbol}
               />
             </div>
 
