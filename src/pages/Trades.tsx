@@ -315,8 +315,8 @@ const Trades = () => {
               onClick={() => setIsAddTradeOpen(true)}
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">הוסף עסקה</span>
-              <span className="sm:hidden">הוסף</span>
+              <span className="hidden sm:inline">{t("trades.addTrade")}</span>
+              <span className="sm:hidden">{t("trades.addTradeShort")}</span>
             </Button>
             <Button
               variant="outline"
