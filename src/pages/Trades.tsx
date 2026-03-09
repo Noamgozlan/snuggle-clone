@@ -139,13 +139,13 @@ const Trades = () => {
 
     if (result.success) {
       toast({
-        title: "כל העסקאות נמחקו",
-        description: "כל העסקאות הוסרו מהמערכת",
+        title: t("trades.allDeleted"),
+        description: t("trades.allDeletedDesc"),
       });
     } else {
       toast({
-        title: "שגיאה",
-        description: "לא ניתן למחוק את העסקאות",
+        title: t("general.error"),
+        description: t("trades.errorDelete"),
         variant: "destructive",
       });
     }
