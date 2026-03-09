@@ -157,7 +157,8 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
 
       {/* Main Navigation */}
       <nav className="flex-1 px-3 py-2 overflow-y-auto">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-2 px-3">{t("nav.navigation")}  <ul className="space-y-0.5">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-2 px-3">{t("nav.navigation")}</p>
+        <ul className="space-y-0.5">
           {menuItems.map((item) => renderNavItem(item))}
 
           {hasApprovedMentor && renderNavItem({ icon: MessageSquare, label: t("nav.mentorChat"), href: "/mentor-chat" })}
@@ -170,7 +171,8 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
 
         <Separator className="bg-sidebar-border my-3" />
         
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] {t("nav.accmb-2 px-3">{t("nav.account")}  <ul className="space-y-0.5">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-2 px-3">{t("nav.account")}</p>
+        <ul className="space-y-0.5">
           {bottomMenuItems.map((item) => renderNavItem(item))}
         </ul>
       </nav>
