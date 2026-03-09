@@ -51,8 +51,12 @@ export const DashboardSidebar = ({ onNavigate }: DashboardSidebarProps) => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
+  const { t } = useLanguage();
   const { myMentor, myStudents, pendingRequests } = useMentorRelationships();
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const menuItems = menuItemDefs.map(item => ({ ...item, label: t(item.labelKey) }));
+  const bottomMenuItems = bottomMenuItemDefs.map(item => ({ ...item, label: t(item.labelKey) }));
 
   const hasMentorAccess = myStudents.length > 0 || pendingRequests.length > 0;
   const hasApprovedMentor = myMentor?.status === "accepted";
