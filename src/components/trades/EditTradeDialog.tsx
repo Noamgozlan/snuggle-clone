@@ -9,12 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Minus, Star, Upload, Loader2, X, Layers, Clock } from "lucide-react";
 import { TradeTagsSection } from "@/components/trades/TradeTagsSection";
+import { SymbolCombobox } from "@/components/trades/SymbolCombobox";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Trade } from "@/hooks/useTrades";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useSavedSymbols } from "@/hooks/useSavedSymbols";
 
 interface EditTradeDialogProps {
   trade: Trade | null;
