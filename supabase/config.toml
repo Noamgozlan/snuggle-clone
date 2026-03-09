@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.weekly-ai-summary]
 verify_jwt = false
+
+[functions.scrape-economic-calendar]
+verify_jwt = false
+
+[functions.fetch-economic-news]
+verify_jwt = false
