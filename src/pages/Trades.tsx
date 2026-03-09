@@ -735,7 +735,7 @@ const Trades = () => {
             {/* Custom confirmation input */}
             {(selectedStrategyForConfirmation === "custom" || selectedStrategyForConfirmation === "" || strategies.length === 0) && (
               <div className="space-y-2">
-                <Label htmlFor="confirmation-name" className="text-right">שם האישור</Label>
+                <Label htmlFor="confirmation-name">{t("trades.confirmationName")}</Label>
                 <Input
                   id="confirmation-name"
                   value={newConfirmationName}
