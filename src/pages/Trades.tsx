@@ -483,15 +483,15 @@ const Trades = () => {
         </div>
 
         {/* Trades Table */}
-        <Card className="bg-card border-border hover-glow animate-slide-up overflow-hidden">
+        <Card className="bg-card border-border overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : trades.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">אין עסקאות להצגה</p>
-              <Button variant="default" className="bg-primary" onClick={() => setIsAddTradeOpen(true)}>
+              <p className="text-muted-foreground text-sm mb-4">אין עסקאות להצגה</p>
+              <Button variant="default" size="sm" onClick={() => setIsAddTradeOpen(true)}>
                 <Plus className="h-4 w-4 ml-2" />
                 הוסף עסקה ראשונה
               </Button>
@@ -500,18 +500,18 @@ const Trades = () => {
             <div className="overflow-x-auto">
             <Table className="min-w-[800px]">
               <TableHeader>
-                <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-right text-muted-foreground w-16">תמונה</TableHead>
-                  <TableHead className="text-right text-muted-foreground">תאריך</TableHead>
-                  <TableHead className="text-right text-muted-foreground">סימול</TableHead>
-                  <TableHead className="text-right text-muted-foreground">סוג</TableHead>
-                  <TableHead className="text-right text-muted-foreground">אסטרטגיה</TableHead>
-                   <TableHead className="text-right text-muted-foreground">אישורים</TableHead>
-                  <TableHead className="text-right text-muted-foreground">תגיות</TableHead>
-                  <TableHead className="text-right text-muted-foreground">RR</TableHead>
-                  <TableHead className="text-right text-muted-foreground">רווח/הפסד</TableHead>
-                  <TableHead className="text-right text-muted-foreground">דירוג</TableHead>
-                  <TableHead className="text-right text-muted-foreground w-12">פעולות</TableHead>
+                <TableRow className="border-border bg-muted/20 hover:bg-muted/20">
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-16">תמונה</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">תאריך</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">סימול</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">סוג</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">אסטרטגיה</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">אישורים</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">תגיות</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">RR</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">רווח/הפסד</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">דירוג</TableHead>
+                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-12">פעולות</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -520,8 +520,11 @@ const Trades = () => {
                   return (
                     <TableRow
                       key={trade.id}
-                      className="border-border hover:bg-secondary/50 transition-colors cursor-pointer animate-fade-in"
-                      style={{ animationDelay: `${index * 0.05}s` }}
+                      className={cn(
+                        "border-border cursor-pointer transition-colors duration-150",
+                        index % 2 === 0 ? "bg-transparent" : "bg-muted/10",
+                        "hover:bg-primary/5"
+                      )}
                       onClick={() => handleTradeClick(trade)}
                     >
                       <TableCell onClick={(e) => e.stopPropagation()}>
