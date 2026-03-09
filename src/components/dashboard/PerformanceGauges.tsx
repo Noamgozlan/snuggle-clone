@@ -147,6 +147,55 @@ export const MiniGauge = ({ wins, breakeven, losses }: { wins: number; breakeven
   );
 };
 
+/** Full-circle donut gauge for Profit Factor card */
+export const FullCircleGauge = ({ wins, breakeven, losses }: { wins: number; breakeven: number; losses: number }) => {
+  const total = wins + breakeven + losses;
+  const winPct = total > 0 ? wins / total : 1;
+  const bePct = total > 0 ? breakeven / total : 0;
+  const lossPct = total > 0 ? losses / total : 0;
+
+  const r = 24;
+  const sw = 6;
+  const cx = 30;
+  const cy = 30;
+
+  // Point on circle at fraction t (0=top, going clockwise)
+  const pointAt = (t: number) => ({
+    x: cx + r * Math.sin(t * 2 * Math.PI),
+    y: cy - r * Math.cos(t * 2 * Math.PI),
+  });
+
+  const arcPath = (t0: number, t1: number) => {
+    const p0 = pointAt(t0);
+    const p1 = pointAt(t1);
+    const span = t1 - t0;
+    const largeArc = span > 0.5 ? 1 : 0;
+    return `M ${p0.x} ${p0.y} A ${r} ${r} 0 ${largeArc} 1 ${p1.x} ${p1.y}`;
+  };
+
+  const winEnd = winPct;
+  const beEnd = winEnd + bePct;
+
+  return (
+    <svg viewBox="0 0 60 60" className="w-[48px] h-[48px] flex-shrink-0">
+      {/* Background circle */}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth={sw} />
+      {/* Wins */}
+      {winPct > 0 && (
+        <path d={arcPath(0, Math.min(winEnd, 0.999))} fill="none" stroke="hsl(142 71% 45%)" strokeWidth={sw} strokeLinecap="round" />
+      )}
+      {/* Breakeven */}
+      {bePct > 0 && (
+        <path d={arcPath(winEnd, Math.min(beEnd, 0.999))} fill="none" stroke="hsl(var(--warning))" strokeWidth={sw} strokeLinecap="round" />
+      )}
+      {/* Losses */}
+      {lossPct > 0 && (
+        <path d={arcPath(beEnd, Math.min(beEnd + lossPct, 0.999))} fill="none" stroke="hsl(0 84% 60%)" strokeWidth={sw} strokeLinecap="round" />
+      )}
+    </svg>
+  );
+};
+
 // Helper: SVG arc path
 function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
