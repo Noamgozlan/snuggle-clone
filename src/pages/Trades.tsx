@@ -470,7 +470,7 @@ const Trades = () => {
           </Card>
 
           <Card className="bg-card border-border p-3.5 flex flex-col items-center justify-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">זמן ממוצע</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("trades.avgTime")}</p>
             <p className="text-xl font-bold text-foreground tabular-nums" dir="ltr">
               {avgDuration ?? "—"}
             </p>
