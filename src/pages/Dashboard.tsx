@@ -329,10 +329,10 @@ const Dashboard = () => {
   const avgDisplay = displayMode === "money" || displayMode === "balance" ? stats.avgPnl : displayMode === "points" ? stats.avgPoints : portfolioBalance > 0 ? (stats.avgPnl / portfolioBalance) * 100 : 0;
 
   const displayModes = [
-    { key: "money" as const, label: "כסף", icon: "$" },
-    { key: "points" as const, label: "נקודות", icon: "P" },
-    { key: "percentage" as const, label: "אחוזים", icon: "%" },
-    { key: "balance" as const, label: "מצב תיק", icon: "B" },
+    { key: "money" as const, label: t("mode.money"), icon: "$" },
+    { key: "points" as const, label: t("mode.points"), icon: "P" },
+    { key: "percentage" as const, label: t("mode.percentage"), icon: "%" },
+    { key: "balance" as const, label: t("mode.balance"), icon: "B" },
   ];
 
   return (
