@@ -716,7 +716,7 @@ const Trades = () => {
                   }}
                 >
                   <SelectTrigger className="text-right">
-                    <SelectValue placeholder="בחר אישור מאסטרטגיה..." />
+                    <SelectValue placeholder={t("trades.selectConfirmation")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="custom">הזן ידנית</SelectItem>
