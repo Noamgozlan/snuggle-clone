@@ -271,9 +271,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           notes: combinedNotes,
           is_closed: true,
           screenshot_url: screenshots.length > 0 ? screenshots[0].url : null,
-          mental_state: mentalState || null,
+          mental_state: mentalStates.length > 0 ? mentalStates.join(",") : null,
           mistakes: tradeMistakes.length > 0 ? tradeMistakes : null,
-          setup_type: setupType || null,
+          setup_type: setupTypes.length > 0 ? setupTypes.join(",") : null,
         } as any)
         .eq("id", trade.id);
 
