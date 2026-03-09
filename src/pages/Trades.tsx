@@ -424,59 +424,52 @@ const Trades = () => {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 stagger-children">
-          <Card className="bg-card border-border p-4 hover-lift">
-            <div className="flex items-center gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5">
+          <Card className="bg-card border-border p-3.5">
+            <div className="flex items-center gap-3">
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground">רווח/הפסד מצטבר נטו</p>
-                <p
-                  className={`text-2xl font-bold animate-bounce-in ${stats.totalPnl >= 0 ? "text-success" : "text-destructive"}`}
-                >
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">רווח/הפסד נטו</p>
+                <p className={`text-xl font-bold tabular-nums ${stats.totalPnl >= 0 ? "text-success" : "text-destructive"}`}>
                   {stats.totalPnl >= 0 ? "+" : ""}${stats.totalPnl.toFixed(2)}
                 </p>
-                <span
-                  className={`inline-block w-2 h-2 rounded-full ml-2 animate-pulse ${stats.totalPnl >= 0 ? "bg-success" : "bg-destructive"}`}
-                />
               </div>
             </div>
-            <div className="mt-4 flex gap-2">
+            <div className="mt-3 flex gap-1.5">
               <div
-                className="h-2 bg-destructive rounded-full transition-all duration-500"
+                className="h-1.5 bg-destructive/60 rounded-full transition-all duration-500"
                 style={{ width: `${stats.totalTrades > 0 ? (stats.losingTrades / stats.totalTrades) * 100 : 50}%` }}
               />
               <div
-                className="h-2 bg-success rounded-full transition-all duration-500"
+                className="h-1.5 bg-success/60 rounded-full transition-all duration-500"
                 style={{ width: `${stats.totalTrades > 0 ? (stats.winningTrades / stats.totalTrades) * 100 : 50}%` }}
               />
             </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-2">
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
               <span>הפסד ({stats.losingTrades})</span>
               <span>רווח ({stats.winningTrades})</span>
             </div>
           </Card>
 
-          <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
-            <p className="text-sm text-muted-foreground mb-2">זכייה מרבית/הפסד מקסימלי</p>
-            <p className="text-3xl font-bold text-foreground animate-scale-in">
+          <Card className="bg-card border-border p-3.5 flex flex-col items-center justify-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">W/L Ratio</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">
               {stats.maxLoss !== 0 ? Math.abs(stats.maxWin / stats.maxLoss).toFixed(2) : "—"}
             </p>
           </Card>
 
-          <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
-            <p className="text-sm text-muted-foreground mb-2">אחוז הצלחה</p>
-            <div className="animate-scale-in">
-              <ProgressRing value={stats.winRate} size={80} strokeWidth={6} />
-            </div>
+          <Card className="bg-card border-border p-3.5 flex flex-col items-center justify-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">אחוז הצלחה</p>
+            <ProgressRing value={stats.winRate} size={70} strokeWidth={5} />
           </Card>
 
-          <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
-            <p className="text-sm text-muted-foreground mb-2">Avg RR</p>
-            <p className="text-3xl font-bold text-foreground animate-scale-in">{stats.avgRR.toFixed(2)}</p>
+          <Card className="bg-card border-border p-3.5 flex flex-col items-center justify-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Avg RR</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{stats.avgRR.toFixed(2)}</p>
           </Card>
 
-          <Card className="bg-card border-border p-4 flex flex-col items-center justify-center hover-lift">
-            <p className="text-sm text-muted-foreground mb-2">זמן ממוצע לעסקה</p>
-            <p className="text-2xl font-bold text-foreground animate-scale-in" dir="ltr">
+          <Card className="bg-card border-border p-3.5 flex flex-col items-center justify-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">זמן ממוצע</p>
+            <p className="text-xl font-bold text-foreground tabular-nums" dir="ltr">
               {avgDuration ?? "—"}
             </p>
           </Card>
