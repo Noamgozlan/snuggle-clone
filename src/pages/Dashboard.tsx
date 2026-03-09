@@ -432,9 +432,17 @@ const Dashboard = () => {
                 <TooltipContent side="top" className="text-xs">יחס רווח גולמי להפסד גולמי</TooltipContent>
               </UITooltip>
             </div>
-            <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">
-              {stats.profitFactor === Infinity ? '∞' : stats.profitFactor.toFixed(2)}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">
+                {stats.profitFactor === Infinity ? '∞' : stats.profitFactor.toFixed(2)}
+              </p>
+              <MiniGauge wins={stats.winningTrades} breakeven={stats.breakevenTrades} losses={stats.losingTrades} />
+            </div>
+            <div className="flex items-center gap-1.5 mt-2">
+               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">{stats.winningTrades}</span>
+               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-warning/15 text-warning">{stats.breakevenTrades}</span>
+               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/15 text-destructive">{stats.losingTrades}</span>
+            </div>
           </Card>
 
           {/* Day Win % */}
