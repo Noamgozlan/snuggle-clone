@@ -27,28 +27,28 @@ export const StatCard = ({
   return (
     <div
       className={cn(
-        "bg-card border border-border rounded-xl p-5 transition-all hover:border-primary/30",
+        "bg-card border border-border rounded-lg p-4 transition-all duration-200 hover:border-primary/20 hover:shadow-[0_0_20px_hsl(var(--primary)/0.05)]",
         className
       )}
     >
       <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">{title}</p>
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
           <p
             className={cn(
-              "text-2xl font-bold",
+              "text-xl font-bold tabular-nums tracking-tight",
               trend ? trendColors[trend] : "text-foreground"
             )}
           >
             {value}
           </p>
           {subtitle && (
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
+            <p className="text-[11px] text-muted-foreground">{subtitle}</p>
           )}
         </div>
         {Icon && (
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Icon className="h-5 w-5 text-primary" />
+          <div className="p-1.5 bg-primary/8 rounded-md">
+            <Icon className="h-4 w-4 text-primary" />
           </div>
         )}
       </div>

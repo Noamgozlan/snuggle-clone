@@ -23,21 +23,21 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-svh bg-background">
-      {/* Mobile menu button - fixed position with safe area */}
+      {/* Mobile menu button */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[60] md:hidden h-10 w-10 bg-card/80 backdrop-blur-sm border border-border shadow-lg"
+        className="fixed top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[60] md:hidden h-9 w-9 bg-card/90 backdrop-blur-sm border border-border shadow-lg"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         aria-label="פתח תפריט"
       >
-        {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </Button>
 
       {/* Mobile overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -58,8 +58,8 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       <div className="md:mr-64">
         <DashboardHeader title={title} />
         <main 
-          className="px-3 py-4 md:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))]"
-          style={{ paddingTop: "calc(1rem + env(safe-area-inset-top))" }}
+          className="px-3 py-3 md:px-5 md:py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
         >
           {children}
         </main>
