@@ -416,6 +416,26 @@ const translations: Record<string, Record<Language, string>> = {
   "admin.fileDownloaded": { he: "הקובץ הורד בהצלחה", en: "File downloaded successfully" },
   "admin.quoteUpdated": { he: "הציטוט עודכן בהצלחה", en: "Quote updated successfully" },
 
+  // Economic News
+  "nav.news": { he: "חדשות כלכליות", en: "Economic News" },
+  "news.title": { he: "חדשות כלכליות", en: "Economic News" },
+  "news.today": { he: "היום", en: "Today" },
+  "news.thisWeek": { he: "השבוע", en: "This Week" },
+  "news.allCurrencies": { he: "כל המטבעות", en: "All Currencies" },
+  "news.allImpacts": { he: "כל ההשפעות", en: "All Impacts" },
+  "news.impactHigh": { he: "גבוה", en: "High" },
+  "news.impactMedium": { he: "בינוני", en: "Medium" },
+  "news.impactLow": { he: "נמוך", en: "Low" },
+  "news.refresh": { he: "רענן", en: "Refresh" },
+  "news.todayEvents": { he: "אירועים להיום", en: "Today's Events" },
+  "news.weekEvents": { he: "אירועי השבוע", en: "This Week's Events" },
+  "news.noEvents": { he: "אין אירועים להצגה", en: "No events to display" },
+  "news.actual": { he: "בפועל", en: "Actual" },
+  "news.forecast": { he: "תחזית", en: "Forecast" },
+  "news.previous": { he: "קודם", en: "Previous" },
+  "news.good": { he: "חיובי", en: "Good" },
+  "news.bad": { he: "שלילי", en: "Bad" },
+
   // General
   "general.save": { he: "שמור", en: "Save" },
   "general.cancel": { he: "ביטול", en: "Cancel" },
