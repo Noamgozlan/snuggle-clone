@@ -697,7 +697,7 @@ const Trades = () => {
       <Dialog open={confirmationDialogOpen} onOpenChange={setConfirmationDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-right">הוסף אישור</DialogTitle>
+            <DialogTitle>{t("trades.addConfirmation")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Strategy confirmations selector */}
