@@ -48,6 +48,7 @@ import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TradeConfirmation {
   trade_id: string;
@@ -68,6 +69,7 @@ const Trades = () => {
   const [deletingTradeId, setDeletingTradeId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [isAddTradeOpen, setIsAddTradeOpen] = useState(false);
   const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -137,13 +139,13 @@ const Trades = () => {
 
     if (result.success) {
       toast({
-        title: "כל העסקאות נמחקו",
-        description: "כל העסקאות הוסרו מהמערכת",
+        title: t("trades.allDeleted"),
+        description: t("trades.allDeletedDesc"),
       });
     } else {
       toast({
-        title: "שגיאה",
-        description: "לא ניתן למחוק את העסקאות",
+        title: t("general.error"),
+        description: t("trades.errorDelete"),
         variant: "destructive",
       });
     }
@@ -156,13 +158,13 @@ const Trades = () => {
 
     if (result.success) {
       toast({
-        title: "העסקה נמחקה",
-        description: "העסקה הוסרה בהצלחה",
+        title: t("trades.deleted"),
+        description: t("trades.deletedDesc"),
       });
     } else {
       toast({
-        title: "שגיאה",
-        description: "לא ניתן למחוק את העסקה",
+        title: t("general.error"),
+        description: t("trades.errorDeleteTrade"),
         variant: "destructive",
       });
     }
@@ -302,7 +304,7 @@ const Trades = () => {
   };
 
   return (
-    <DashboardLayout title="עסקאות">
+    <DashboardLayout title={t("trades.title")}>
       <div className="space-y-6">
         {/* Filters - Mobile Responsive */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between animate-fade-in mt-8 md:mt-0">
@@ -313,8 +315,8 @@ const Trades = () => {
               onClick={() => setIsAddTradeOpen(true)}
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">הוסף עסקה</span>
-              <span className="sm:hidden">הוסף</span>
+              <span className="hidden sm:inline">{t("trades.addTrade")}</span>
+              <span className="sm:hidden">{t("trades.addTradeShort")}</span>
             </Button>
             <Button
               variant="outline"
@@ -323,7 +325,7 @@ const Trades = () => {
               onClick={() => setIsCSVImportOpen(true)}
             >
               <FileDown className="h-4 w-4" />
-              <span className="hidden sm:inline">יבוא CSV</span>
+              <span className="hidden sm:inline">{t("trades.importCSV")}</span>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -333,26 +335,26 @@ const Trades = () => {
                   className="gap-2 hover:scale-105 transition-transform"
                   disabled={trades.length === 0}
                 >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">מחק הכל</span>
+                   <Trash2 className="h-4 w-4" />
+                   <span className="hidden sm:inline">{t("trades.deleteAll")}</span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                  <AlertDialogTitle>{t("trades.deleteConfirm")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    פעולה זו תמחק את כל העסקאות שלך לצמיתות. לא ניתן לבטל פעולה זו.
+                    {t("trades.deleteConfirmDesc")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>ביטול</AlertDialogCancel>
+                  <AlertDialogCancel>{t("general.cancel")}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDeleteAll} disabled={isDeleting}>
-                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "מחק הכל"}
+                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("trades.deleteAll")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <span className="text-xs md:text-sm text-muted-foreground">{filteredTrades.length} עסקאות</span>
+            <span className="text-xs md:text-sm text-muted-foreground">{filteredTrades.length} {t("trades.count")}</span>
           </div>
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <Popover>
@@ -366,7 +368,7 @@ const Trades = () => {
                   )}
                 >
                   <CalendarIcon className="h-4 w-4 ml-1 md:ml-2" />
-                  {fromDate ? format(fromDate, "dd/MM/yy") : "מתאריך"}
+                  {fromDate ? format(fromDate, "dd/MM/yy") : t("trades.fromDate")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -390,7 +392,7 @@ const Trades = () => {
                   )}
                 >
                   <CalendarIcon className="h-4 w-4 ml-1 md:ml-2" />
-                  {toDate ? format(toDate, "dd/MM/yy") : "עד תאריך"}
+                  {toDate ? format(toDate, "dd/MM/yy") : t("trades.toDate")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -410,15 +412,15 @@ const Trades = () => {
             )}
             <div className="hidden md:flex gap-1">
               <Button variant="default" size="sm" className="bg-primary">
-                כסף $
+                {t("trades.moneyBtn")}
               </Button>
               <Button variant="secondary" size="sm">
-                נקודות
+                {t("trades.pointsBtn")}
               </Button>
             </div>
             <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
-              <Filter className="h-4 w-4 md:ml-2" />
-              <span className="hidden md:inline">מסננים</span>
+               <Filter className="h-4 w-4 md:me-2" />
+               <span className="hidden md:inline">{t("trades.filters")}</span>
             </Button>
           </div>
         </div>
@@ -428,7 +430,7 @@ const Trades = () => {
           <Card className="bg-card border-border p-3.5">
             <div className="flex items-center gap-3">
               <div className="flex-1">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">רווח/הפסד נטו</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{t("trades.netPnl")}</p>
                 <p className={`text-xl font-bold tabular-nums ${stats.totalPnl >= 0 ? "text-success" : "text-destructive"}`}>
                   {stats.totalPnl >= 0 ? "+" : ""}${stats.totalPnl.toFixed(2)}
                 </p>
@@ -445,8 +447,8 @@ const Trades = () => {
               />
             </div>
             <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
-              <span>הפסד ({stats.losingTrades})</span>
-              <span>רווח ({stats.winningTrades})</span>
+              <span>{t("trades.loss")} ({stats.losingTrades})</span>
+              <span>{t("trades.profit")} ({stats.winningTrades})</span>
             </div>
           </Card>
 
@@ -458,7 +460,7 @@ const Trades = () => {
           </Card>
 
           <Card className="bg-card border-border p-3.5 flex flex-col items-center justify-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">אחוז הצלחה</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("trades.winRate")}</p>
             <ProgressRing value={stats.winRate} size={70} strokeWidth={5} />
           </Card>
 
@@ -468,7 +470,7 @@ const Trades = () => {
           </Card>
 
           <Card className="bg-card border-border p-3.5 flex flex-col items-center justify-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">זמן ממוצע</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("trades.avgTime")}</p>
             <p className="text-xl font-bold text-foreground tabular-nums" dir="ltr">
               {avgDuration ?? "—"}
             </p>
@@ -483,10 +485,10 @@ const Trades = () => {
             </div>
           ) : trades.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground text-sm mb-4">אין עסקאות להצגה</p>
+              <p className="text-muted-foreground text-sm mb-4">{t("trades.noTrades")}</p>
               <Button variant="default" size="sm" onClick={() => setIsAddTradeOpen(true)}>
-                <Plus className="h-4 w-4 ml-2" />
-                הוסף עסקה ראשונה
+                <Plus className="h-4 w-4 me-2" />
+                {t("trades.addFirst")}
               </Button>
             </div>
           ) : (
@@ -494,17 +496,17 @@ const Trades = () => {
             <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow className="border-border bg-muted/20 hover:bg-muted/20">
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-16">תמונה</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">תאריך</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">סימול</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">סוג</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">אסטרטגיה</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">אישורים</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">תגיות</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">RR</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">רווח/הפסד</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">דירוג</TableHead>
-                  <TableHead className="text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-12">פעולות</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-16">{t("table.image")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.date")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.symbol")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.type")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.strategy")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.confirmations")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.tags")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.rr")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.pnl")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("table.rating")}</TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-12">{t("table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -637,18 +639,18 @@ const Trades = () => {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>מחק עסקה</AlertDialogTitle>
+                              <AlertDialogTitle>{t("trades.deleteTrade")}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                האם אתה בטוח שברצונך למחוק את העסקה על {trade.symbol}?
+                                {t("trades.deleteTradeConfirm")} {trade.symbol}?
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>ביטול</AlertDialogCancel>
+                              <AlertDialogCancel>{t("general.cancel")}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => handleDeleteTrade(trade.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                מחק
+                                {t("general.delete")}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -695,13 +697,13 @@ const Trades = () => {
       <Dialog open={confirmationDialogOpen} onOpenChange={setConfirmationDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-right">הוסף אישור</DialogTitle>
+            <DialogTitle>{t("trades.addConfirmation")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Strategy confirmations selector */}
             {strategies.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-right">בחר מאסטרטגיה קיימת</Label>
+                <Label>{t("trades.selectStrategy")}</Label>
                 <Select 
                   value={selectedStrategyForConfirmation} 
                   onValueChange={(value) => {
@@ -714,10 +716,10 @@ const Trades = () => {
                   }}
                 >
                   <SelectTrigger className="text-right">
-                    <SelectValue placeholder="בחר אישור מאסטרטגיה..." />
+                    <SelectValue placeholder={t("trades.selectConfirmation")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="custom">הזן ידנית</SelectItem>
+                    <SelectItem value="custom">{t("trades.enterManually")}</SelectItem>
                     {strategies.flatMap(strategy => 
                       strategy.confirmations.map(conf => (
                         <SelectItem key={conf.id} value={conf.name}>
@@ -733,13 +735,12 @@ const Trades = () => {
             {/* Custom confirmation input */}
             {(selectedStrategyForConfirmation === "custom" || selectedStrategyForConfirmation === "" || strategies.length === 0) && (
               <div className="space-y-2">
-                <Label htmlFor="confirmation-name" className="text-right">שם האישור</Label>
+                <Label htmlFor="confirmation-name">{t("trades.confirmationName")}</Label>
                 <Input
                   id="confirmation-name"
                   value={newConfirmationName}
                   onChange={(e) => setNewConfirmationName(e.target.value)}
-                  placeholder="הזן שם אישור..."
-                  className="text-right"
+                    placeholder={t("trades.enterConfirmation")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -752,10 +753,10 @@ const Trades = () => {
           </div>
           <DialogFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setConfirmationDialogOpen(false)}>
-              ביטול
+              {t("general.cancel")}
             </Button>
             <Button onClick={handleSaveConfirmation} disabled={!newConfirmationName.trim()}>
-              הוסף
+              {t("general.add")}
             </Button>
           </DialogFooter>
         </DialogContent>
