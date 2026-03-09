@@ -242,7 +242,9 @@ const Dashboard = () => {
 
   // Day of week performance
   const dayOfWeekPerformance = useMemo(() => {
-    const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    const dayNames = language === "he" 
+      ? ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
+      : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayData: { [day: number]: { totalPnl: number; count: number; wins: number; losses: number } } = {};
     
     trades.filter(t => t.entry_date && t.pnl !== null).forEach(trade => {
