@@ -354,7 +354,7 @@ const Trades = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <span className="text-xs md:text-sm text-muted-foreground">{filteredTrades.length} עסקאות</span>
+            <span className="text-xs md:text-sm text-muted-foreground">{filteredTrades.length} {t("trades.count")}</span>
           </div>
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <Popover>
