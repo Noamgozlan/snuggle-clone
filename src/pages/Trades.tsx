@@ -719,7 +719,7 @@ const Trades = () => {
                     <SelectValue placeholder={t("trades.selectConfirmation")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="custom">הזן ידנית</SelectItem>
+                    <SelectItem value="custom">{t("trades.enterManually")}</SelectItem>
                     {strategies.flatMap(strategy => 
                       strategy.confirmations.map(conf => (
                         <SelectItem key={conf.id} value={conf.name}>
