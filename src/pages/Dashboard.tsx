@@ -724,7 +724,7 @@ const Dashboard = () => {
                     </defs>
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} interval="preserveStartEnd" />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
-                    <Tooltip 
+                    <RechartsTooltip 
                       content={({ active, payload }) => {
                         if (active && payload?.[0]) {
                           const data = payload[0].payload;
