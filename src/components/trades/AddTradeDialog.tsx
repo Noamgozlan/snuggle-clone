@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Plus, Minus, Star, Upload, Loader2, X, CalendarIcon, Layers, Sparkles } from "lucide-react";
 import { TradeTagsSection } from "@/components/trades/TradeTagsSection";
+import { SymbolCombobox } from "@/components/trades/SymbolCombobox";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useStrategies, Strategy } from "@/hooks/useStrategies";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useSavedSymbols } from "@/hooks/useSavedSymbols";
 
 interface AddTradeDialogProps {
   trigger?: React.ReactNode;
