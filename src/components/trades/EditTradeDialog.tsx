@@ -47,9 +47,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   const { portfolios } = usePortfolio();
   const [selectedPortfolioIds, setSelectedPortfolioIds] = useState<string[]>([]);
   const [session, setSession] = useState<string>("");
-  const [mentalState, setMentalState] = useState("");
+  const [mentalStates, setMentalStates] = useState<string[]>([]);
   const [tradeMistakes, setTradeMistakes] = useState<string[]>([]);
-  const [setupType, setSetupType] = useState("");
+  const [setupTypes, setSetupTypes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     symbol: "",
     quantity: "1",
