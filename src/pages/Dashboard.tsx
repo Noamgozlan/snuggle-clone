@@ -10,6 +10,10 @@ import { GoalsTracker } from "@/components/dashboard/GoalsTracker";
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview";
 import { RecurringMistakesBanner } from "@/components/dashboard/RecurringMistakesBanner";
 import { PerformanceGauges, MiniGauge, FullCircleGauge } from "@/components/dashboard/PerformanceGauges";
+import { TradingHeatmap } from "@/components/dashboard/TradingHeatmap";
+import { AchievementsPanel } from "@/components/dashboard/AchievementsPanel";
+import { TiltDetection } from "@/components/dashboard/TiltDetection";
+import { InteractiveEquityCurve } from "@/components/dashboard/InteractiveEquityCurve";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
 import { useTrades } from "@/hooks/useTrades";
@@ -324,6 +328,8 @@ const Dashboard = () => {
       <div className="space-y-4 md:space-y-5 max-w-full overflow-x-hidden">
         {/* Recurring Mistakes Banner */}
         <RecurringMistakesBanner trades={trades} />
+        {/* Tilt Detection */}
+        <TiltDetection trades={trades} />
         {/* Header */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-4 md:mt-0">
           <div>
@@ -699,50 +705,8 @@ const Dashboard = () => {
             )}
           </Card>
 
-          {/* Cumulative PNL */}
-          <Card className="bg-card border-border p-4 md:p-5">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              {t("dashboard.equityCurve")}
-            </h3>
-            {cumulativePnlData.length === 0 ? (
-              <div className="h-48 md:h-56 flex items-center justify-center">
-                <p className="text-muted-foreground text-sm">{t("dashboard.notEnoughData")}</p>
-              </div>
-            ) : (
-              <div className="h-48 md:h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={cumulativePnlData} margin={{ top: 5, right: 5, bottom: 15, left: 35 }}>
-                    <defs>
-                      <linearGradient id="colorCumulativePnl" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} interval="preserveStartEnd" />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} tickFormatter={(v) => `$${v}`} />
-                    <RechartsTooltip 
-                      content={({ active, payload }) => {
-                        if (active && payload?.[0]) {
-                          const data = payload[0].payload;
-                          return (
-                            <div className="bg-card border border-border rounded-lg p-2.5 shadow-lg text-xs">
-                              <p className="font-semibold text-sm">{data.symbol}</p>
-                              <p className="text-muted-foreground">{data.fullDate}</p>
-                              <p className={`${data.pnl >= 0 ? 'text-success' : 'text-destructive'}`}>{language === "he" ? "עסקה" : "Trade"}: ${data.pnl.toFixed(2)}</p>
-                              <p className={`font-bold ${data.cumulative >= 0 ? 'text-success' : 'text-destructive'}`}>{t("dashboard.total")}: ${data.cumulative.toFixed(2)}</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Area type="monotone" dataKey="cumulative" stroke="hsl(var(--primary))" strokeWidth={1.5} fill="url(#colorCumulativePnl)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </Card>
+          {/* Interactive Equity Curve */}
+          <InteractiveEquityCurve trades={trades} language={language} />
         </div>
 
         {/* Tags Analytics */}
@@ -889,6 +853,12 @@ const Dashboard = () => {
           </div>
         </Card>
       </div>
+
+      {/* Heatmap */}
+      <TradingHeatmap trades={trades} />
+
+      {/* Achievements */}
+      <AchievementsPanel trades={trades} />
 
       {/* Goals Tracker */}
       <GoalsTracker goals={goals} trades={trades} onCreateGoal={createGoal} onDeleteGoal={deleteGoal} />
