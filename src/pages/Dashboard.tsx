@@ -10,6 +10,10 @@ import { GoalsTracker } from "@/components/dashboard/GoalsTracker";
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview";
 import { RecurringMistakesBanner } from "@/components/dashboard/RecurringMistakesBanner";
 import { PerformanceGauges, MiniGauge, FullCircleGauge } from "@/components/dashboard/PerformanceGauges";
+import { TradingHeatmap } from "@/components/dashboard/TradingHeatmap";
+import { AchievementsPanel } from "@/components/dashboard/AchievementsPanel";
+import { TiltDetection } from "@/components/dashboard/TiltDetection";
+import { InteractiveEquityCurve } from "@/components/dashboard/InteractiveEquityCurve";
 
 import { AddTradeDialog } from "@/components/trades/AddTradeDialog";
 import { useTrades } from "@/hooks/useTrades";
