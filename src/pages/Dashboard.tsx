@@ -854,6 +854,12 @@ const Dashboard = () => {
         </Card>
       </div>
 
+      {/* Heatmap */}
+      <TradingHeatmap trades={trades} />
+
+      {/* Achievements */}
+      <AchievementsPanel trades={trades} />
+
       {/* Goals Tracker */}
       <GoalsTracker goals={goals} trades={trades} onCreateGoal={createGoal} onDeleteGoal={deleteGoal} />
 
