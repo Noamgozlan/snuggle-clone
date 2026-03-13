@@ -328,6 +328,8 @@ const Dashboard = () => {
       <div className="space-y-4 md:space-y-5 max-w-full overflow-x-hidden">
         {/* Recurring Mistakes Banner */}
         <RecurringMistakesBanner trades={trades} />
+        {/* Tilt Detection */}
+        <TiltDetection trades={trades} />
         {/* Header */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-4 md:mt-0">
           <div>
