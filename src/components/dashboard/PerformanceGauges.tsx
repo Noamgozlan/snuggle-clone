@@ -115,13 +115,12 @@ export const MiniGauge = ({ wins, breakeven, losses }: { wins: number; breakeven
     y: cy - r * Math.sin(t * Math.PI),
   });
 
-  // Helper: SVG arc between two fractions
+  // Helper: SVG arc between two fractions of the top semicircle.
+  // Angular span never exceeds 180°, so largeArc is always 0.
   const arcPath = (t0: number, t1: number) => {
     const p0 = pointAt(t0);
     const p1 = pointAt(t1);
-    const span = t1 - t0;
-    const largeArc = span > 0.5 ? 1 : 0;
-    return `M ${p0.x} ${p0.y} A ${r} ${r} 0 ${largeArc} 1 ${p1.x} ${p1.y}`;
+    return `M ${p0.x} ${p0.y} A ${r} ${r} 0 0 1 ${p1.x} ${p1.y}`;
   };
 
   const winEnd = winPct;
@@ -133,15 +132,15 @@ export const MiniGauge = ({ wins, breakeven, losses }: { wins: number; breakeven
       <path d={arcPath(0, 1)} fill="none" stroke="hsl(var(--muted))" strokeWidth={sw} strokeLinecap="round" />
       {/* Wins */}
       {winPct > 0 && (
-        <path d={arcPath(0, Math.min(winEnd, 0.999))} fill="none" stroke="hsl(142 71% 45%)" strokeWidth={sw} strokeLinecap="round" />
+        <path d={arcPath(0, winEnd)} fill="none" stroke="hsl(142 71% 45%)" strokeWidth={sw} strokeLinecap="round" />
       )}
       {/* Breakeven */}
       {bePct > 0 && (
-        <path d={arcPath(winEnd, Math.min(beEnd, 0.999))} fill="none" stroke="hsl(var(--warning))" strokeWidth={sw} strokeLinecap="round" />
+        <path d={arcPath(winEnd, beEnd)} fill="none" stroke="hsl(var(--warning))" strokeWidth={sw} strokeLinecap="round" />
       )}
       {/* Losses */}
       {lossPct > 0 && (
-        <path d={arcPath(beEnd, 0.999)} fill="none" stroke="hsl(0 84% 60%)" strokeWidth={sw} strokeLinecap="round" />
+        <path d={arcPath(beEnd, 1)} fill="none" stroke="hsl(0 84% 60%)" strokeWidth={sw} strokeLinecap="round" />
       )}
     </svg>
   );
