@@ -703,6 +703,38 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
             </div>
           </div>
 
+          {/* Confirmations */}
+          {selectedStrategy && selectedStrategy.confirmations.length > 0 && (
+            <div className="space-y-3 animate-fade-in">
+              <Label className="text-muted-foreground text-sm">
+                אישורים - {selectedStrategy.name}
+              </Label>
+              <div className="grid grid-cols-2 gap-2 p-3 bg-secondary/30 rounded-lg">
+                {selectedStrategy.confirmations.map((conf) => (
+                  <div key={conf.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`edit-conf-${conf.id}`}
+                      checked={selectedConfirmations.includes(conf.name)}
+                      onCheckedChange={() =>
+                        setSelectedConfirmations((prev) =>
+                          prev.includes(conf.name)
+                            ? prev.filter((c) => c !== conf.name)
+                            : [...prev, conf.name],
+                        )
+                      }
+                    />
+                    <label htmlFor={`edit-conf-${conf.id}`} className="text-sm cursor-pointer">
+                      {conf.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                נבחרו {selectedConfirmations.length} מתוך {selectedStrategy.confirmations.length} אישורים
+              </p>
+            </div>
+          )}
+
           {/* Tags Section */}
           <TradeTagsSection
             mentalStates={mentalStates}
