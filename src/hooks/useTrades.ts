@@ -126,7 +126,7 @@ export const useTrades = () => {
         losingTrades: losingTrades.length,
         breakevenTrades: breakevenTrades.length,
         winRate: decisiveTrades > 0 ? (winningTrades.length / decisiveTrades) * 100 : 0,
-        profitFactor: totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0,
+        profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0,
         avgRR,
         avgPnl: tradesData.length > 0 ? totalPnl / tradesData.length : 0,
         avgPoints: tradesData.length > 0 ? totalPoints / tradesData.length : 0,
