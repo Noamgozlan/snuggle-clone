@@ -128,6 +128,22 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       setTradeMistakes((trade as any).mistakes || []);
       const stVal = (trade as any).setup_type || "";
       setSetupTypes(stVal ? stVal.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
+
+      // Map trade.strategy (stored as name) → Strategy object
+      const matched = trade.strategy
+        ? strategies.find((s) => s.name === trade.strategy) || null
+        : null;
+      setSelectedStrategy(matched);
+
+      // Load saved confirmations for this trade
+      const fetchConfirmations = async () => {
+        const { data } = await supabase
+          .from("trade_confirmations")
+          .select("confirmation_name")
+          .eq("trade_id", trade.id);
+        setSelectedConfirmations(data ? data.map((d: any) => d.confirmation_name) : []);
+      };
+      fetchConfirmations();
       
       // Load existing screenshots
       if (trade.screenshot_url) {
