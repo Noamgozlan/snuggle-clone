@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { MentorSettings as MentorSettingsSection } from "@/components/mentor/MentorSettings";
 import { StudentFeedbackView } from "@/components/mentor/StudentFeedbackView";
 import { BrokerIntegrations } from "@/components/settings/BrokerIntegrations";
+import { DataExportCard } from "@/components/settings/DataExportCard";
 import { Scale } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -422,6 +423,9 @@ const Settings = () => {
             {t("settings.showGuide")}
           </Button>
         </Card>
+
+        {/* Move My Data */}
+        <DataExportCard />
 
         {/* Change Password */}
         <Card className="bg-card border-border p-6">
