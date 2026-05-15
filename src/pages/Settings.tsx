@@ -424,6 +424,9 @@ const Settings = () => {
           </Button>
         </Card>
 
+        {/* Move My Data */}
+        <DataExportCard />
+
         {/* Change Password */}
         <Card className="bg-card border-border p-6">
           <h2 className="text-xl font-bold text-foreground mb-2">{t("settings.changePassword")}</h2>
