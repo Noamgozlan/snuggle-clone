@@ -635,11 +635,25 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
             <div className="space-y-2 col-span-2">
               <Label className="text-muted-foreground text-sm">אסטרטגיה</Label>
               <div className="flex gap-2">
-                <Input
-                  value={formData.strategy}
-                  onChange={(e) => setFormData({ ...formData, strategy: e.target.value })}
-                  className="bg-input border-border flex-1"
-                />
+                <Select
+                  value={selectedStrategy?.id || ""}
+                  onValueChange={(id) => {
+                    const s = strategies.find((x) => x.id === id) || null;
+                    setSelectedStrategy(s);
+                    setSelectedConfirmations([]);
+                  }}
+                >
+                  <SelectTrigger className="bg-input border-border flex-1">
+                    <SelectValue placeholder="בחר אסטרטגיה" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {strategies.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
                 <Popover>
                   <PopoverTrigger asChild>
