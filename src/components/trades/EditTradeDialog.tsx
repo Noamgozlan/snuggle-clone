@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Trade } from "@/hooks/useTrades";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useSavedSymbols } from "@/hooks/useSavedSymbols";
+import { useStrategies, Strategy } from "@/hooks/useStrategies";
 
 interface EditTradeDialogProps {
   trade: Trade | null;
@@ -29,6 +30,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
   const { user } = useAuth();
   const { toast } = useToast();
   const { symbols: savedSymbols, addSymbol, removeSymbol } = useSavedSymbols();
+  const { strategies } = useStrategies();
+  const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
+  const [selectedConfirmations, setSelectedConfirmations] = useState<string[]>([]);
   const [rating, setRating] = useState(0);
   const [tradeType, setTradeType] = useState<"long" | "short">("long");
   const [pnlSign, setPnlSign] = useState<"positive" | "negative">("positive");
@@ -124,6 +128,22 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       setTradeMistakes((trade as any).mistakes || []);
       const stVal = (trade as any).setup_type || "";
       setSetupTypes(stVal ? stVal.split(",").map((s: string) => s.trim()).filter(Boolean) : []);
+
+      // Map trade.strategy (stored as name) → Strategy object
+      const matched = trade.strategy
+        ? strategies.find((s) => s.name === trade.strategy) || null
+        : null;
+      setSelectedStrategy(matched);
+
+      // Load saved confirmations for this trade
+      const fetchConfirmations = async () => {
+        const { data } = await supabase
+          .from("trade_confirmations")
+          .select("confirmation_name")
+          .eq("trade_id", trade.id);
+        setSelectedConfirmations(data ? data.map((d: any) => d.confirmation_name) : []);
+      };
+      fetchConfirmations();
       
       // Load existing screenshots
       if (trade.screenshot_url) {
@@ -157,7 +177,15 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
     if (!open) {
       setInitializedForTradeId(null);
     }
-  }, [trade, open, initializedForTradeId]);
+  }, [trade, open, initializedForTradeId, strategies]);
+
+  // Re-resolve strategy object when strategies list loads after trade
+  useEffect(() => {
+    if (trade?.strategy && !selectedStrategy && strategies.length > 0) {
+      const m = strategies.find((s) => s.name === trade.strategy);
+      if (m) setSelectedStrategy(m);
+    }
+  }, [strategies, trade, selectedStrategy]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -280,7 +308,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           risk: formData.risk ? parseFloat(formData.risk) : null,
           rr: rrValue,
           rating: rating || null,
-          strategy: formData.strategy || null,
+          strategy: selectedStrategy?.name || null,
           session: session || null,
           notes: combinedNotes,
           is_closed: true,
@@ -308,6 +336,16 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
         await supabase.from("trade_screenshots").insert(screenshotsToInsert);
       }
 
+      // Update trade_confirmations: replace
+      await supabase.from("trade_confirmations").delete().eq("trade_id", trade.id);
+      if (selectedConfirmations.length > 0) {
+        const confRows = selectedConfirmations.map((name) => ({
+          trade_id: trade.id,
+          confirmation_name: name,
+        }));
+        await supabase.from("trade_confirmations").insert(confRows);
+      }
+
       // Check if user wants to sync to OTHER portfolios (creating copies)
       const otherPortfolioIds = selectedPortfolioIds.filter((id) => id !== trade.portfolio_id);
 
@@ -326,7 +364,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           risk: formData.risk ? parseFloat(formData.risk) : null,
           rr: formData.rr ? parseFloat(formData.rr) : null,
           rating: rating || null,
-          strategy: formData.strategy || null,
+          strategy: selectedStrategy?.name || null,
           session: session || null,
           notes: combinedNotes,
           is_closed: true,
@@ -597,11 +635,25 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
             <div className="space-y-2 col-span-2">
               <Label className="text-muted-foreground text-sm">אסטרטגיה</Label>
               <div className="flex gap-2">
-                <Input
-                  value={formData.strategy}
-                  onChange={(e) => setFormData({ ...formData, strategy: e.target.value })}
-                  className="bg-input border-border flex-1"
-                />
+                <Select
+                  value={selectedStrategy?.id || ""}
+                  onValueChange={(id) => {
+                    const s = strategies.find((x) => x.id === id) || null;
+                    setSelectedStrategy(s);
+                    setSelectedConfirmations([]);
+                  }}
+                >
+                  <SelectTrigger className="bg-input border-border flex-1">
+                    <SelectValue placeholder="בחר אסטרטגיה" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {strategies.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
                 <Popover>
                   <PopoverTrigger asChild>
@@ -650,6 +702,38 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
               </div>
             </div>
           </div>
+
+          {/* Confirmations */}
+          {selectedStrategy && selectedStrategy.confirmations.length > 0 && (
+            <div className="space-y-3 animate-fade-in">
+              <Label className="text-muted-foreground text-sm">
+                אישורים - {selectedStrategy.name}
+              </Label>
+              <div className="grid grid-cols-2 gap-2 p-3 bg-secondary/30 rounded-lg">
+                {selectedStrategy.confirmations.map((conf) => (
+                  <div key={conf.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`edit-conf-${conf.id}`}
+                      checked={selectedConfirmations.includes(conf.name)}
+                      onCheckedChange={() =>
+                        setSelectedConfirmations((prev) =>
+                          prev.includes(conf.name)
+                            ? prev.filter((c) => c !== conf.name)
+                            : [...prev, conf.name],
+                        )
+                      }
+                    />
+                    <label htmlFor={`edit-conf-${conf.id}`} className="text-sm cursor-pointer">
+                      {conf.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                נבחרו {selectedConfirmations.length} מתוך {selectedStrategy.confirmations.length} אישורים
+              </p>
+            </div>
+          )}
 
           {/* Tags Section */}
           <TradeTagsSection

@@ -95,6 +95,11 @@ export const useTrades = () => {
       const totalWins = winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
       const totalLosses = Math.abs(losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0));
 
+      // Profit factor: standard formula uses gross profit vs gross loss across ALL trades
+      // (independent of break-even bucketing) so the value is realistic.
+      const grossProfit = tradesData.reduce((sum, t) => sum + Math.max(0, t.pnl || 0), 0);
+      const grossLoss = Math.abs(tradesData.reduce((sum, t) => sum + Math.min(0, t.pnl || 0), 0));
+
       const pnls = tradesData.map((t) => t.pnl || 0);
       const points = tradesData.map((t) => t.pnl_points || 0);
       const maxWin = pnls.length > 0 ? Math.max(...pnls) : 0;
@@ -121,7 +126,7 @@ export const useTrades = () => {
         losingTrades: losingTrades.length,
         breakevenTrades: breakevenTrades.length,
         winRate: decisiveTrades > 0 ? (winningTrades.length / decisiveTrades) * 100 : 0,
-        profitFactor: totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0,
+        profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0,
         avgRR,
         avgPnl: tradesData.length > 0 ? totalPnl / tradesData.length : 0,
         avgPoints: tradesData.length > 0 ? totalPoints / tradesData.length : 0,
