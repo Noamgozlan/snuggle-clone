@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Trade } from "@/hooks/useTrades";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useSavedSymbols } from "@/hooks/useSavedSymbols";
+import { useStrategies, Strategy } from "@/hooks/useStrategies";
 
 interface EditTradeDialogProps {
   trade: Trade | null;
