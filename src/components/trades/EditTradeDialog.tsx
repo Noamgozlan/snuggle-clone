@@ -354,7 +354,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
           risk: formData.risk ? parseFloat(formData.risk) : null,
           rr: formData.rr ? parseFloat(formData.rr) : null,
           rating: rating || null,
-          strategy: formData.strategy || null,
+          strategy: selectedStrategy?.name || null,
           session: session || null,
           notes: combinedNotes,
           is_closed: true,
