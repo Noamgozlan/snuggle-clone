@@ -177,7 +177,15 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
     if (!open) {
       setInitializedForTradeId(null);
     }
-  }, [trade, open, initializedForTradeId]);
+  }, [trade, open, initializedForTradeId, strategies]);
+
+  // Re-resolve strategy object when strategies list loads after trade
+  useEffect(() => {
+    if (trade?.strategy && !selectedStrategy && strategies.length > 0) {
+      const m = strategies.find((s) => s.name === trade.strategy);
+      if (m) setSelectedStrategy(m);
+    }
+  }, [strategies, trade, selectedStrategy]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
