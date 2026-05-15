@@ -336,6 +336,16 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
         await supabase.from("trade_screenshots").insert(screenshotsToInsert);
       }
 
+      // Update trade_confirmations: replace
+      await supabase.from("trade_confirmations").delete().eq("trade_id", trade.id);
+      if (selectedConfirmations.length > 0) {
+        const confRows = selectedConfirmations.map((name) => ({
+          trade_id: trade.id,
+          confirmation_name: name,
+        }));
+        await supabase.from("trade_confirmations").insert(confRows);
+      }
+
       // Check if user wants to sync to OTHER portfolios (creating copies)
       const otherPortfolioIds = selectedPortfolioIds.filter((id) => id !== trade.portfolio_id);
 
