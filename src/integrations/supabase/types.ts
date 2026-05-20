@@ -650,6 +650,101 @@ export type Database = {
         }
         Relationships: []
       }
+      prop_accounts: {
+        Row: {
+          account_size: number
+          account_type: string
+          cost: number
+          created_at: string
+          firm_name: string
+          id: string
+          max_drawdown: number | null
+          min_trading_days: number | null
+          notes: string | null
+          portfolio_id: string | null
+          profit_target: number | null
+          rules_preset: string | null
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_size?: number
+          account_type?: string
+          cost?: number
+          created_at?: string
+          firm_name: string
+          id?: string
+          max_drawdown?: number | null
+          min_trading_days?: number | null
+          notes?: string | null
+          portfolio_id?: string | null
+          profit_target?: number | null
+          rules_preset?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_size?: number
+          account_type?: string
+          cost?: number
+          created_at?: string
+          firm_name?: string
+          id?: string
+          max_drawdown?: number | null
+          min_trading_days?: number | null
+          notes?: string | null
+          portfolio_id?: string | null
+          profit_target?: number | null
+          rules_preset?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prop_payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          payout_date: string
+          prop_account_id: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payout_date?: string
+          prop_account_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payout_date?: string
+          prop_account_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prop_payouts_prop_account_id_fkey"
+            columns: ["prop_account_id"]
+            isOneToOne: false
+            referencedRelation: "prop_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_trade_comments: {
         Row: {
           content: string
