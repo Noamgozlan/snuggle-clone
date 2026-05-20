@@ -17,6 +17,7 @@ import {
   LogOut,
   ChevronLeft,
   Newspaper,
+  Briefcase,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ const menuItemDefs = [
   { icon: TrendingUp, labelKey: "nav.trades", href: "/trades" },
   { icon: BarChart3, labelKey: "nav.statistics", href: "/statistics" },
   { icon: Target, labelKey: "nav.strategies", href: "/strategies" },
+  { icon: Briefcase, labelKey: "nav.propPortfolios", href: "/prop-portfolios" },
   { icon: TrendingUp, labelKey: "nav.backtesting", href: "/backtesting" },
   { icon: Newspaper, labelKey: "nav.news", href: "/news" },
   { icon: Users, labelKey: "nav.community", href: "/community" },

@@ -29,6 +29,7 @@ import Giveaways from "./pages/Giveaways";
 import Admin from "./pages/Admin";
 import Backtesting from "./pages/Backtesting";
 import EconomicNews from "./pages/EconomicNews";
+import PropPortfolios from "./pages/PropPortfolios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -153,6 +154,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <EconomicNews />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/prop-portfolios"
+                element={
+                  <ProtectedRoute>
+                    <PropPortfolios />
                   </ProtectedRoute>
                 }
               />
