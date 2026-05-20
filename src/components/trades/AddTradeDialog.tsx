@@ -187,9 +187,25 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
 
     setUploadingImage(true);
 
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    const ALLOWED_EXT: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/gif": "gif",
+      "image/webp": "webp",
+    };
+    const MAX_SIZE = 5 * 1024 * 1024;
+
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          throw new Error("רק קבצי תמונה (JPG, PNG, GIF, WEBP) מותרים");
+        }
+        if (file.size > MAX_SIZE) {
+          throw new Error("הקובץ גדול מדי (מקסימום 5MB)");
+        }
 
         // Show preview immediately
         const reader = new FileReader();
@@ -199,10 +215,12 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
         });
         const preview = await previewPromise;
 
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${user.id}/${Date.now()}-${i}.${fileExt}`;
+        const safeExt = ALLOWED_EXT[file.type];
+        const fileName = `${user.id}/${Date.now()}-${i}.${safeExt}`;
 
-        const { error: uploadError } = await supabase.storage.from("trade-screenshots").upload(fileName, file);
+        const { error: uploadError } = await supabase.storage
+          .from("trade-screenshots")
+          .upload(fileName, file, { contentType: file.type, upsert: false });
 
         if (uploadError) throw uploadError;
 
