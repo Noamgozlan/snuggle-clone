@@ -17,6 +17,7 @@ const translations: Record<string, Record<Language, string>> = {
   "nav.strategies": { he: "אסטרטגיות", en: "Strategies" },
   "nav.backtesting": { he: "Gozlan Forever Model", en: "Gozlan Forever Model" },
   "nav.community": { he: "קהילה", en: "Community" },
+  "nav.propPortfolios": { he: "ניהול תיקים", en: "Portfolio Management" },
   "nav.giveaways": { he: "הגרלות", en: "Giveaways" },
   "nav.profile": { he: "פרופיל", en: "Profile" },
   "nav.settings": { he: "הגדרות", en: "Settings" },
