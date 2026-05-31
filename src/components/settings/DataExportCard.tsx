@@ -1,7 +1,8 @@
 import { useState } from "react";
+import JSZip from "jszip";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +22,131 @@ async function urlToBase64(url: string): Promise<string> {
 
 export const DataExportCard = () => {
   const [exporting, setExporting] = useState(false);
+  const [exportingScreenshots, setExportingScreenshots] = useState(false);
+
+  const handleExportScreenshots = async () => {
+    setExportingScreenshots(true);
+    let toastId: string | number | undefined;
+    try {
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData.user) throw new Error("Not authenticated");
+      const userId = userData.user.id;
+
+      const [tradesRes, strategiesRes] = await Promise.all([
+        supabase.from("trades").select("id,symbol,entry_date,screenshot_url").eq("user_id", userId),
+        supabase.from("strategies").select("id,name,screenshot_url").eq("user_id", userId),
+      ]);
+      if (tradesRes.error) throw tradesRes.error;
+      if (strategiesRes.error) throw strategiesRes.error;
+
+      const trades = tradesRes.data ?? [];
+      const strategies = strategiesRes.data ?? [];
+      const tradeIds = trades.map((t: any) => t.id);
+
+      const tsRes = tradeIds.length
+        ? await supabase.from("trade_screenshots").select("*").in("trade_id", tradeIds)
+        : ({ data: [], error: null } as any);
+      if (tsRes.error) throw tsRes.error;
+
+      const tradeById = new Map(trades.map((t: any) => [t.id, t]));
+
+      type Item = { url: string; folder: string; name: string };
+      const items: Item[] = [];
+      const seen = new Set<string>();
+      const safe = (s: string) => (s || "untitled").replace(/[^a-z0-9._-]+/gi, "_").slice(0, 80);
+      const extFromUrl = (u: string) => {
+        const m = u.split("?")[0].match(/\.([a-z0-9]{2,5})$/i);
+        return m ? m[1].toLowerCase() : "jpg";
+      };
+
+      for (const t of trades as any[]) {
+        if (t.screenshot_url && !seen.has(t.screenshot_url)) {
+          seen.add(t.screenshot_url);
+          const date = t.entry_date ? String(t.entry_date).slice(0, 10) : "no-date";
+          items.push({
+            url: t.screenshot_url,
+            folder: `trades/${safe(t.symbol)}_${date}_${t.id.slice(0, 8)}`,
+            name: `main.${extFromUrl(t.screenshot_url)}`,
+          });
+        }
+      }
+      for (const ts of (tsRes.data ?? []) as any[]) {
+        if (!ts.screenshot_url || seen.has(ts.screenshot_url)) continue;
+        seen.add(ts.screenshot_url);
+        const t: any = tradeById.get(ts.trade_id);
+        const date = t?.entry_date ? String(t.entry_date).slice(0, 10) : "no-date";
+        const sym = t?.symbol ? safe(t.symbol) : "trade";
+        const id = ts.trade_id.slice(0, 8);
+        const tf = ts.timeframe ? safe(ts.timeframe) : "tf";
+        items.push({
+          url: ts.screenshot_url,
+          folder: `trades/${sym}_${date}_${id}`,
+          name: `${tf}_${ts.position ?? 0}_${ts.id.slice(0, 6)}.${extFromUrl(ts.screenshot_url)}`,
+        });
+      }
+      for (const s of strategies as any[]) {
+        if (s.screenshot_url && !seen.has(s.screenshot_url)) {
+          seen.add(s.screenshot_url);
+          items.push({
+            url: s.screenshot_url,
+            folder: `strategies/${safe(s.name)}_${s.id.slice(0, 8)}`,
+            name: `main.${extFromUrl(s.screenshot_url)}`,
+          });
+        }
+      }
+
+      if (items.length === 0) {
+        toast.info("No screenshots to download.");
+        return;
+      }
+
+      const zip = new JSZip();
+      const failed: string[] = [];
+      let i = 0;
+      for (const it of items) {
+        i++;
+        toastId = toast.loading(`Downloading screenshots... (${i}/${items.length})`, { id: toastId });
+        try {
+          const res = await fetch(it.url);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const blob = await res.blob();
+          zip.file(`${it.folder}/${it.name}`, blob);
+        } catch (e) {
+          failed.push(it.url);
+        }
+      }
+
+      if (failed.length) {
+        zip.file("_failed_urls.txt", failed.join("\n"));
+      }
+
+      toastId = toast.loading("Packaging ZIP...", { id: toastId });
+      const blob = await zip.generateAsync({ type: "blob" });
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const a = document.createElement("a");
+      const objUrl = URL.createObjectURL(blob);
+      a.href = objUrl;
+      a.download = `trade-screenshots-${dateStr}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objUrl);
+
+      if (toastId !== undefined) toast.dismiss(toastId);
+      toast.success(
+        failed.length
+          ? `Downloaded ${items.length - failed.length}/${items.length} screenshots. ${failed.length} failed.`
+          : `Downloaded ${items.length} screenshots.`,
+      );
+    } catch (err) {
+      console.error("Screenshot export failed:", err);
+      if (toastId !== undefined) toast.dismiss(toastId);
+      toast.error("Export failed — please try again.");
+    } finally {
+      setExportingScreenshots(false);
+    }
+  };
+
 
   const handleExport = async () => {
     setExporting(true);
@@ -146,19 +272,38 @@ export const DataExportCard = () => {
           </p>
         </div>
       </div>
-      <Button onClick={handleExport} disabled={exporting} className="mt-4">
-        {exporting ? (
-          <>
-            <Loader2 className="h-4 w-4 me-2 animate-spin" />
-            Exporting...
-          </>
-        ) : (
-          <>
-            <Download className="h-4 w-4 me-2" />
-            Export My Data
-          </>
-        )}
-      </Button>
+      <div className="flex flex-wrap gap-2 mt-4">
+        <Button onClick={handleExport} disabled={exporting || exportingScreenshots}>
+          {exporting ? (
+            <>
+              <Loader2 className="h-4 w-4 me-2 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4 me-2" />
+              Export My Data
+            </>
+          )}
+        </Button>
+        <Button
+          onClick={handleExportScreenshots}
+          disabled={exporting || exportingScreenshots}
+          variant="outline"
+        >
+          {exportingScreenshots ? (
+            <>
+              <Loader2 className="h-4 w-4 me-2 animate-spin" />
+              Downloading...
+            </>
+          ) : (
+            <>
+              <ImageIcon className="h-4 w-4 me-2" />
+              Download All Screenshots (ZIP)
+            </>
+          )}
+        </Button>
+      </div>
     </Card>
   );
 };
