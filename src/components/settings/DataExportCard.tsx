@@ -50,49 +50,76 @@ export const DataExportCard = () => {
 
       const tradeById = new Map(trades.map((t: any) => [t.id, t]));
 
-      type Item = { url: string; folder: string; name: string };
+      type Kind = "trade_main" | "trade_extra" | "strategy_main";
+      type Item = {
+        url: string;
+        path: string;
+        kind: Kind;
+        trade_id?: string;
+        trade_screenshot_id?: string;
+        strategy_id?: string;
+        symbol?: string;
+        entry_date?: string | null;
+        timeframe?: string | null;
+        position?: number | null;
+      };
       const items: Item[] = [];
-      const seen = new Set<string>();
+      const seen = new Map<string, Item>();
       const safe = (s: string) => (s || "untitled").replace(/[^a-z0-9._-]+/gi, "_").slice(0, 80);
       const extFromUrl = (u: string) => {
         const m = u.split("?")[0].match(/\.([a-z0-9]{2,5})$/i);
         return m ? m[1].toLowerCase() : "jpg";
       };
 
+      const addItem = (it: Item) => {
+        const existing = seen.get(it.url);
+        if (existing) return existing;
+        items.push(it);
+        seen.set(it.url, it);
+        return it;
+      };
+
       for (const t of trades as any[]) {
-        if (t.screenshot_url && !seen.has(t.screenshot_url)) {
-          seen.add(t.screenshot_url);
-          const date = t.entry_date ? String(t.entry_date).slice(0, 10) : "no-date";
-          items.push({
-            url: t.screenshot_url,
-            folder: `trades/${safe(t.symbol)}_${date}_${t.id.slice(0, 8)}`,
-            name: `main.${extFromUrl(t.screenshot_url)}`,
-          });
-        }
+        if (!t.screenshot_url) continue;
+        const date = t.entry_date ? String(t.entry_date).slice(0, 10) : "no-date";
+        // Full trade_id in folder name so importers can match unambiguously
+        const folder = `trades/${safe(t.symbol)}_${date}__${t.id}`;
+        addItem({
+          url: t.screenshot_url,
+          path: `${folder}/main.${extFromUrl(t.screenshot_url)}`,
+          kind: "trade_main",
+          trade_id: t.id,
+          symbol: t.symbol,
+          entry_date: t.entry_date,
+        });
       }
       for (const ts of (tsRes.data ?? []) as any[]) {
-        if (!ts.screenshot_url || seen.has(ts.screenshot_url)) continue;
-        seen.add(ts.screenshot_url);
+        if (!ts.screenshot_url) continue;
         const t: any = tradeById.get(ts.trade_id);
         const date = t?.entry_date ? String(t.entry_date).slice(0, 10) : "no-date";
         const sym = t?.symbol ? safe(t.symbol) : "trade";
-        const id = ts.trade_id.slice(0, 8);
+        const folder = `trades/${sym}_${date}__${ts.trade_id}`;
         const tf = ts.timeframe ? safe(ts.timeframe) : "tf";
-        items.push({
+        addItem({
           url: ts.screenshot_url,
-          folder: `trades/${sym}_${date}_${id}`,
-          name: `${tf}_${ts.position ?? 0}_${ts.id.slice(0, 6)}.${extFromUrl(ts.screenshot_url)}`,
+          path: `${folder}/extra_${tf}_pos${ts.position ?? 0}__${ts.id}.${extFromUrl(ts.screenshot_url)}`,
+          kind: "trade_extra",
+          trade_id: ts.trade_id,
+          trade_screenshot_id: ts.id,
+          symbol: t?.symbol,
+          entry_date: t?.entry_date ?? null,
+          timeframe: ts.timeframe ?? null,
+          position: ts.position ?? null,
         });
       }
       for (const s of strategies as any[]) {
-        if (s.screenshot_url && !seen.has(s.screenshot_url)) {
-          seen.add(s.screenshot_url);
-          items.push({
-            url: s.screenshot_url,
-            folder: `strategies/${safe(s.name)}_${s.id.slice(0, 8)}`,
-            name: `main.${extFromUrl(s.screenshot_url)}`,
-          });
-        }
+        if (!s.screenshot_url) continue;
+        addItem({
+          url: s.screenshot_url,
+          path: `strategies/${safe(s.name)}__${s.id}/main.${extFromUrl(s.screenshot_url)}`,
+          kind: "strategy_main",
+          strategy_id: s.id,
+        });
       }
 
       if (items.length === 0) {
@@ -103,18 +130,50 @@ export const DataExportCard = () => {
       const zip = new JSZip();
       const failed: string[] = [];
       let i = 0;
+      const manifestFiles: Array<Omit<Item, "url"> & { url: string; downloaded: boolean }> = [];
       for (const it of items) {
         i++;
         toastId = toast.loading(`Downloading screenshots... (${i}/${items.length})`, { id: toastId });
+        let downloaded = false;
         try {
           const res = await fetch(it.url);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const blob = await res.blob();
-          zip.file(`${it.folder}/${it.name}`, blob);
+          zip.file(it.path, blob);
+          downloaded = true;
         } catch (e) {
           failed.push(it.url);
         }
+        manifestFiles.push({ ...it, downloaded });
       }
+
+      // Manifest: lets any importer map each file back to its trade/strategy
+      const manifest = {
+        version: "snuggle-screenshots-v1",
+        exported_at: new Date().toISOString(),
+        user_id: userId,
+        path_convention: {
+          trade_main: "trades/<symbol>_<entry_date>__<trade_id>/main.<ext>",
+          trade_extra: "trades/<symbol>_<entry_date>__<trade_id>/extra_<timeframe>_pos<position>__<trade_screenshot_id>.<ext>",
+          strategy_main: "strategies/<name>__<strategy_id>/main.<ext>",
+        },
+        files: manifestFiles,
+      };
+      zip.file("manifest.json", JSON.stringify(manifest, null, 2));
+      zip.file(
+        "README.txt",
+        [
+          "Trade Screenshots Export",
+          "",
+          "Each file is placed in a folder named after its trade or strategy.",
+          "The folder ends with the full trade_id or strategy_id (after the '__' separator).",
+          "",
+          "manifest.json contains the authoritative mapping: each file path is linked",
+          "to its trade_id (or strategy_id), original URL, timeframe and position.",
+          "When importing into a new account, use manifest.json to re-attach every",
+          "screenshot to the correct trade — do not rely on folder names alone.",
+        ].join("\n"),
+      );
 
       if (failed.length) {
         zip.file("_failed_urls.txt", failed.join("\n"));
