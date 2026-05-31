@@ -272,19 +272,38 @@ export const DataExportCard = () => {
           </p>
         </div>
       </div>
-      <Button onClick={handleExport} disabled={exporting} className="mt-4">
-        {exporting ? (
-          <>
-            <Loader2 className="h-4 w-4 me-2 animate-spin" />
-            Exporting...
-          </>
-        ) : (
-          <>
-            <Download className="h-4 w-4 me-2" />
-            Export My Data
-          </>
-        )}
-      </Button>
+      <div className="flex flex-wrap gap-2 mt-4">
+        <Button onClick={handleExport} disabled={exporting || exportingScreenshots}>
+          {exporting ? (
+            <>
+              <Loader2 className="h-4 w-4 me-2 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4 me-2" />
+              Export My Data
+            </>
+          )}
+        </Button>
+        <Button
+          onClick={handleExportScreenshots}
+          disabled={exporting || exportingScreenshots}
+          variant="outline"
+        >
+          {exportingScreenshots ? (
+            <>
+              <Loader2 className="h-4 w-4 me-2 animate-spin" />
+              Downloading...
+            </>
+          ) : (
+            <>
+              <ImageIcon className="h-4 w-4 me-2" />
+              Download All Screenshots (ZIP)
+            </>
+          )}
+        </Button>
+      </div>
     </Card>
   );
 };
