@@ -10,7 +10,7 @@ import { GoalsTracker } from "@/components/dashboard/GoalsTracker";
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview";
 import { RecurringMistakesBanner } from "@/components/dashboard/RecurringMistakesBanner";
 import { PerformanceGauges, MiniGauge, FullCircleGauge } from "@/components/dashboard/PerformanceGauges";
-import { TradingHeatmap } from "@/components/dashboard/TradingHeatmap";
+
 import { AchievementsPanel } from "@/components/dashboard/AchievementsPanel";
 import { TiltDetection } from "@/components/dashboard/TiltDetection";
 import { InteractiveEquityCurve } from "@/components/dashboard/InteractiveEquityCurve";
@@ -36,6 +36,8 @@ import {
   ChevronUp,
   ChevronDown,
   Info,
+  Percent,
+  DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -854,8 +856,6 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Heatmap */}
-      <TradingHeatmap trades={trades} />
 
       {/* Achievements */}
       <AchievementsPanel trades={trades} />
