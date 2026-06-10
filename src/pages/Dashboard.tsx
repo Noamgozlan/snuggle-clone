@@ -380,7 +380,8 @@ const Dashboard = () => {
         {/* Stats Grid - TradeZella Style */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
           {/* Net P&L */}
-          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+          <Card className="relative overflow-hidden bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <DollarSign className="absolute end-3 top-1/2 -translate-y-1/2 h-10 w-10 text-primary/15" />
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] font-medium text-muted-foreground">{t("stats.netPnl")}</span>
@@ -402,7 +403,8 @@ const Dashboard = () => {
           </Card>
 
           {/* Trade Win % */}
-          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+          <Card className="relative overflow-hidden bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <Percent className="absolute end-3 top-1/2 -translate-y-1/2 h-10 w-10 text-primary/15" />
             <div className="flex items-center gap-1.5 mb-2">
               <span className="text-[11px] font-medium text-muted-foreground">{t("stats.tradeWin")}</span>
               <UITooltip>
@@ -422,7 +424,8 @@ const Dashboard = () => {
           </Card>
 
           {/* Profit Factor */}
-          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+          <Card className="relative overflow-hidden bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <BarChart3 className="absolute end-3 top-1/2 -translate-y-1/2 h-10 w-10 text-primary/15" />
             <div className="flex items-center gap-1.5 mb-2">
               <span className="text-[11px] font-medium text-muted-foreground">{t("stats.profitFactor")}</span>
               <UITooltip>
@@ -444,7 +447,8 @@ const Dashboard = () => {
           </Card>
 
           {/* Day Win % */}
-          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+          <Card className="relative overflow-hidden bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <Percent className="absolute end-3 top-1/2 -translate-y-1/2 h-10 w-10 text-primary/15" />
             <div className="flex items-center gap-1.5 mb-2">
               <span className="text-[11px] font-medium text-muted-foreground">{t("stats.dayWin")}</span>
               <UITooltip>
@@ -464,7 +468,8 @@ const Dashboard = () => {
           </Card>
 
           {/* Avg Win/Loss Trade */}
-          <Card className="bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+          <Card className="relative overflow-hidden bg-card border-border p-4 hover:border-primary/15 transition-all duration-200">
+            <BarChart3 className="absolute end-3 top-1/2 -translate-y-1/2 h-10 w-10 text-primary/15" />
             <div className="flex items-center gap-1.5 mb-2">
               <span className="text-[11px] font-medium text-muted-foreground">{t("stats.avgWinLoss")}</span>
               <UITooltip>
