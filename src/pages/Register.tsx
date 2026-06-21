@@ -61,13 +61,19 @@ const Register = () => {
 
       if (error) {
         let errorMessage = "שגיאה בהרשמה";
-        
-        if (error.message.includes("already registered")) {
+        const msg = (error.message || "").toLowerCase();
+        const code = (error as any).code || (error as any).error_code;
+
+        if (code === "weak_password" || msg.includes("pwned") || msg.includes("weak") || msg.includes("known to be")) {
+          errorMessage = "הסיסמה הזו דלפה ברשת בעבר ואינה בטוחה. בחר סיסמה ייחודית וחזקה יותר (אותיות גדולות + קטנות + מספרים + סימן).";
+        } else if (msg.includes("already registered") || msg.includes("already exists") || code === "user_already_exists") {
           errorMessage = "משתמש עם אימייל זה כבר קיים במערכת";
-        } else if (error.message.includes("invalid email")) {
+        } else if (msg.includes("invalid email") || msg.includes("email")) {
           errorMessage = "כתובת אימייל לא תקינה";
-        } else if (error.message.includes("password")) {
-          errorMessage = "סיסמה חייבת להכיל לפחות 6 תווים";
+        } else if (msg.includes("password")) {
+          errorMessage = "סיסמה לא תקינה - לפחות 8 תווים, אות גדולה, קטנה וספרה";
+        } else if (error.message) {
+          errorMessage = error.message;
         }
 
         toast({
