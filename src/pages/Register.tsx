@@ -184,7 +184,7 @@ const Register = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="לפחות 6 תווים"
+                  placeholder="לפחות 8 תווים (Aa1)"
                   className="text-left"
                   dir="ltr"
                   value={password}
