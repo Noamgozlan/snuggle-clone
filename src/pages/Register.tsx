@@ -11,7 +11,11 @@ import { z } from "zod";
 const registerSchema = z.object({
   email: z.string().email("אימייל לא תקין"),
   username: z.string().min(3, "שם משתמש חייב להכיל לפחות 3 תווים"),
-  password: z.string().min(6, "סיסמה חייבת להכיל לפחות 6 תווים"),
+  password: z.string()
+    .min(8, "סיסמה חייבת להכיל לפחות 8 תווים")
+    .regex(/[A-Z]/, "הסיסמה חייבת להכיל לפחות אות גדולה אחת")
+    .regex(/[a-z]/, "הסיסמה חייבת להכיל לפחות אות קטנה אחת")
+    .regex(/[0-9]/, "הסיסמה חייבת להכיל לפחות ספרה אחת"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
 });
@@ -57,13 +61,19 @@ const Register = () => {
 
       if (error) {
         let errorMessage = "שגיאה בהרשמה";
-        
-        if (error.message.includes("already registered")) {
+        const msg = (error.message || "").toLowerCase();
+        const code = (error as any).code || (error as any).error_code;
+
+        if (code === "weak_password" || msg.includes("pwned") || msg.includes("weak") || msg.includes("known to be")) {
+          errorMessage = "הסיסמה הזו דלפה ברשת בעבר ואינה בטוחה. בחר סיסמה ייחודית וחזקה יותר (אותיות גדולות + קטנות + מספרים + סימן).";
+        } else if (msg.includes("already registered") || msg.includes("already exists") || code === "user_already_exists") {
           errorMessage = "משתמש עם אימייל זה כבר קיים במערכת";
-        } else if (error.message.includes("invalid email")) {
+        } else if (msg.includes("invalid email") || msg.includes("email")) {
           errorMessage = "כתובת אימייל לא תקינה";
-        } else if (error.message.includes("password")) {
-          errorMessage = "סיסמה חייבת להכיל לפחות 6 תווים";
+        } else if (msg.includes("password")) {
+          errorMessage = "סיסמה לא תקינה - לפחות 8 תווים, אות גדולה, קטנה וספרה";
+        } else if (error.message) {
+          errorMessage = error.message;
         }
 
         toast({
@@ -174,7 +184,7 @@ const Register = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="לפחות 6 תווים"
+                  placeholder="לפחות 8 תווים (Aa1)"
                   className="text-left"
                   dir="ltr"
                   value={password}
