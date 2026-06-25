@@ -3,10 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Home, User, Loader2 } from "lucide-react";
+import { ArrowRight, Home, User, Loader2, MailCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getHebrewAuthErrorMessage } from "@/lib/authErrors";
 
 const registerSchema = z.object({
   email: z.string().email("אימייל לא תקין"),
@@ -15,14 +17,15 @@ const registerSchema = z.object({
     .min(8, "סיסמה חייבת להכיל לפחות 8 תווים")
     .regex(/[A-Z]/, "הסיסמה חייבת להכיל לפחות אות גדולה אחת")
     .regex(/[a-z]/, "הסיסמה חייבת להכיל לפחות אות קטנה אחת")
-    .regex(/[0-9]/, "הסיסמה חייבת להכיל לפחות ספרה אחת"),
+    .regex(/[0-9]/, "הסיסמה חייבת להכיל לפחות ספרה אחת")
+    .regex(/[^A-Za-z0-9]/, "הסיסמה חייבת להכיל לפחות סימן מיוחד אחד"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
 });
 
 const Register = () => {
   const navigate = useNavigate();
-  const { signUp, user, loading: authLoading } = useAuth();
+  const { signUp, resendConfirmation, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
   const [email, setEmail] = useState("");
@@ -31,6 +34,8 @@ const Register = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [resending, setResending] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -53,33 +58,28 @@ const Register = () => {
         lastName: lastName || undefined,
       });
 
-      const { error } = await signUp(validatedData.email, validatedData.password, {
+      const { data, error } = await signUp(validatedData.email, validatedData.password, {
         first_name: validatedData.firstName,
         last_name: validatedData.lastName,
         username: validatedData.username,
       });
 
       if (error) {
-        let errorMessage = "שגיאה בהרשמה";
-        const msg = (error.message || "").toLowerCase();
-        const code = (error as any).code || (error as any).error_code;
-
-        if (code === "weak_password" || msg.includes("pwned") || msg.includes("weak") || msg.includes("known to be")) {
-          errorMessage = "הסיסמה הזו דלפה ברשת בעבר ואינה בטוחה. בחר סיסמה ייחודית וחזקה יותר (אותיות גדולות + קטנות + מספרים + סימן).";
-        } else if (msg.includes("already registered") || msg.includes("already exists") || code === "user_already_exists") {
-          errorMessage = "משתמש עם אימייל זה כבר קיים במערכת";
-        } else if (msg.includes("invalid email") || msg.includes("email")) {
-          errorMessage = "כתובת אימייל לא תקינה";
-        } else if (msg.includes("password")) {
-          errorMessage = "סיסמה לא תקינה - לפחות 8 תווים, אות גדולה, קטנה וספרה";
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
+        const errorMessage = getHebrewAuthErrorMessage(error, "שגיאה בהרשמה");
 
         toast({
           title: "שגיאה",
           description: errorMessage,
           variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data?.session) {
+        setRegisteredEmail(validatedData.email);
+        toast({
+          title: "נשלח קישור אימות",
+          description: "בדוק את האימייל שלך כדי להשלים את ההרשמה.",
         });
         return;
       }
@@ -101,6 +101,23 @@ const Register = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResendConfirmation = async () => {
+    const targetEmail = registeredEmail || email;
+    if (!targetEmail) return;
+
+    setResending(true);
+    const { error } = await resendConfirmation(targetEmail);
+    setResending(false);
+
+    toast({
+      title: error ? "שגיאה בשליחה" : "קישור אימות נשלח שוב",
+      description: error
+        ? getHebrewAuthErrorMessage(error, "לא הצלחנו לשלוח קישור אימות חדש. נסה שוב בעוד כמה דקות.")
+        : "בדוק גם את תיקיית הספאם/קידומי מכירות.",
+      variant: error ? "destructive" : "default",
+    });
   };
 
   if (authLoading) {
@@ -144,6 +161,20 @@ const Register = () => {
               </p>
             </div>
 
+            {registeredEmail && (
+              <Alert className="mb-5 border-primary/30 bg-primary/5">
+                <MailCheck className="h-4 w-4 text-primary" />
+                <AlertTitle>נשלח אימייל אימות</AlertTitle>
+                <AlertDescription className="space-y-3">
+                  <p>שלחנו קישור אימות אל {registeredEmail}. צריך ללחוץ עליו לפני התחברות למערכת.</p>
+                  <Button type="button" variant="outline" size="sm" onClick={handleResendConfirmation} disabled={resending}>
+                    {resending ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                    שלח קישור אימות שוב
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
@@ -184,14 +215,16 @@ const Register = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="לפחות 8 תווים (Aa1)"
+                  placeholder="לפחות 8 תווים (Aa1!)"
                   className="text-left"
                   dir="ltr"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
+                  autoComplete="new-password"
                 />
+                <p className="text-xs text-muted-foreground">חובה: אות גדולה, אות קטנה, מספר וסימן מיוחד.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
