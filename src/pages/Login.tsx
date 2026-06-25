@@ -7,6 +7,7 @@ import { ArrowRight, Home, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { getHebrewAuthErrorMessage } from "@/lib/authErrors";
 
 const loginSchema = z.object({
   email: z.string().email("אימייל לא תקין"),
@@ -15,12 +16,14 @@ const loginSchema = z.object({
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn, user, loading: authLoading } = useAuth();
+  const { signIn, resendConfirmation, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [resending, setResending] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -37,16 +40,14 @@ const Login = () => {
       // Validate input
       const validatedData = loginSchema.parse({ email, password });
 
+      setNeedsConfirmation(false);
       const { error } = await signIn(validatedData.email, validatedData.password);
 
       if (error) {
-        let errorMessage = "שגיאה בהתחברות";
-        
-        if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "אימייל או סיסמה שגויים";
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "יש לאמת את כתובת האימייל לפני ההתחברות";
-        }
+        const errorMessage = getHebrewAuthErrorMessage(error, "שגיאה בהתחברות");
+        const rawMessage = error.message.toLowerCase();
+        const errorCode = (error as any).code || (error as any).error_code;
+        setNeedsConfirmation(errorCode === "email_not_confirmed" || rawMessage.includes("email not confirmed") || rawMessage.includes("not confirmed"));
 
         toast({
           title: "שגיאה",
@@ -73,6 +74,22 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email) return;
+
+    setResending(true);
+    const { error } = await resendConfirmation(email);
+    setResending(false);
+
+    toast({
+      title: error ? "שגיאה בשליחה" : "קישור אימות נשלח",
+      description: error
+        ? getHebrewAuthErrorMessage(error, "לא הצלחנו לשלוח קישור אימות חדש.")
+        : "בדוק את תיבת הדואר וגם את תיקיית הספאם.",
+      variant: error ? "destructive" : "default",
+    });
   };
 
   if (authLoading) {
@@ -150,9 +167,16 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
-                  autoComplete="new-password"
+                  autoComplete="current-password"
                 />
               </div>
+
+              {needsConfirmation && (
+                <Button type="button" variant="outline" className="w-full" onClick={handleResendConfirmation} disabled={resending || loading}>
+                  {resending ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                  שלח קישור אימות שוב
+                </Button>
+              )}
 
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading ? (
