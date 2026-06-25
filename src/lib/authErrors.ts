@@ -56,6 +56,14 @@ export const getHebrewAuthErrorMessage = (error: unknown, fallback: string) => {
     return "כתובת האימייל לא תקינה.";
   }
 
+  if (message.includes("auth session missing") || message.includes("session missing")) {
+    return "הקישור לאיפוס סיסמה לא תקין או שפג תוקפו. בקש קישור חדש מהמסך 'שכחת סיסמה'.";
+  }
+
+  if (message.includes("redirect") && (message.includes("not allowed") || message.includes("not permitted"))) {
+    return "יש בעיה בהגדרות קישור האימייל. נסה שוב, ואם זה חוזר פנה לתמיכה.";
+  }
+
   if (message.includes("signup") && message.includes("disabled")) {
     return "הרשמה כבויה כרגע. נסה שוב מאוחר יותר.";
   }
