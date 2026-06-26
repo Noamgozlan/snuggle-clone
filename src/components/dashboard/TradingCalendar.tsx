@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, X, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, BookOpen, ChevronDown, ChevronUp, Star, Target, CheckCircle2, FileText, Brain, AlertTriangle, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
