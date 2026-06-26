@@ -37,6 +37,13 @@ interface Trade {
   exit_price?: number | null;
   strategy?: string | null;
   screenshot_url?: string | null;
+  notes?: string | null;
+  rating?: number | null;
+  rr?: number | null;
+  risk?: number | null;
+  mental_state?: string | null;
+  mistakes?: string[] | null;
+  setup_type?: string | null;
 }
 
 interface TradingCalendarProps {
