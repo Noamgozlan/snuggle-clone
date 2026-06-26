@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, X, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, BookOpen, ChevronDown, ChevronUp, Star, Target, CheckCircle2, FileText, Brain, AlertTriangle, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -37,6 +37,13 @@ interface Trade {
   exit_price?: number | null;
   strategy?: string | null;
   screenshot_url?: string | null;
+  notes?: string | null;
+  rating?: number | null;
+  rr?: number | null;
+  risk?: number | null;
+  mental_state?: string | null;
+  mistakes?: string[] | null;
+  setup_type?: string | null;
 }
 
 interface TradingCalendarProps {
@@ -67,6 +74,7 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [noteDate, setNoteDate] = useState("");
+  const [expandedTradeId, setExpandedTradeId] = useState<string | null>(null);
   const { getNoteForDate, getDatesWithNotes, upsertNote } = useDailyNotes();
   const datesWithNotes = getDatesWithNotes();
 
@@ -360,21 +368,29 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
             {selectedDayTrades.map((trade) => {
               const value = displayMode === "points" ? (trade.pnl_points || 0) : (trade.pnl || 0);
               const isProfit = value >= 0;
-              
+              const isExpanded = expandedTradeId === trade.id;
+              const [reason, ...rest] = (trade.notes || "").split("\n\n[CONCLUSIONS]\n");
+              const conclusions = rest.join("\n\n[CONCLUSIONS]\n");
+              const hasExtraDetails = Boolean(
+                trade.notes || trade.rating || trade.rr || trade.risk ||
+                trade.mental_state || trade.setup_type ||
+                (trade.mistakes && trade.mistakes.length > 0)
+              );
+
               return (
                 <div
                   key={trade.id}
-                  className={`p-4 rounded-xl border ${
-                    isProfit 
-                      ? "bg-success/5 border-success/20" 
+                  className={`p-4 rounded-xl border transition-colors ${
+                    isProfit
+                      ? "bg-success/5 border-success/20"
                       : "bg-destructive/5 border-destructive/20"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        trade.trade_type === "long" 
-                          ? "bg-success/20 text-success" 
+                        trade.trade_type === "long"
+                          ? "bg-success/20 text-success"
                           : "bg-destructive/20 text-destructive"
                       }`}>
                         {trade.trade_type === "long" ? "לונג" : "שורט"}
@@ -382,25 +398,25 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
                       <span className="font-bold text-foreground">{trade.symbol}</span>
                     </div>
                     <span className={`text-lg font-bold ${isProfit ? "text-success" : "text-destructive"}`}>
-                      {displayMode === "points" 
+                      {displayMode === "points"
                         ? `${value >= 0 ? '+' : ''}${value.toFixed(1)} נק׳`
                         : `${value >= 0 ? '+' : ''}$${value.toFixed(2)}`
                       }
                     </span>
                   </div>
-                  
+
                   {/* Trade Screenshot */}
                   {trade.screenshot_url && (
                     <div className="mb-3">
-                      <img 
-                        src={trade.screenshot_url} 
+                      <img
+                        src={trade.screenshot_url}
                         alt={`צילום מסך - ${trade.symbol}`}
                         className="w-full h-40 object-cover rounded-lg border border-border cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => window.open(trade.screenshot_url!, '_blank')}
                       />
                     </div>
                   )}
-                  
+
                   <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                     {trade.entry_price && (
                       <div>
@@ -426,12 +442,121 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
                         <span className="text-foreground">{trade.strategy}</span>
                       </div>
                     )}
+                    {trade.rr != null && (
+                      <div>
+                        <span className="text-xs">RR: </span>
+                        <span className="text-foreground">{trade.rr.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {trade.risk != null && (
+                      <div>
+                        <span className="text-xs">סיכון: </span>
+                        <span className="text-foreground">${trade.risk}</span>
+                      </div>
+                    )}
                   </div>
-                  
+
                   {trade.entry_date && (
                     <p className="text-xs text-muted-foreground mt-2">
                       {format(new Date(trade.entry_date), "HH:mm")}
                     </p>
+                  )}
+
+                  {hasExtraDetails && (
+                    <>
+                      <button
+                        onClick={() => setExpandedTradeId(isExpanded ? null : trade.id)}
+                        className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 py-1.5 rounded-md hover:bg-primary/5 transition-colors"
+                      >
+                        {isExpanded ? (
+                          <>
+                            <ChevronUp className="h-3.5 w-3.5" />
+                            הסתר פרטים
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="h-3.5 w-3.5" />
+                            הצג את כל הפרטים
+                          </>
+                        )}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-3 space-y-3 pt-3 border-t border-border/50 animate-fade-in">
+                          {trade.rating != null && trade.rating > 0 && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                <Star className="h-3.5 w-3.5" />
+                                דירוג
+                              </span>
+                              <div className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`h-3.5 w-3.5 ${
+                                      s <= (trade.rating || 0)
+                                        ? "fill-warning text-warning"
+                                        : "text-muted-foreground/40"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {(trade.mental_state || trade.setup_type || (trade.mistakes && trade.mistakes.length > 0)) && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                                <Brain className="h-3.5 w-3.5" />
+                                תגיות
+                              </p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {trade.mental_state && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                                    {trade.mental_state}
+                                  </span>
+                                )}
+                                {trade.setup_type && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-violet-500/10 text-violet-400 border border-violet-500/30">
+                                    {trade.setup_type}
+                                  </span>
+                                )}
+                                {(trade.mistakes || []).map((m, i) => (
+                                  <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/30">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    {m}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {reason && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                                <FileText className="h-3.5 w-3.5" />
+                                סיבת כניסה
+                              </p>
+                              <p className="text-sm text-foreground whitespace-pre-wrap break-words bg-background/50 rounded-md p-2 border border-border/50">
+                                {reason}
+                              </p>
+                            </div>
+                          )}
+
+                          {conclusions && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                מסקנות
+                              </p>
+                              <p className="text-sm text-foreground whitespace-pre-wrap break-words bg-background/50 rounded-md p-2 border border-border/50">
+                                {conclusions}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               );
