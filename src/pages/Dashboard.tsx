@@ -853,9 +853,6 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Heatmap */}
-      <TradingHeatmap trades={trades} />
-
       {/* Achievements */}
       <AchievementsPanel trades={trades} />
 
