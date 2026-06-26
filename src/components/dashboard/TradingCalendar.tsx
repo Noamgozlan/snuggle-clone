@@ -74,6 +74,7 @@ export const TradingCalendar = ({ trades, displayMode = "money", portfolioBalanc
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [noteDate, setNoteDate] = useState("");
+  const [expandedTradeId, setExpandedTradeId] = useState<string | null>(null);
   const { getNoteForDate, getDatesWithNotes, upsertNote } = useDailyNotes();
   const datesWithNotes = getDatesWithNotes();
 
