@@ -509,6 +509,17 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
               </Popover>
             </div>
 
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">שעת כניסה</Label>
+              <Input
+                type="time"
+                value={tradeTime}
+                onChange={(e) => setTradeTime(e.target.value)}
+                className="bg-input border-border hover:border-primary/50 transition-colors"
+                dir="ltr"
+              />
+            </div>
+
 
             <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">משך העסקה</Label>
