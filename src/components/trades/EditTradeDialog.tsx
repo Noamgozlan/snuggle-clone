@@ -277,15 +277,18 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       let entryDate = null;
       let exitDate = null;
       if (formData.tradeDate) {
-        entryDate = `${formData.tradeDate}T12:00:00`;
-        
-        // Calculate exit date based on duration - start from entry time (12:00:00) and add duration
+        const [hhStr, mmStr] = (formData.tradeTime || "12:00").split(":");
+        const hh = String(Math.min(23, Math.max(0, parseInt(hhStr) || 12))).padStart(2, "0");
+        const mm = String(Math.min(59, Math.max(0, parseInt(mmStr) || 0))).padStart(2, "0");
+        entryDate = `${formData.tradeDate}T${hh}:${mm}:00`;
+
+        // Calculate exit date based on duration - start from entry time and add duration
         if (formData.durationHours || formData.durationMinutes || formData.durationSeconds) {
           const hours = parseInt(formData.durationHours) || 0;
           const minutes = parseInt(formData.durationMinutes) || 0;
           const seconds = parseInt(formData.durationSeconds) || 0;
 
-          const entryDateTime = new Date(`${formData.tradeDate}T12:00:00`);
+          const entryDateTime = new Date(entryDate);
           entryDateTime.setHours(entryDateTime.getHours() + hours);
           entryDateTime.setMinutes(entryDateTime.getMinutes() + minutes);
           entryDateTime.setSeconds(entryDateTime.getSeconds() + seconds);
