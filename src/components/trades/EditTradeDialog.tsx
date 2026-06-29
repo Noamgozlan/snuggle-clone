@@ -106,6 +106,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
         symbol: trade.symbol || "",
         quantity: String(trade.quantity || 1),
         tradeDate: trade.entry_date ? trade.entry_date.split("T")[0] : "",
+        tradeTime: trade.entry_date && trade.entry_date.includes("T")
+          ? trade.entry_date.split("T")[1].slice(0, 5)
+          : "12:00",
         durationHours: hours,
         durationMinutes: minutes,
         durationSeconds: seconds,
