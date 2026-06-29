@@ -14,6 +14,7 @@ import AITradingAdvisor from "@/components/statistics/AITradingAdvisor";
 import { RiskManagement } from "@/components/statistics/RiskManagement";
 import { PeriodComparison } from "@/components/statistics/PeriodComparison";
 import { AIWeeklySummary } from "@/components/statistics/AIWeeklySummary";
+import { HourOfDayStats } from "@/components/statistics/HourOfDayStats";
 
 interface TradeConfirmation {
   trade_id: string;
