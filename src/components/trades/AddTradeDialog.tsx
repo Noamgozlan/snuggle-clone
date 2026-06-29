@@ -51,6 +51,10 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const [improvingConclusions, setImprovingConclusions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [tradeDate, setTradeDate] = useState<Date>(new Date());
+  const [tradeTime, setTradeTime] = useState<string>(() => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  });
 
   // Always sync with active portfolio when it changes
   useEffect(() => {
@@ -103,6 +107,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       conclusions: "",
     });
     setTradeDate(new Date());
+    const now = new Date();
+    setTradeTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
     setRating(0);
     setTradeType("long");
     setPnlSign("positive");
@@ -280,7 +286,10 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       const month = String(tradeDate.getMonth() + 1).padStart(2, "0");
       const day = String(tradeDate.getDate()).padStart(2, "0");
       const tradeDateStr = `${year}-${month}-${day}`;
-      const entryDate = `${tradeDateStr}T12:00:00`; // Use noon to avoid timezone edge cases
+      const [hhStr, mmStr] = (tradeTime || "12:00").split(":");
+      const hh = String(Math.min(23, Math.max(0, parseInt(hhStr) || 0))).padStart(2, "0");
+      const mm = String(Math.min(59, Math.max(0, parseInt(mmStr) || 0))).padStart(2, "0");
+      const entryDate = `${tradeDateStr}T${hh}:${mm}:00`;
 
       // Calculate exit date based on duration - start from entry time and add duration
       let exitDate = null;
@@ -289,8 +298,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
         const minutes = parseInt(formData.durationMinutes) || 0;
         const seconds = parseInt(formData.durationSeconds) || 0;
 
-        // Start from entry date (T12:00:00) and add duration
-        const entryDateTime = new Date(`${tradeDateStr}T12:00:00`);
+        // Start from entry datetime and add duration
+        const entryDateTime = new Date(entryDate);
         entryDateTime.setHours(entryDateTime.getHours() + hours);
         entryDateTime.setMinutes(entryDateTime.getMinutes() + minutes);
         entryDateTime.setSeconds(entryDateTime.getSeconds() + seconds);
@@ -498,6 +507,17 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">שעת כניסה</Label>
+              <Input
+                type="time"
+                value={tradeTime}
+                onChange={(e) => setTradeTime(e.target.value)}
+                className="bg-input border-border hover:border-primary/50 transition-colors"
+                dir="ltr"
+              />
             </div>
 
 

@@ -61,6 +61,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
     symbol: "",
     quantity: "1",
     tradeDate: "",
+    tradeTime: "",
     durationHours: "",
     durationMinutes: "",
     durationSeconds: "",
@@ -105,6 +106,9 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
         symbol: trade.symbol || "",
         quantity: String(trade.quantity || 1),
         tradeDate: trade.entry_date ? trade.entry_date.split("T")[0] : "",
+        tradeTime: trade.entry_date && trade.entry_date.includes("T")
+          ? trade.entry_date.split("T")[1].slice(0, 5)
+          : "12:00",
         durationHours: hours,
         durationMinutes: minutes,
         durationSeconds: seconds,
@@ -273,15 +277,18 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
       let entryDate = null;
       let exitDate = null;
       if (formData.tradeDate) {
-        entryDate = `${formData.tradeDate}T12:00:00`;
-        
-        // Calculate exit date based on duration - start from entry time (12:00:00) and add duration
+        const [hhStr, mmStr] = (formData.tradeTime || "12:00").split(":");
+        const hh = String(Math.min(23, Math.max(0, parseInt(hhStr) || 12))).padStart(2, "0");
+        const mm = String(Math.min(59, Math.max(0, parseInt(mmStr) || 0))).padStart(2, "0");
+        entryDate = `${formData.tradeDate}T${hh}:${mm}:00`;
+
+        // Calculate exit date based on duration - start from entry time and add duration
         if (formData.durationHours || formData.durationMinutes || formData.durationSeconds) {
           const hours = parseInt(formData.durationHours) || 0;
           const minutes = parseInt(formData.durationMinutes) || 0;
           const seconds = parseInt(formData.durationSeconds) || 0;
 
-          const entryDateTime = new Date(`${formData.tradeDate}T12:00:00`);
+          const entryDateTime = new Date(entryDate);
           entryDateTime.setHours(entryDateTime.getHours() + hours);
           entryDateTime.setMinutes(entryDateTime.getMinutes() + minutes);
           entryDateTime.setSeconds(entryDateTime.getSeconds() + seconds);
@@ -472,6 +479,17 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
                 value={formData.tradeDate}
                 onChange={(e) => setFormData({ ...formData, tradeDate: e.target.value })}
                 className="bg-input border-border"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">שעת כניסה</Label>
+              <Input
+                type="time"
+                value={formData.tradeTime}
+                onChange={(e) => setFormData({ ...formData, tradeTime: e.target.value })}
+                className="bg-input border-border"
+                dir="ltr"
               />
             </div>
 
