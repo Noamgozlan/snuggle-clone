@@ -107,6 +107,8 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
       conclusions: "",
     });
     setTradeDate(new Date());
+    const now = new Date();
+    setTradeTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
     setRating(0);
     setTradeType("long");
     setPnlSign("positive");
