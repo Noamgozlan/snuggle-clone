@@ -51,6 +51,10 @@ export const AddTradeDialog = ({ trigger, open, onOpenChange, onTradeAdded }: Ad
   const [improvingConclusions, setImprovingConclusions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [tradeDate, setTradeDate] = useState<Date>(new Date());
+  const [tradeTime, setTradeTime] = useState<string>(() => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  });
 
   // Always sync with active portfolio when it changes
   useEffect(() => {
