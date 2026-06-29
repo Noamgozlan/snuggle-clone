@@ -483,6 +483,17 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
             </div>
 
             <div className="space-y-2">
+              <Label className="text-muted-foreground text-sm">שעת כניסה</Label>
+              <Input
+                type="time"
+                value={formData.tradeTime}
+                onChange={(e) => setFormData({ ...formData, tradeTime: e.target.value })}
+                className="bg-input border-border"
+                dir="ltr"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label className="text-muted-foreground text-sm">סשן מסחר</Label>
               <Select value={session} onValueChange={setSession}>
                 <SelectTrigger className="bg-input border-border">
