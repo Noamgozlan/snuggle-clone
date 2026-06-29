@@ -1009,6 +1009,8 @@ const Statistics = () => {
             </p>
           </Card>
         </div>
+
+        <HourOfDayStats trades={trades} />
         </TabsContent>
 
         <TabsContent value="ai-summary">
