@@ -61,6 +61,7 @@ export const EditTradeDialog = ({ trade, open, onOpenChange, onTradeUpdated }: E
     symbol: "",
     quantity: "1",
     tradeDate: "",
+    tradeTime: "",
     durationHours: "",
     durationMinutes: "",
     durationSeconds: "",
