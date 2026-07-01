@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+const serve = (handler: (req: Request) => Response | Promise<Response>) => Deno.serve(handler);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { trades, stats } = await req.json();
+    const { trades, stats, periodLabel } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
@@ -20,16 +20,15 @@ serve(async (req) => {
 
     if (!trades || trades.length === 0) {
       return new Response(JSON.stringify({ 
-        summary: "אין עסקאות לניתוח בשבוע האחרון. המשך לסחור ותקבל סיכום שבועי מפורט!",
-        patterns: [],
-        mistakes: [],
-        recommendations: []
+        summary: "אין עסקאות לניתוח בטווח הנבחר.",
+        patterns: [], mistakes: [], recommendations: [], strengths: [],
+        grade: "C", riskAlert: null,
+        textPatterns: { goodPoints: [], badPoints: [], insights: [] }
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Build trade context
     const tradesContext = trades.map((t: any, i: number) => {
       const parts = [
         `${i + 1}. ${t.symbol} (${t.trade_type})`,
@@ -37,45 +36,60 @@ serve(async (req) => {
         t.strategy ? `אסטרטגיה: ${t.strategy}` : null,
         t.mental_state ? `מצב מנטלי: ${t.mental_state}` : null,
         t.mistakes?.length ? `טעויות: ${t.mistakes.join(', ')}` : null,
-        t.session ? `סשן: ${t.session}` : null,
         t.rr ? `R:R: ${t.rr.toFixed(2)}` : null,
         t.entry_date ? `תאריך: ${t.entry_date}` : null,
       ].filter(Boolean);
       return parts.join(' | ');
     }).join('\n');
 
-    const systemPrompt = `אתה מנתח מסחר מקצועי. עליך לנתח את עסקאות השבוע ולספק תובנות.
+    const notesContext = trades
+      .map((t: any, i: number) => {
+        if (!t.notes) return null;
+        const pnl = (t.pnl || 0);
+        const result = pnl > 0 ? "רווח" : pnl < 0 ? "הפסד" : "BE";
+        return `[עסקה ${i + 1} - ${t.symbol} - ${result} $${pnl.toFixed(0)}]\n${t.notes}`;
+      })
+      .filter(Boolean)
+      .join('\n\n---\n\n');
 
-חובה להחזיר JSON בלבד (בלי markdown, בלי backticks) עם המבנה הבא:
+    const systemPrompt = `אתה מנתח מסחר מקצועי שקורא ומבין את מה שהסוחר כותב.
+
+חובה להחזיר JSON בלבד (בלי markdown, בלי backticks) עם המבנה:
 {
-  "summary": "סיכום קצר של 2-3 משפטים על הביצועים השבועיים",
-  "patterns": ["דפוס 1 שזוהה", "דפוס 2 שזוהה"],
-  "mistakes": ["טעות חוזרת 1 עם הסבר קצר", "טעות חוזרת 2"],
-  "recommendations": ["המלצה ספציפית 1", "המלצה ספציפית 2", "המלצה 3"],
+  "summary": "סיכום 2-3 משפטים על הביצועים בטווח",
+  "patterns": ["דפוס 1", "דפוס 2"],
+  "mistakes": ["טעות חוזרת 1", "טעות חוזרת 2"],
+  "recommendations": ["המלצה 1", "המלצה 2", "המלצה 3"],
   "grade": "A/B/C/D/F",
   "strengths": ["חוזקה 1", "חוזקה 2"],
-  "riskAlert": "אם יש סיכון מיוחד לציין כאן, אחרת null"
+  "riskAlert": "התרעת סיכון או null",
+  "textPatterns": {
+    "goodPoints": ["דבר טוב שזיהית מסיבות הכניסה/מסקנות שהסוחר כתב"],
+    "badPoints": ["דבר לא טוב שחוזר בטקסטים של הסוחר"],
+    "insights": ["תובנה מעניינת מהטקסט - למשל: כשכותב X מרוויח, כשכותב Y מפסיד"]
+  }
 }
 
 הנחיות:
-- כתוב בעברית פשוטה וברורה
-- התבסס רק על הנתונים שקיבלת
-- אל תמציא מספרים
-- המלצות צריכות להיות מעשיות וספציפיות
-- זהה דפוסים חוזרים (ימים מסוימים, סשנים, אסטרטגיות, מצבים מנטליים)
-- אם יש טעויות חוזרות - ציין אותן בבירור`;
+- כתוב בעברית ברורה
+- textPatterns חייב להיות מבוסס אך ורק על הטקסט של סיבות הכניסה והמסקנות שהסוחר כתב
+- זהה מילות מפתח או ביטויים חוזרים בעסקאות רווחיות מול מפסידות
+- הצג דוגמאות ספציפיות (אל תכתוב "יש דפוס" - כתוב את הדפוס בפועל)
+- אם הטקסטים דלים או ריקים - החזר מערכים ריקים ב-textPatterns`;
 
-    const userPrompt = `## סטטיסטיקות השבוע
+    const userPrompt = `## סטטיסטיקות (${periodLabel || 'הטווח'})
 - סה"כ עסקאות: ${stats.totalTrades || trades.length}
 - PnL כולל: $${(stats.totalPnl || 0).toFixed(2)}
 - אחוז הצלחה: ${(stats.winRate || 0).toFixed(1)}%
-- עסקאות מנצחות: ${stats.winningTrades || 0}
-- עסקאות מפסידות: ${stats.losingTrades || 0}
+- מנצחות: ${stats.winningTrades || 0} | מפסידות: ${stats.losingTrades || 0}
 
 ## פירוט עסקאות
 ${tradesContext}
 
-נתח את הביצועים והחזר JSON.`;
+## סיבות כניסה ומסקנות שהסוחר כתב
+${notesContext || '(אין הערות)'}
+
+נתח והחזר JSON. שים דגש מיוחד על ניתוח הטקסטים ב-textPatterns.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
